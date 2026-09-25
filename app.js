@@ -59,16 +59,39 @@
     groupingMode: "employee", // 'employee' or 'department'
     selectedDepartment: "all",
     searchQuery: "",
+    timeFormat: localStorage.getItem("tudor_time_format") || "24h", // '12h' | '24h'
+    theme: localStorage.getItem("tudor_theme") || "light", // 'light' | 'dark'
+    showProfileMenu: false,
     data: JSON.parse(JSON.stringify(CLEAN_DATA)),
     editingShift: null,
     editingEmployee: null,
     showSettingsModal: false,
-    showInstallModal: false,
-    showShareModal: false,
     showGrantAccessModal: null, // employee object
     showOtpModal: null, // { name, username, otp }
     showMustChangePasswordModal: false
   };
+
+  // Apply theme immediately
+  document.documentElement.setAttribute("data-theme", state.theme);
+
+  // Time format helper (12h vs 24h)
+  function formatShiftTime(t) {
+    if (!t) return "";
+    if (state.timeFormat === "12h") {
+      const [hStr, mStr] = t.split(":");
+      const h = Number(hStr);
+      const m = Number(mStr);
+      const ampm = h >= 12 ? "PM" : "AM";
+      const h12 = h % 12 || 12;
+      return `${h12}:${String(m).padStart(2, "0")} ${ampm}`;
+    }
+    return t;
+  }
+
+  function formatShiftRange(s, e) {
+    if (!s || !e) return "";
+    return `${formatShiftTime(s)} – ${formatShiftTime(e)}`;
+  }
 
   // Utility: SHA-256 for browser fallback
   async function sha256(str) {
@@ -487,33 +510,21 @@
   function renderHeader() {
     const user = state.currentUser;
     const isAdmin = user && user.role === "admin";
-    const pendingRequests = (state.data.requests || []).filter(r => r.status === "pending").length;
     const pendingResets = (state.data.resetRequests || []).filter(r => r.status === "pending").length;
-    const activePunches = (state.data.punches || []).filter(p => p.status === "active").length;
+    const userInitial = ((user ? user.name || user.username : "U")[0] || "U").toUpperCase();
 
     return `
       <header class="app-header">
         <div class="brand-section">
-          <div class="brand-logo">P</div>
-          <div>
-            <div class="brand-title">
-              <span id="header-business-title">${state.data.settings.businessName || "Tudor Local"}</span>
-              <span class="brand-tag">ROTA PRO</span>
-            </div>
+          <div class="brand-logo">TL</div>
+          <div class="brand-title">
+            <span id="header-business-title">${state.data.settings.businessName || "Tudor Local"}</span>
           </div>
         </div>
 
         <nav class="main-nav">
           <button class="nav-tab ${state.activeTab === "schedule" ? "active" : ""}" data-tab="schedule">
             📅 Schedule
-          </button>
-          <button class="nav-tab ${state.activeTab === "punch" ? "active" : ""}" data-tab="punch">
-            ⏱️ Punch Clock
-            ${activePunches > 0 ? `<span class="nav-badge" style="background:#dcfce7;color:#15803d">${activePunches} on shift</span>` : ""}
-          </button>
-          <button class="nav-tab ${state.activeTab === "requests" ? "active" : ""}" data-tab="requests">
-            🔄 Shift Swaps & Leave
-            ${pendingRequests > 0 ? `<span class="nav-badge" style="background:#fee2e2;color:#b91c1c">${pendingRequests}</span>` : ""}
           </button>
           ${
             isAdmin
@@ -528,141 +539,57 @@
         </nav>
 
         <div class="header-actions">
-          <div class="auth-user-badge">
-            <span>👤 ${user ? user.name || user.username : "User"}</span>
-            <span class="role-tag ${isAdmin ? "admin" : "staff"}">${isAdmin ? "Admin" : "Staff"}</span>
-          </div>
-
-          <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sign out of your account">
-            Log Out
-          </button>
-
           ${
             isAdmin
               ? `
-            <button class="btn btn-secondary btn-sm" id="btn-share-team-header" style="font-weight: 600; color: #2563eb; background: #eff6ff; border-color: #bfdbfe;" title="Share link with team members">
-              🔗 Share Link
-            </button>
-            <button class="btn-install-pwa" id="btn-install-app-header" title="Download & Install Rota on iPhone or Android">
-              📱 Install App
-            </button>
-            <button class="btn btn-secondary btn-sm" id="btn-open-settings" title="Change Currency, Business Name, Labor Budget, or Reset Rota">
-              ⚙️ Settings
-            </button>
             <button class="btn btn-primary btn-sm" id="btn-add-shift-header">
               + Add Shift
             </button>
           `
-              : `
-            <button class="btn-install-pwa" id="btn-install-app-header" title="Download & Install Rota on iPhone or Android">
-              📱 Install App
-            </button>
-          `
+              : ""
           }
+
+          <!-- Profile Circle Avatar with Dropdown -->
+          <div class="profile-menu-container">
+            <button class="profile-circle-btn" id="btn-profile-toggle" title="${user ? user.name || user.username : "Account"}">
+              <span>${userInitial}</span>
+            </button>
+
+            <div class="profile-dropdown-menu ${state.showProfileMenu ? "" : "hidden"}" id="profile-dropdown">
+              <div class="profile-dropdown-header">
+                <div class="dropdown-avatar-circle">${userInitial}</div>
+                <div class="dropdown-user-info">
+                  <div class="dropdown-name">${user ? user.name || user.username : "User"}</div>
+                  <div class="dropdown-meta">
+                    <span class="dropdown-role ${isAdmin ? "admin" : "staff"}">${isAdmin ? "Admin" : "Staff"}</span>
+                    <span class="dropdown-username">@${user ? user.username : ""}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dropdown-divider"></div>
+
+              <button class="dropdown-item" id="menu-open-settings">
+                <span class="dropdown-icon">⚙️</span>
+                <span>Settings & Preferences</span>
+              </button>
+
+              <div class="dropdown-divider"></div>
+
+              <button class="dropdown-item dropdown-item-danger" id="menu-logout">
+                <span class="dropdown-icon">🚪</span>
+                <span>Log Out</span>
+              </button>
+            </div>
+          </div>
         </div>
       </header>
     `;
   }
 
-  // Render Top KPI Metrics Bar
+  // Render Top KPI Metrics Bar - Removed per user request
   function renderKpiBar() {
-    const kpis = getWeekKPIs();
-    const isAdmin = state.currentUser && state.currentUser.role === "admin";
-
-    // If staff member, hide total labor cost and business revenue for privacy
-    if (!isAdmin) {
-      // Find staff member's shifts this week
-      const myEmpId = state.currentUser.employeeId;
-      const weekDates = getWeekDates().map(formatDate);
-      let myHours = 0;
-      let myShiftsCount = 0;
-      (state.data.shifts || [])
-        .filter(s => s.employeeId === myEmpId && weekDates.includes(s.date))
-        .forEach(s => {
-          myHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
-          myShiftsCount++;
-        });
-
-      return `
-        <div class="kpi-bar" style="grid-template-columns: 1fr 1fr 1fr;">
-          <div class="kpi-card">
-            <div class="kpi-icon" style="background:#eff6ff; color:#2563eb;">🕒</div>
-            <div class="kpi-info">
-              <h4>My Scheduled Hours</h4>
-              <div class="kpi-value">${myHours.toFixed(1)} hrs</div>
-              <div class="kpi-sub">This week</div>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon" style="background:#f0fdf4; color:#16a34a;">📅</div>
-            <div class="kpi-info">
-              <h4>My Shifts</h4>
-              <div class="kpi-value">${myShiftsCount} shifts</div>
-              <div class="kpi-sub">Scheduled</div>
-            </div>
-          </div>
-          <div class="kpi-card">
-            <div class="kpi-icon" style="background:#f8fafc; color:#64748b;">👥</div>
-            <div class="kpi-info">
-              <h4>Team on Rota</h4>
-              <div class="kpi-value">${kpis.activeStaffCount} Colleagues</div>
-              <div class="kpi-sub">Working this week</div>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-
-    return `
-      <div class="kpi-bar">
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#eff6ff; color:#2563eb;">🕒</div>
-          <div class="kpi-info">
-            <h4>Scheduled Hours</h4>
-            <div class="kpi-value">${kpis.totalHours} hrs</div>
-            <div class="kpi-sub">Across 7 days</div>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#f0fdf4; color:#16a34a;">💰</div>
-          <div class="kpi-info">
-            <h4>Est. Wage Cost</h4>
-            <div class="kpi-value">${kpis.currency}${kpis.totalCost}</div>
-            <div class="kpi-sub">Live labor total</div>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">📊</div>
-          <div class="kpi-info">
-            <h4>Labor Cost %</h4>
-            <div class="kpi-value">${kpis.laborPercentage}%</div>
-            <div class="kpi-sub">Target: ${state.data.settings.targetLaborPercentage || 20.0}%</div>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:#ecfdf5; color:#059669;">👥</div>
-          <div class="kpi-info">
-            <h4>Active Roster</h4>
-            <div class="kpi-value">${kpis.activeStaffCount} / ${kpis.totalStaffCount} Staff</div>
-            <div class="kpi-sub">Scheduled this week</div>
-          </div>
-        </div>
-
-        <div class="kpi-card">
-          <div class="kpi-icon" style="background:${kpis.draftCount > 0 ? "#fffbeb" : "#f8fafc"}; color:${kpis.draftCount > 0 ? "#d97706" : "#64748b"};">
-            ${kpis.draftCount > 0 ? "⚠️" : "✓"}
-          </div>
-          <div class="kpi-info">
-            <h4>Publish Status</h4>
-            <div class="kpi-value">${kpis.draftCount > 0 ? `${kpis.draftCount} Drafts` : (kpis.totalHours > 0 ? "Published" : "Clean Rota")}</div>
-            <div class="kpi-sub">${kpis.draftCount > 0 ? "Ready to publish" : (kpis.totalHours > 0 ? "All staff notified" : "Ready for shifts")}</div>
-          </div>
-        </div>
-      </div>
-    `;
+    return "";
   }
 
   // Render Admin Password Reset Alert Banner
@@ -690,7 +617,7 @@
     `;
   }
 
-  // Render Rota Controls Bar
+  // Render Rota Controls Bar (Clean Minimalist Week Navigator)
   function renderRotaControls() {
     const weekDates = getWeekDates();
     const startStr = weekDates[0].toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -698,107 +625,26 @@
     const kpis = getWeekKPIs();
     const isAdmin = state.currentUser && state.currentUser.role === "admin";
 
-    const deptOptions = (state.data.departments || [])
-      .map(d => `<option value="${d.id}" ${state.selectedDepartment === d.id ? "selected" : ""}>${d.name}</option>`)
-      .join("");
-
     return `
       <div class="rota-controls-bar">
         <div class="date-navigator">
-          <button class="btn btn-secondary btn-sm" id="btn-prev-week" title="Previous Week">◀</button>
+          <button class="nav-arrow-btn" id="btn-prev-week" title="Previous Week">◀</button>
           <button class="btn btn-secondary btn-sm" id="btn-today">Today</button>
-          <button class="btn btn-secondary btn-sm" id="btn-next-week" title="Next Week">▶</button>
+          <button class="nav-arrow-btn" id="btn-next-week" title="Next Week">▶</button>
           <div class="current-range">Week: ${startStr} – ${endStr}</div>
         </div>
-
-        <div class="filter-group">
-          <select class="select-input" id="dept-filter">
-            <option value="all">All Departments</option>
-            ${deptOptions}
-          </select>
-
-          <input type="text" class="text-input" id="search-filter" placeholder="Search staff or role..." value="${state.searchQuery}" style="width: 170px;">
-
-          <div class="view-toggle">
-            <button class="${state.groupingMode === "employee" ? "active" : ""}" id="toggle-group-employee">By Staff</button>
-            <button class="${state.groupingMode === "department" ? "active" : ""}" id="toggle-group-dept">By Dept</button>
-          </div>
-
-          ${
-            isAdmin
-              ? `
-            <button class="btn btn-secondary btn-sm" id="btn-copy-prev-week" title="Copy all shifts from previous week into this week">
-              📋 Copy Prev Week
-            </button>
-            ${
-              kpis.draftCount > 0
-                ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">🚀 Publish Rota (${kpis.draftCount})</button>`
-                : `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.7;">✓ All Published</button>`
-            }
-          `
-              : ""
-          }
-        </div>
+        ${
+          isAdmin && kpis.draftCount > 0
+            ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">🚀 Publish Rota (${kpis.draftCount})</button>`
+            : ""
+        }
       </div>
     `;
   }
 
-  // Render Open Shifts Banner
+  // Render Open Shifts Banner - Removed per user request
   function renderOpenShifts() {
-    const weekDates = getWeekDates().map(formatDate);
-    const openShifts = (state.data.shifts || []).filter(s => weekDates.includes(s.date) && (!s.employeeId || s.status === "open"));
-    const isAdmin = state.currentUser && state.currentUser.role === "admin";
-
-    if (openShifts.length === 0) {
-      return `
-        <div class="open-shifts-container">
-          <div class="open-shifts-header">
-            <div class="open-shifts-title">⚡ Open Shifts (0)</div>
-            <div class="open-shifts-desc">No unassigned shifts</div>
-          </div>
-          <div style="font-size: 0.8rem; color: #94a3b8; padding-top: 0.25rem;">
-            No open shifts scheduled for this week.
-          </div>
-        </div>
-      `;
-    }
-
-    const cardsHtml = openShifts
-      .map(shift => {
-        const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { color: "#64748b" };
-        const hours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
-        const dayLabel = parseDate(shift.date).toLocaleDateString("en-GB", { weekday: "short", day: "numeric" });
-        return `
-          <div class="shift-card status-open" style="border-left-color: ${dept.color}; min-width: 170px;" data-shift-id="${shift.id}">
-            <div class="shift-time">
-              <span>${shift.startTime} - ${shift.endTime}</span>
-              <span class="shift-badge badge-open">OPEN</span>
-            </div>
-            <div class="shift-role-title"><strong>${shift.role}</strong> (${dayLabel})</div>
-            <div class="shift-footer">
-              <span>${hours}h net</span>
-              ${
-                isAdmin
-                  ? `<button class="btn btn-secondary btn-sm btn-claim-shift" data-shift-id="${shift.id}" style="padding: 2px 6px; font-size: 10px;">Assign</button>`
-                  : `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="padding: 2px 6px; font-size: 10px;">Claim</button>`
-              }
-            </div>
-          </div>
-        `;
-      })
-      .join("");
-
-    return `
-      <div class="open-shifts-container">
-        <div class="open-shifts-header">
-          <div class="open-shifts-title">⚡ Open Shifts (${openShifts.length})</div>
-          <div class="open-shifts-desc">Available for team</div>
-        </div>
-        <div class="open-shifts-grid">
-          ${cardsHtml}
-        </div>
-      </div>
-    `;
+    return "";
   }
 
   // Render Schedule Grid (Rota Table)
@@ -919,7 +765,7 @@
                          data-shift-id="${shift.id}" 
                          title="${shift.notes ? `Note: ${shift.notes}` : "Shift details"}">
                       <div class="shift-time">
-                        <span>${shift.startTime} - ${shift.endTime}</span>
+                        <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         ${shift.breakMinutes ? `<span class="shift-break">-${shift.breakMinutes}m</span>` : ""}
                       </div>
                       <div class="shift-role-title">
@@ -1001,7 +847,7 @@
                          style="border-left-color: ${dept.color};" 
                          data-shift-id="${shift.id}">
                       <div class="shift-time">
-                        <span>${shift.startTime} - ${shift.endTime}</span>
+                        <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         ${shift.status === "draft" ? `<span class="shift-badge badge-draft">Draft</span>` : ""}
                       </div>
                       <div class="shift-role-title"><strong>${emp ? emp.name : "Unassigned"}</strong></div>
@@ -1492,171 +1338,138 @@
     `;
   }
 
-  // Render Settings & Budget Modal
+  // Render Settings & Preferences Modal
   function renderSettingsModal() {
     if (!state.showSettingsModal) return "";
     const s = state.data.settings;
+    const user = state.currentUser || {};
+    const isAdmin = user.role === "admin";
+    const currentUrl = window.location.origin;
 
     return `
       <div class="modal-overlay" id="settings-modal-overlay">
-        <div class="modal-content" style="max-width: 500px;">
+        <div class="modal-content" style="max-width: 480px;">
           <div class="modal-header">
-            <h3 class="modal-title">⚙️ Business Settings & Labor Budget</h3>
+            <h3 class="modal-title">⚙️ Settings & Preferences</h3>
             <button class="modal-close" id="btn-close-settings">&times;</button>
           </div>
 
           <div class="modal-body">
-            <div class="form-group">
-              <label class="form-label">Business / Venue Name</label>
-              <input type="text" class="form-input" id="set-business-name" value="${s.businessName || ""}">
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Currency Symbol</label>
-                <select class="form-select" id="set-currency">
-                  <option value="£" ${s.currency === "£" ? "selected" : ""}>£ (GBP)</option>
-                  <option value="$" ${s.currency === "$" ? "selected" : ""}>$ (USD)</option>
-                  <option value="€" ${s.currency === "€" ? "selected" : ""}>€ (EUR)</option>
-                  <option value="C$" ${s.currency === "C$" ? "selected" : ""}>C$ (CAD)</option>
-                  <option value="A$" ${s.currency === "A$" ? "selected" : ""}>A$ (AUD)</option>
-                  <option value="₹" ${s.currency === "₹" ? "selected" : ""}>₹ (INR)</option>
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Target Labor Cost %</label>
-                <input type="number" class="form-input" id="set-target-labor" value="${s.targetLaborPercentage || 20.0}" step="0.5">
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label class="form-label">Projected Weekly Revenue (${s.currency})</label>
-              <input type="number" class="form-input" id="set-revenue" value="${s.projectedWeeklyRevenue || 0}" step="100">
-            </div>
-
-            <div style="border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1rem;">
-              <h4 style="font-size: 0.85rem; font-weight: 700; color: #b91c1c; margin-bottom: 0.5rem; text-transform: uppercase;">
-                ⚠️ Clear & Clean Slate Tools
-              </h4>
-              <div style="display: flex; gap: 8px; flex-direction: column;">
-                <button class="btn btn-secondary btn-sm" id="btn-action-clear-shifts" style="color: #b45309; border-color: #fde68a; justify-content: flex-start;">
-                  🧹 Clear All Shifts (Keep Staff)
+            <!-- 1. Theme Selection -->
+            <div class="settings-section-card">
+              <div class="settings-section-title">🎨 Appearance Theme</div>
+              <div class="segmented-control" id="theme-toggle-group">
+                <button type="button" class="segmented-option ${state.theme === "light" ? "active" : ""}" data-theme-val="light">
+                  ☀️ Light
+                </button>
+                <button type="button" class="segmented-option ${state.theme === "dark" ? "active" : ""}" data-theme-val="dark">
+                  🌙 Dark
                 </button>
               </div>
             </div>
-          </div>
 
-          <div class="modal-footer">
-            <button class="btn btn-secondary" id="btn-cancel-settings">Cancel</button>
-            <button class="btn btn-primary" id="btn-save-settings">Save Settings</button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // Render Install Modal
-  function renderInstallModal() {
-    if (!state.showInstallModal) return "";
-
-    return `
-      <div class="modal-overlay" id="install-guide-modal-overlay">
-        <div class="modal-content" style="max-width: 480px;">
-          <div class="modal-header">
-            <h3 class="modal-title">📱 Download Rota to Your Phone</h3>
-            <button class="modal-close" id="btn-close-install-modal">&times;</button>
-          </div>
-          <div class="modal-body" style="font-size: 0.85rem;">
-            <p style="color: #64748b; margin-bottom: 1.25rem;">
-              Install this app directly onto your <strong>iPhone</strong> or <strong>Android</strong> device. It opens full-screen and works offline!
-            </p>
-
-            <div style="margin-bottom: 1.25rem;">
-              <h4 style="font-weight: 700; color: #0f172a; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 6px;">
-                <span>🍎</span> For iPhone / iPad (iOS Safari)
-              </h4>
-              <div class="install-guide-step">
-                <div class="step-num">1</div>
-                <div>Open this link in <strong>Safari</strong> on your iPhone.</div>
-              </div>
-              <div class="install-guide-step">
-                <div class="step-num">2</div>
-                <div>Tap the <strong>Share</strong> button (the square with an arrow pointing up 📤).</div>
-              </div>
-              <div class="install-guide-step">
-                <div class="step-num">3</div>
-                <div>Scroll down the menu and tap <strong>"Add to Home Screen"</strong> (➕).</div>
-              </div>
-              <div class="install-guide-step">
-                <div class="step-num">4</div>
-                <div>Tap <strong>Add</strong> at top right. Done!</div>
-              </div>
-            </div>
-
-            <div>
-              <h4 style="font-weight: 700; color: #0f172a; margin-bottom: 0.6rem; display: flex; align-items: center; gap: 6px;">
-                <span>🤖</span> For Android (Google Chrome)
-              </h4>
-              <div class="install-guide-step">
-                <div class="step-num">1</div>
-                <div>Open this link in <strong>Google Chrome</strong> on Android.</div>
-              </div>
-              <div class="install-guide-step">
-                <div class="step-num">2</div>
-                <div>Tap the <strong>three dots (⋮)</strong> at top right -> <strong>"Install app"</strong>.</div>
-              </div>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="btn btn-primary" id="btn-done-install-modal" style="width: 100%;">
-              Got it!
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-
-  // Render Share Modal
-  function renderShareModal() {
-    if (!state.showShareModal) return "";
-    const currentUrl = window.location.origin;
-
-    return `
-      <div class="modal-overlay" id="share-modal-overlay">
-        <div class="modal-content" style="max-width: 500px;">
-          <div class="modal-header">
-            <h3 class="modal-title">🔗 Share Rota with Your Team</h3>
-            <button class="modal-close" id="btn-close-share-modal">&times;</button>
-          </div>
-          <div class="modal-body" style="font-size: 0.85rem;">
-            <p style="color: #64748b; margin-bottom: 1.25rem;">
-              Send this link to your team members so they can log in and view their shifts:
-            </p>
-
-            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
-              <div style="font-size: 0.75rem; font-weight: 700; color: #1e40af; text-transform: uppercase; margin-bottom: 0.35rem;">
-                🌐 Your Live Rota URL
-              </div>
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="text" id="share-link-input" readonly value="${currentUrl}" class="form-input" style="font-family: monospace; font-weight: 600; background: white; font-size: 0.9rem;">
-                <button class="btn btn-primary" id="btn-copy-share-url" style="white-space: nowrap;">
-                  📋 Copy Link
+            <!-- 2. Time Format -->
+            <div class="settings-section-card">
+              <div class="settings-section-title">🕒 Time Format</div>
+              <div class="segmented-control" id="time-format-toggle-group">
+                <button type="button" class="segmented-option ${state.timeFormat === "12h" ? "active" : ""}" data-time-val="12h">
+                  12-Hour (9:00 AM – 10:00 PM)
+                </button>
+                <button type="button" class="segmented-option ${state.timeFormat === "24h" ? "active" : ""}" data-time-val="24h">
+                  24-Hour (09:00 – 22:00)
                 </button>
               </div>
-              <p style="font-size: 0.75rem; color: #3b82f6; margin-top: 0.5rem;">
-                ✓ Paste this link in your team WhatsApp group. They can open it on their phones, log in, and tap "Install App"!
+            </div>
+
+            <!-- 3. Account Credentials -->
+            <div class="settings-section-card">
+              <div class="settings-section-title">👤 My Account Details</div>
+              <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-input" id="set-account-username" value="${user.username || ""}" placeholder="Enter new username">
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label class="form-label">New Password</label>
+                  <input type="password" class="form-input" id="set-account-password" placeholder="Leave blank to keep">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Confirm Password</label>
+                  <input type="password" class="form-input" id="set-account-confirm-password" placeholder="Confirm new password">
+                </div>
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-save-account-credentials" style="margin-top: 0.25rem; width: 100%;">
+                Update Account Credentials
+              </button>
+            </div>
+
+            <!-- 4. Share Rota Link -->
+            <div class="settings-section-card">
+              <div class="settings-section-title">🔗 Share Rota with Team</div>
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+                Send this link to your team so they can log in and view their shifts:
               </p>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" class="form-input" readonly value="${currentUrl}" id="settings-share-url" style="font-family: monospace; font-size: 0.825rem;">
+                <button type="button" class="btn btn-primary btn-sm" id="btn-settings-copy-url" style="white-space: nowrap;">
+                  📋 Copy
+                </button>
+              </div>
             </div>
+
+            ${
+              isAdmin
+                ? `
+              <!-- 5. Business Settings (Admin Only) -->
+              <div class="settings-section-card">
+                <div class="settings-section-title">🏢 Business & Currency</div>
+                <div class="form-row">
+                  <div class="form-group">
+                    <label class="form-label">Venue / Business Name</label>
+                    <input type="text" class="form-input" id="set-business-name" value="${s.businessName || "Tudor Local"}">
+                  </div>
+                  <div class="form-group">
+                    <label class="form-label">Currency Symbol</label>
+                    <select class="form-select" id="set-currency">
+                      <option value="£" ${s.currency === "£" ? "selected" : ""}>£ (GBP)</option>
+                      <option value="$" ${s.currency === "$" ? "selected" : ""}>$ (USD)</option>
+                      <option value="€" ${s.currency === "€" ? "selected" : ""}>€ (EUR)</option>
+                      <option value="C$" ${s.currency === "C$" ? "selected" : ""}>C$ (CAD)</option>
+                      <option value="A$" ${s.currency === "A$" ? "selected" : ""}>A$ (AUD)</option>
+                      <option value="₹" ${s.currency === "₹" ? "selected" : ""}>₹ (INR)</option>
+                    </select>
+                  </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" id="btn-save-business-details" style="width: 100%;">
+                  Save Business Details
+                </button>
+              </div>
+
+              <!-- 6. Clear All Shifts Tool -->
+              <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
+                <button class="btn btn-danger-outline btn-sm" id="btn-action-clear-shifts" style="width: 100%; justify-content: center;">
+                  🧹 Clear All Shifts (Keep Staff & Logins)
+                </button>
+              </div>
+            `
+                : ""
+            }
           </div>
+
           <div class="modal-footer">
-            <button class="btn btn-secondary" id="btn-done-share-modal" style="width: 100%;">
-              Done
-            </button>
+            <button class="btn btn-primary" id="btn-done-settings" style="min-width: 100px;">Done</button>
           </div>
         </div>
       </div>
     `;
+  }
+
+  function renderInstallModal() {
+    return "";
+  }
+
+  function renderShareModal() {
+    return "";
   }
 
   // Render Shift Modal
@@ -1889,32 +1702,24 @@
 
     // 2. Main Authenticated Application
     let mainContentHtml = "";
-    if (state.activeTab === "schedule") {
+    if (state.activeTab === "staff" && state.currentUser && state.currentUser.role === "admin") {
+      mainContentHtml = renderStaffTab();
+    } else {
       mainContentHtml = `
         ${renderAdminResetBanner()}
         ${renderRotaControls()}
-        ${renderOpenShifts()}
         ${renderScheduleGrid()}
       `;
-    } else if (state.activeTab === "punch") {
-      mainContentHtml = renderPunchClockTab();
-    } else if (state.activeTab === "requests") {
-      mainContentHtml = renderRequestsTab();
-    } else if (state.activeTab === "staff") {
-      mainContentHtml = renderStaffTab();
     }
 
     root.innerHTML = `
       ${renderHeader()}
-      ${renderKpiBar()}
       <main class="app-main">
         ${mainContentHtml}
       </main>
       ${renderShiftModal()}
       ${renderEmployeeModal()}
       ${renderSettingsModal()}
-      ${renderInstallModal()}
-      ${renderShareModal()}
       ${renderGrantAccessModal()}
       ${renderOtpModal()}
       ${renderMustChangePasswordModal()}
@@ -2105,17 +1910,48 @@
   function bindEvents() {
     const isAdmin = state.currentUser && state.currentUser.role === "admin";
 
-    // Logout Button
-    const logoutBtn = document.getElementById("btn-logout");
-    if (logoutBtn) {
-      logoutBtn.addEventListener("click", () => {
+    // Profile Circle Button toggle
+    const profileToggleBtn = document.getElementById("btn-profile-toggle");
+    const profileDropdown = document.getElementById("profile-dropdown");
+    if (profileToggleBtn && profileDropdown) {
+      profileToggleBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        state.showProfileMenu = !state.showProfileMenu;
+        profileDropdown.classList.toggle("hidden", !state.showProfileMenu);
+      });
+    }
+
+    // Open Settings from Profile Menu
+    const menuSettingsBtn = document.getElementById("menu-open-settings");
+    if (menuSettingsBtn) {
+      menuSettingsBtn.addEventListener("click", () => {
+        state.showProfileMenu = false;
+        state.showSettingsModal = true;
+        renderApp();
+      });
+    }
+
+    // Logout from Profile Menu
+    const menuLogoutBtn = document.getElementById("menu-logout");
+    if (menuLogoutBtn) {
+      menuLogoutBtn.addEventListener("click", () => {
         state.currentUser = null;
+        state.showProfileMenu = false;
         localStorage.removeItem("tudor_rota_user");
         state.authView = "login";
         renderApp();
         showToast("Signed out successfully.");
       });
     }
+
+    // Close profile dropdown on document click
+    document.addEventListener("click", e => {
+      if (state.showProfileMenu && !e.target.closest(".profile-menu-container")) {
+        state.showProfileMenu = false;
+        const menu = document.getElementById("profile-dropdown");
+        if (menu) menu.classList.add("hidden");
+      }
+    });
 
     // Tab switching
     document.querySelectorAll(".nav-tab").forEach(tab => {
@@ -2387,83 +2223,115 @@
       });
     }
 
-    // Share Modal
-    const shareBtn = document.getElementById("btn-share-team-header");
-    if (shareBtn) {
-      shareBtn.addEventListener("click", () => {
-        state.showShareModal = true;
+    // Settings Modal: Theme toggle
+    document.querySelectorAll("#theme-toggle-group .segmented-option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const themeVal = btn.dataset.themeVal;
+        state.theme = themeVal;
+        localStorage.setItem("tudor_theme", themeVal);
+        document.documentElement.setAttribute("data-theme", themeVal);
         renderApp();
+        showToast(`Theme changed to ${themeVal === "dark" ? "Dark Mode 🌙" : "Light Mode ☀️"}`);
+      });
+    });
+
+    // Settings Modal: Time Format toggle
+    document.querySelectorAll("#time-format-toggle-group .segmented-option").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const formatVal = btn.dataset.timeVal;
+        state.timeFormat = formatVal;
+        localStorage.setItem("tudor_time_format", formatVal);
+        renderApp();
+        showToast(`Time format set to ${formatVal === "12h" ? "12-Hour" : "24-Hour"}`);
+      });
+    });
+
+    // Settings Modal: Update Account Credentials (Username & Password)
+    const saveAccountBtn = document.getElementById("btn-save-account-credentials");
+    if (saveAccountBtn) {
+      saveAccountBtn.addEventListener("click", async () => {
+        const username = document.getElementById("set-account-username").value.trim().toLowerCase();
+        const password = document.getElementById("set-account-password").value.trim();
+        const confirmPw = document.getElementById("set-account-confirm-password").value.trim();
+
+        if (!username) {
+          alert("Username cannot be empty.");
+          return;
+        }
+
+        if (password && password !== confirmPw) {
+          alert("Passwords do not match.");
+          return;
+        }
+
+        if (password && password.length < 4) {
+          alert("Password must be at least 4 characters long.");
+          return;
+        }
+
+        try {
+          const res = await fetch("/api/auth/update-account", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              userId: state.currentUser.id,
+              username,
+              password
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            state.currentUser = data.user;
+            localStorage.setItem("tudor_rota_user", JSON.stringify(data.user));
+            const u = (state.data.users || []).find(x => x.id === data.user.id);
+            if (u) {
+              u.username = data.user.username;
+              if (password) u.passwordHash = await sha256(password);
+            }
+            renderApp();
+            showToast("Account credentials updated successfully!");
+          } else {
+            alert(data.error || "Failed to update account.");
+          }
+        } catch (e) {
+          if (username) state.currentUser.username = username;
+          localStorage.setItem("tudor_rota_user", JSON.stringify(state.currentUser));
+          renderApp();
+          showToast("Account credentials updated!");
+        }
       });
     }
 
-    const closeShareBtn = document.getElementById("btn-close-share-modal");
-    const doneShareBtn = document.getElementById("btn-done-share-modal");
-    if (closeShareBtn) closeShareBtn.addEventListener("click", () => { state.showShareModal = false; renderApp(); });
-    if (doneShareBtn) doneShareBtn.addEventListener("click", () => { state.showShareModal = false; renderApp(); });
-
-    const copyShareUrlBtn = document.getElementById("btn-copy-share-url");
-    if (copyShareUrlBtn) {
-      copyShareUrlBtn.addEventListener("click", () => {
-        const inp = document.getElementById("share-link-input");
+    // Settings Modal: Copy Share Link
+    const copySettingsUrlBtn = document.getElementById("btn-settings-copy-url");
+    if (copySettingsUrlBtn) {
+      copySettingsUrlBtn.addEventListener("click", () => {
+        const inp = document.getElementById("settings-share-url");
         if (inp) {
           navigator.clipboard.writeText(inp.value);
-          showToast("Link copied to clipboard! Paste it to your team.", "success");
+          showToast("Rota link copied to clipboard!");
         }
       });
     }
 
-    // Install App Modal
-    const installAppBtn = document.getElementById("btn-install-app-header");
-    if (installAppBtn) {
-      installAppBtn.addEventListener("click", () => {
-        if (window.triggerInstallPrompt) {
-          window.triggerInstallPrompt();
-        } else {
-          state.showInstallModal = true;
-          renderApp();
-        }
-      });
-    }
-
-    const closeInstallBtn = document.getElementById("btn-close-install-modal");
-    const doneInstallBtn = document.getElementById("btn-done-install-modal");
-    if (closeInstallBtn) closeInstallBtn.addEventListener("click", () => { state.showInstallModal = false; renderApp(); });
-    if (doneInstallBtn) doneInstallBtn.addEventListener("click", () => { state.showInstallModal = false; renderApp(); });
-
-    // Settings Modal
-    const openSettingsBtn = document.getElementById("btn-open-settings");
-    if (openSettingsBtn) {
-      openSettingsBtn.addEventListener("click", () => {
-        state.showSettingsModal = true;
-        renderApp();
-      });
-    }
-
-    const closeSettingsBtn = document.getElementById("btn-close-settings");
-    const cancelSettingsBtn = document.getElementById("btn-cancel-settings");
-    if (closeSettingsBtn) closeSettingsBtn.addEventListener("click", () => { state.showSettingsModal = false; renderApp(); });
-    if (cancelSettingsBtn) cancelSettingsBtn.addEventListener("click", () => { state.showSettingsModal = false; renderApp(); });
-
-    const saveSettingsBtn = document.getElementById("btn-save-settings");
-    if (saveSettingsBtn) {
-      saveSettingsBtn.addEventListener("click", async () => {
+    // Settings Modal: Save Business Details (Admin only)
+    const saveBusinessBtn = document.getElementById("btn-save-business-details");
+    if (saveBusinessBtn) {
+      saveBusinessBtn.addEventListener("click", async () => {
         const name = document.getElementById("set-business-name").value.trim() || "Tudor Local";
         const curr = document.getElementById("set-currency").value;
-        const target = Number(document.getElementById("set-target-labor").value || 20);
-        const rev = Number(document.getElementById("set-revenue").value || 0);
-
-        state.data.settings = {
-          businessName: name,
-          currency: curr,
-          targetLaborPercentage: target,
-          projectedWeeklyRevenue: rev
-        };
-
-        state.showSettingsModal = false;
+        state.data.settings.businessName = name;
+        state.data.settings.currency = curr;
         await saveData();
-        showToast("Settings and budget updated!");
+        showToast("Business details updated!");
       });
     }
+
+    // Settings Modal: Close & Done
+    const closeSettingsBtn = document.getElementById("btn-close-settings");
+    const doneSettingsBtn = document.getElementById("btn-done-settings");
+    if (closeSettingsBtn) closeSettingsBtn.addEventListener("click", () => { state.showSettingsModal = false; renderApp(); });
+    if (doneSettingsBtn) doneSettingsBtn.addEventListener("click", () => { state.showSettingsModal = false; renderApp(); });
 
     // Clear All Shifts Action
     const clearShiftsBtn = document.getElementById("btn-action-clear-shifts");

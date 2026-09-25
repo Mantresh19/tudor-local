@@ -254,6 +254,42 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
             })
             return
 
+        # 5b. Update User Account (Username and/or Password)
+        if parsed.path == "/api/auth/update-account":
+            user_id = req_data.get("userId")
+            new_username = req_data.get("username", "").strip().lower()
+            new_password = req_data.get("password", "").strip()
+
+            db = read_db()
+            user = next((u for u in db.get("users", []) if u.get("id") == user_id), None)
+            if not user:
+                self.send_json(404, {"success": False, "error": "User not found."})
+                return
+
+            if new_username and new_username != user.get("username"):
+                exists = next((u for u in db.get("users", []) if u.get("username", "").lower() == new_username and u.get("id") != user_id), None)
+                if exists:
+                    self.send_json(400, {"success": False, "error": f"Username '{new_username}' is already taken."})
+                    return
+                user["username"] = new_username
+
+            if new_password:
+                if len(new_password) < 4:
+                    self.send_json(400, {"success": False, "error": "Password must be at least 4 characters."})
+                    return
+                user["passwordHash"] = hash_pw(new_password)
+                user["tempPassword"] = None
+                user["mustChangePassword"] = False
+
+            write_db(db)
+            safe_user = {k: v for k, v in user.items() if k != "passwordHash"}
+            self.send_json(200, {
+                "success": True,
+                "user": safe_user,
+                "message": "Account details updated successfully!"
+            })
+            return
+
         # 6. Grant / Create Rota Access for Staff Member (Admin Only)
         if parsed.path == "/api/auth/grant-access":
             employee_id = req_data.get("employeeId")
