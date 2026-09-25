@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Rota - Shift Schedule & Workforce</title>
+  
+  <!-- PWA & Mobile Web App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2563eb">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Rota">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app-root">
+    <div style="display:flex;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;color:#64748b;">
+      Loading Rota Application...
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>
+    // Register Service Worker for PWA installability & offline caching
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+          .then(reg => console.log('PWA Service Worker registered:', reg.scope))
+          .catch(err => console.log('Service Worker registration skipped:', err));
+      });
+    }
+
+    // Capture Native PWA Install Prompt (Chrome / Edge / Android)
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const installBtn = document.getElementById('btn-install-pwa');
+      if (installBtn) {
+        installBtn.classList.remove('hidden');
+      }
+    });
+
+    window.triggerInstallPrompt = function() {
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.then((choiceResult) => {
+          if (choiceResult.outcome === 'accepted') {
+            console.log('User installed the Rota App');
+          }
+          deferredPrompt = null;
+          const installBtn = document.getElementById('btn-install-pwa');
+          if (installBtn) installBtn.classList.add('hidden');
+        });
+      } else {
+        // Show instructions for iOS or desktop
+        const modal = document.getElementById('install-guide-modal');
+        if (modal) modal.classList.remove('hidden');
+      }
+    };
+  </script>
+</body>
+</html>
