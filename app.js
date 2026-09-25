@@ -476,11 +476,6 @@
                 Sign In
               </button>
             </form>
-
-            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 0.75rem; margin-top: 1.5rem; font-size: 0.75rem; color: #64748b; text-align: center;">
-              <strong>Manager Initial Login:</strong><br>
-              Username: <code style="color: #2563eb;">mantresh</code> or <code style="color: #2563eb;">admin</code><br>
-              Password: <code style="color: #2563eb;">admin123</code>
             </div>
           </div>
         </div>
