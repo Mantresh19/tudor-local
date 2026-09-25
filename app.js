@@ -836,19 +836,30 @@
         myWeekHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
       });
 
-    // 2. Find all personal shifts
-    let myShifts = [];
+    // 2. Find 3 upcoming closest shifts
+    const todayStr = formatDate(new Date());
+    let candidateShifts = [];
     if (myEmpId) {
-      myShifts = (state.data.shifts || []).filter(s => s.employeeId === myEmpId);
+      candidateShifts = (state.data.shifts || []).filter(s => s.employeeId === myEmpId);
     } else if (isAdmin) {
-      myShifts = (state.data.shifts || []).slice(0, 10);
+      candidateShifts = (state.data.shifts || []).filter(s => s.employeeId !== null);
     }
 
-    // Sort chronologically
-    myShifts.sort((a, b) => {
+    // Sort chronologically by date and start time
+    candidateShifts.sort((a, b) => {
       if (a.date !== b.date) return a.date.localeCompare(b.date);
       return (a.startTime || "").localeCompare(b.startTime || "");
     });
+
+    // Pick upcoming closest shifts (today or in future)
+    let upcoming = candidateShifts.filter(s => s.date >= todayStr);
+    if (upcoming.length === 0) {
+      // Fallback to closest available shifts if none >= today
+      upcoming = candidateShifts;
+    }
+
+    // Strictly limit to the 3 closest upcoming shifts on the main screen
+    const myShifts = upcoming.slice(0, 3);
 
     // Group shifts by Month
     const shiftsByMonth = {};
@@ -990,16 +1001,16 @@
             : ""
         }
 
-        <!-- Quick Jump to Team Schedule Banner -->
+        <!-- Quick Jump to Team Week Grid Banner -->
         <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: var(--radius-lg); padding: 1.25rem 1.35rem; color: white; margin-top: 1rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
           <div>
-            <div style="font-weight: 700; font-size: 1rem;">📅 Team Schedule</div>
+            <div style="font-weight: 700; font-size: 1rem;">📅 Full Week Grid Rota</div>
             <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 2px;">
-              See everyone's shifts & who is working with you
+              See the complete weekly schedule grid for the entire team
             </div>
           </div>
           <button class="btn" id="btn-jump-to-schedule" style="background: white; color: #1e3a8a; font-weight: 700; font-size: 0.85rem; padding: 8px 14px; border-radius: 8px; border: none; white-space: nowrap; cursor: pointer;">
-            View Rota ›
+            Week Grid ›
           </button>
         </div>
       </div>
@@ -2377,7 +2388,7 @@
     if (seeAllBtn) {
       seeAllBtn.addEventListener("click", () => {
         state.activeTab = "schedule";
-        state.scheduleViewMode = "list";
+        state.scheduleViewMode = "grid"; // Prompt to week grid page per user request
         renderApp();
       });
     }
@@ -2386,7 +2397,7 @@
     if (openShiftsSeeAll) {
       openShiftsSeeAll.addEventListener("click", () => {
         state.activeTab = "schedule";
-        state.scheduleViewMode = "list";
+        state.scheduleViewMode = "grid"; // Prompt to week grid page
         renderApp();
       });
     }
@@ -2395,7 +2406,7 @@
     if (jumpScheduleBtn) {
       jumpScheduleBtn.addEventListener("click", () => {
         state.activeTab = "schedule";
-        state.scheduleViewMode = "list";
+        state.scheduleViewMode = "grid"; // Prompt to week grid page
         renderApp();
       });
     }
@@ -2404,8 +2415,10 @@
       item.addEventListener("click", () => {
         const d = item.dataset.date;
         state.activeTab = "schedule";
-        state.scheduleViewMode = "list";
-        state.selectedScheduleDate = d;
+        state.scheduleViewMode = "grid"; // Prompt to week grid page
+        if (d) {
+          state.currentMonday = getMonday(new Date(d));
+        }
         renderApp();
       });
     });
