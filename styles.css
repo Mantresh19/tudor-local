@@ -1040,25 +1040,447 @@ table.rota-table th {
   display: none !important;
 }
 
+/* Mobile Planday Interface & Bottom Navigation */
+.mobile-bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-card);
+  border-top: 1px solid var(--border-color);
+  padding: 6px 12px;
+  padding-bottom: max(10px, env(safe-area-inset-bottom, 10px));
+  z-index: 50;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(16px);
+}
+
+.mobile-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  background: none;
+  border: none;
+  padding: 5px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.mobile-nav-item.active {
+  color: var(--primary);
+  font-weight: 600;
+}
+
+.mobile-nav-item .mobile-nav-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* Mobile Overview (Planday 'Your Schedule') */
+.mobile-overview-container {
+  max-width: 600px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.mobile-welcome-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.25rem;
+  padding: 0.25rem 0.25rem 0;
+}
+
+.mobile-hours-badge {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.5rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: var(--shadow-sm);
+}
+
+.planday-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 1rem;
+}
+
+.planday-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.planday-card-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.planday-date-separator {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1rem 0 0.85rem;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.planday-date-separator::before,
+.planday-date-separator::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background-color: var(--border-color);
+}
+
+.planday-shift-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+
+.planday-date-box {
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0.25rem;
+  background-color: var(--border-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.planday-date-num {
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-main);
+}
+
+.planday-date-day {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-top: 2px;
+}
+
+.planday-shift-content {
+  flex: 1;
+  background-color: var(--border-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  transition: transform 0.1s ease, border-color 0.1s ease;
+}
+
+.planday-shift-content:hover {
+  border-color: var(--primary);
+}
+
+.planday-shift-main {
+  flex: 1;
+}
+
+.planday-shift-time {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.planday-shift-role {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.planday-shift-meta {
+  font-size: 0.725rem;
+  color: var(--text-light);
+  margin-top: 4px;
+}
+
+.planday-shift-chevron {
+  color: var(--text-light);
+  font-size: 1.35rem;
+  font-weight: 300;
+}
+
+/* Mobile Day Strip Selector (Planday Schedule) */
+.mobile-day-strip-wrap {
+  margin: 0.75rem 0 0.5rem;
+}
+
+.mobile-day-strip {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 4px 2px 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.mobile-day-strip::-webkit-scrollbar {
+  display: none;
+}
+
+.mobile-day-pill {
+  flex: 1;
+  min-width: 44px;
+  padding: 8px 4px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.mobile-day-pill.active {
+  background-color: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+}
+
+.mobile-day-pill .pill-day {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.mobile-day-pill .pill-num {
+  font-size: 1.1rem;
+  font-weight: 700;
+  line-height: 1.1;
+  margin-top: 2px;
+}
+
+.mobile-day-pill.active .pill-day,
+.mobile-day-pill.active .pill-num {
+  color: white;
+}
+
+.mobile-day-pill .pill-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background-color: var(--primary);
+  margin-top: 4px;
+}
+.mobile-day-pill.active .pill-dot {
+  background-color: white;
+}
+
+/* Day Roster List (Everyone's Shifts on this day) */
+.day-roster-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0.75rem 0 0.5rem;
+}
+
+.day-roster-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.day-roster-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left-width: 4px;
+  border-radius: var(--radius-md);
+  padding: 0.85rem 1rem;
+  margin-bottom: 0.65rem;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  box-shadow: var(--shadow-sm);
+  transition: transform 0.1s ease;
+}
+
+.day-roster-card.my-shift {
+  background-color: var(--primary-light);
+  border-right: 3px solid var(--primary);
+}
+
+.day-roster-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: white;
+  font-weight: 700;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  text-transform: uppercase;
+}
+
+.day-roster-info {
+  flex: 1;
+  overflow: hidden;
+}
+
+.day-roster-name {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.day-roster-role {
+  font-size: 0.775rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.day-roster-time {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.day-roster-hours {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.day-roster-net {
+  font-size: 0.725rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.planday-icon-badge {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.planday-icon-badge.blue {
+  background-color: #0284c7;
+  color: white;
+}
+
+.planday-icon-badge.red {
+  background-color: #ef4444;
+  color: white;
+}
+
+.planday-icon-badge.green {
+  background-color: #10b981;
+  color: white;
+}
+
+.planday-see-all-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.planday-see-all-link:hover {
+  text-decoration: underline;
+}
+
+.schedule-view-toggle {
+  display: inline-flex;
+  background-color: var(--border-light);
+  padding: 3px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  gap: 2px;
+}
+
+.schedule-view-toggle .btn {
+  padding: 4px 10px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+  border: none;
+}
+
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+  body {
+    padding-bottom: 72px; /* Space for bottom navigation */
+  }
+
   header.app-header {
     padding: 0.65rem 1rem;
   }
+
   .brand-title {
     font-size: 1rem;
   }
+
   nav.main-nav {
-    gap: 0.25rem;
+    display: none !important;
   }
-  .nav-tab {
-    padding: 0.4rem 0.65rem;
-    font-size: 0.8rem;
+
+  /* Bottom nav active on mobile */
+  .mobile-bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
   }
+
   main.app-main {
-    padding: 0.75rem 1rem 3rem;
+    padding: 0.75rem 0.85rem 2rem;
   }
+
   .form-row {
     grid-template-columns: 1fr;
   }
 }
+

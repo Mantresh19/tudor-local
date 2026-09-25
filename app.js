@@ -54,8 +54,10 @@
     authView: "login", // 'login' | 'forgot' | 'reset_otp'
     authError: "",
     authSuccess: "",
-    activeTab: "schedule",
-    currentMonday: getMonday(new Date("2026-09-21")),
+    activeTab: window.innerWidth <= 768 ? "overview" : "schedule", // Mobile defaults to Planday Overview, desktop to Schedule
+    selectedScheduleDate: null, // Selected day YYYY-MM-DD for day roster
+    scheduleViewMode: window.innerWidth <= 768 ? "list" : "grid", // 'list' (mobile day roster) | 'grid' (desktop table)
+    currentMonday: getMonday(new Date("2026-09-28")),
     groupingMode: "employee", // 'employee' or 'department'
     selectedDepartment: "all",
     searchQuery: "",
@@ -523,6 +525,9 @@
         </div>
 
         <nav class="main-nav">
+          <button class="nav-tab ${state.activeTab === "overview" ? "active" : ""}" data-tab="overview">
+            🏠 Overview
+          </button>
           <button class="nav-tab ${state.activeTab === "schedule" ? "active" : ""}" data-tab="schedule">
             📅 Schedule
           </button>
@@ -617,7 +622,7 @@
     `;
   }
 
-  // Render Rota Controls Bar (Clean Minimalist Week Navigator)
+  // Render Rota Controls Bar (Clean Minimalist Week Navigator + View Toggle)
   function renderRotaControls() {
     const weekDates = getWeekDates();
     const startStr = weekDates[0].toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -633,11 +638,23 @@
           <button class="nav-arrow-btn" id="btn-next-week" title="Next Week">▶</button>
           <div class="current-range">Week: ${startStr} – ${endStr}</div>
         </div>
-        ${
-          isAdmin && kpis.draftCount > 0
-            ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">🚀 Publish Rota (${kpis.draftCount})</button>`
-            : ""
-        }
+
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+          <div class="schedule-view-toggle">
+            <button class="btn ${state.scheduleViewMode === "list" ? "btn-primary" : "btn-secondary"}" id="btn-view-mode-list" title="View everyone working by day">
+              📋 Day View
+            </button>
+            <button class="btn ${state.scheduleViewMode === "grid" ? "btn-primary" : "btn-secondary"}" id="btn-view-mode-grid" title="Full 7-day grid table">
+              📊 Week Grid
+            </button>
+          </div>
+
+          ${
+            isAdmin && kpis.draftCount > 0
+              ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">🚀 Publish Rota (${kpis.draftCount})</button>`
+              : ""
+          }
+        </div>
       </div>
     `;
   }
@@ -645,6 +662,385 @@
   // Render Open Shifts Banner - Removed per user request
   function renderOpenShifts() {
     return "";
+  }
+
+  // Get Selected Schedule Date for Mobile Day View
+  function getSelectedDateStr() {
+    const weekDates = getWeekDates().map(formatDate);
+    if (state.selectedScheduleDate && weekDates.includes(state.selectedScheduleDate)) {
+      return state.selectedScheduleDate;
+    }
+    const today = formatDate(new Date("2026-09-24"));
+    if (weekDates.includes(today)) {
+      return today;
+    }
+    return weekDates[0];
+  }
+
+  // Render Day Roster View (Shows Everyone's Shifts on Selected Day)
+  function renderDayRosterView(selectedDate) {
+    const weekDates = getWeekDates();
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    const myEmpId = state.currentUser ? state.currentUser.employeeId : null;
+
+    // Filter shifts for the selected date
+    const dayShifts = (state.data.shifts || [])
+      .filter(s => s.date === selectedDate)
+      .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
+
+    // Total hours for this day
+    let totalDayHours = 0;
+    dayShifts.forEach(s => {
+      totalDayHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
+    });
+
+    // Format selected date nicely
+    const selDateObj = parseDate(selectedDate);
+    const dayFullTitle = selDateObj.toLocaleDateString("en-GB", {
+      weekday: "long",
+      day: "numeric",
+      month: "short"
+    });
+
+    const dayPillsHtml = weekDates.map(d => {
+      const dateStr = formatDate(d);
+      const dayShort = d.toLocaleDateString("en-GB", { weekday: "short" });
+      const dayNum = d.toLocaleDateString("en-GB", { day: "numeric" });
+      const isSelected = dateStr === selectedDate;
+      const count = (state.data.shifts || []).filter(s => s.date === dateStr).length;
+
+      return `
+        <button class="mobile-day-pill ${isSelected ? "active" : ""}" data-date="${dateStr}">
+          <span class="pill-day">${dayShort}</span>
+          <span class="pill-num">${dayNum}</span>
+          ${count > 0 ? `<span class="pill-dot"></span>` : ""}
+        </button>
+      `;
+    }).join("");
+
+    let rosterListHtml = "";
+    if (dayShifts.length === 0) {
+      rosterListHtml = `
+        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3rem 1.5rem; text-align: center; color: var(--text-muted); margin-top: 0.5rem; box-shadow: var(--shadow-sm);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">☕</div>
+          <div style="font-weight: 700; color: var(--text-main); font-size: 1.05rem;">No shifts scheduled for ${dayFullTitle}</div>
+          <p style="font-size: 0.85rem; margin-top: 6px; color: var(--text-muted);">
+            Tap another day in the strip above to see colleagues scheduled that day${isAdmin ? ", or click Add Shift to schedule someone" : ""}.
+          </p>
+          ${
+            isAdmin
+              ? `<button class="btn btn-primary btn-sm" id="btn-empty-day-add" data-date="${selectedDate}" style="margin-top: 1rem;">+ Add Shift for this Day</button>`
+              : ""
+          }
+        </div>
+      `;
+    } else {
+      rosterListHtml = dayShifts.map(shift => {
+        const emp = (state.data.employees || []).find(e => e.id === shift.employeeId);
+        const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "General Staff", color: "#0ea5e9" };
+        const isMyShift = myEmpId && shift.employeeId === myEmpId;
+        const empName = emp ? emp.name : "Unassigned / Open Shift";
+        const empInitial = empName[0].toUpperCase();
+        const avatarBg = emp ? emp.avatarColor || dept.color || "#0ea5e9" : "#f59e0b";
+        const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
+        const isDraft = shift.status === "draft";
+
+        return `
+          <div class="day-roster-card ${isMyShift ? "my-shift" : ""}" data-shift-id="${shift.id}" style="border-left-color: ${dept.color || "#0ea5e9"}; cursor: ${isAdmin ? "pointer" : "default"};">
+            <div class="day-roster-avatar" style="background-color: ${avatarBg};">
+              ${empInitial}
+            </div>
+            <div class="day-roster-info">
+              <div class="day-roster-name">
+                <span>${empName}</span>
+                ${isMyShift ? `<span style="background:var(--primary);color:white;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700;">YOU</span>` : ""}
+                ${isDraft && isAdmin ? `<span class="badge badge-draft" style="font-size:10px;">Draft</span>` : ""}
+              </div>
+              <div class="day-roster-role">
+                ${shift.role || (emp ? emp.role : "Staff Member")} · <span style="color: ${dept.color}; font-weight: 600;">${dept.name}</span>
+              </div>
+              ${shift.notes ? `<div style="font-size: 0.725rem; color: var(--text-light); margin-top: 3px; font-style: italic;">📝 ${shift.notes}</div>` : ""}
+            </div>
+            <div class="day-roster-time">
+              <div class="day-roster-hours">
+                ${formatShiftRange(shift.startTime, shift.endTime)}
+              </div>
+              <div class="day-roster-net">
+                ${netH} hrs ${shift.breakMinutes ? `(${shift.breakMinutes}m break)` : ""}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    return `
+      <!-- 7-Day Horizontal Strip Selector -->
+      <div class="mobile-day-strip-wrap">
+        <div class="mobile-day-strip">
+          ${dayPillsHtml}
+        </div>
+      </div>
+
+      <!-- Day Roster Header & Count -->
+      <div class="day-roster-header">
+        <div class="day-roster-title">
+          <span>${dayFullTitle}</span>
+          <span style="font-weight: 500; color: var(--text-muted); font-size: 0.825rem;">
+            · ${dayShifts.length} colleague${dayShifts.length === 1 ? "" : "s"} (${totalDayHours.toFixed(1)}h)
+          </span>
+        </div>
+        ${
+          isAdmin
+            ? `<button class="btn btn-primary btn-sm" id="btn-day-add-shift" data-date="${selectedDate}">+ Add Shift</button>`
+            : ""
+        }
+      </div>
+
+      <!-- List of Everyone's Shifts on this Day -->
+      <div class="day-roster-list">
+        ${rosterListHtml}
+      </div>
+    `;
+  }
+
+  // Render Team Schedule View (Day Roster or Week Grid)
+  function renderScheduleView() {
+    const selectedDate = getSelectedDateStr();
+
+    return `
+      ${renderAdminResetBanner()}
+      ${renderRotaControls()}
+      ${
+        state.scheduleViewMode === "list"
+          ? renderDayRosterView(selectedDate)
+          : renderScheduleGrid()
+      }
+    `;
+  }
+
+  // Render Mobile Overview (Planday 'Your Schedule' Screen)
+  function renderMobileOverview() {
+    const user = state.currentUser;
+    const isAdmin = user && user.role === "admin";
+    const myEmpId = user ? user.employeeId : null;
+    const myEmp = myEmpId ? (state.data.employees || []).find(e => e.id === myEmpId) : null;
+    const displayName = myEmp ? myEmp.name : (user.name || user.username);
+
+    // 1. Calculate this week's hours for current user
+    const weekDateStrs = getWeekDates().map(formatDate);
+    let myWeekHours = 0;
+    (state.data.shifts || [])
+      .filter(s => (myEmpId ? s.employeeId === myEmpId : false) && weekDateStrs.includes(s.date))
+      .forEach(s => {
+        myWeekHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
+      });
+
+    // 2. Find all personal shifts
+    let myShifts = [];
+    if (myEmpId) {
+      myShifts = (state.data.shifts || []).filter(s => s.employeeId === myEmpId);
+    } else if (isAdmin) {
+      myShifts = (state.data.shifts || []).slice(0, 10);
+    }
+
+    // Sort chronologically
+    myShifts.sort((a, b) => {
+      if (a.date !== b.date) return a.date.localeCompare(b.date);
+      return (a.startTime || "").localeCompare(b.startTime || "");
+    });
+
+    // Group shifts by Month
+    const shiftsByMonth = {};
+    myShifts.forEach(shift => {
+      const d = parseDate(shift.date);
+      const mKey = d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+      if (!shiftsByMonth[mKey]) shiftsByMonth[mKey] = [];
+      shiftsByMonth[mKey].push(shift);
+    });
+
+    // 3. Find Open Shifts
+    const openShifts = (state.data.shifts || []).filter(s => s.status === "open" || s.employeeId === null);
+
+    return `
+      <div class="mobile-overview-container">
+        <!-- Welcome & Weekly Hours Header -->
+        <div class="mobile-welcome-header">
+          <div>
+            <div style="font-size: 0.825rem; color: var(--text-muted); font-weight: 500;">Welcome back,</div>
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">
+              ${displayName} 👋
+            </h2>
+          </div>
+          <div class="mobile-hours-badge">
+            <span style="font-size: 0.65rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;">This Week</span>
+            <strong style="font-size: 1.15rem; color: var(--primary);">${myWeekHours.toFixed(1)} hrs</strong>
+          </div>
+        </div>
+
+        ${renderAdminResetBanner()}
+
+        <!-- Planday 'Your Schedule' Card -->
+        <div class="planday-card">
+          <div class="planday-card-header">
+            <div class="planday-card-title">
+              <div class="planday-icon-badge blue">👤</div>
+              <span>Your schedule</span>
+            </div>
+            <button class="planday-see-all-link" id="btn-overview-see-all">
+              See all ›
+            </button>
+          </div>
+
+          ${
+            myShifts.length === 0
+              ? `
+            <div style="padding: 2rem 1rem; text-align: center; color: var(--text-muted);">
+              <div style="font-size: 2.25rem; margin-bottom: 0.5rem;">🏖️</div>
+              <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">No upcoming shifts</div>
+              <div style="font-size: 0.8rem; margin-top: 4px; color: var(--text-muted);">
+                You don't have any shifts scheduled right now. Tap Schedule below to check everyone's rota.
+              </div>
+            </div>
+          `
+              : Object.keys(shiftsByMonth).map(monthKey => `
+            <div class="planday-date-separator">${monthKey}</div>
+            ${shiftsByMonth[monthKey].map(shift => {
+              const shiftDate = parseDate(shift.date);
+              const dayNum = String(shiftDate.getDate()).padStart(2, "0");
+              const dayName = shiftDate.toLocaleDateString("en-GB", { weekday: "short" });
+              const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "Front of House" };
+              const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
+              const businessName = state.data.settings.businessName || "Tudor Local";
+
+              return `
+                <div class="planday-shift-row overview-shift-item" data-date="${shift.date}" data-shift-id="${shift.id}" style="cursor: pointer;">
+                  <div class="planday-date-box">
+                    <span class="planday-date-num">${dayNum}</span>
+                    <span class="planday-date-day">${dayName}</span>
+                  </div>
+                  <div class="planday-shift-content">
+                    <div class="planday-shift-main">
+                      <div class="planday-shift-time">
+                        ⏰ ${formatShiftRange(shift.startTime, shift.endTime)}
+                      </div>
+                      <div class="planday-shift-role">
+                        ${shift.role || "Staff"} · ${businessName} (${dept.name})
+                      </div>
+                      <div class="planday-shift-meta">
+                        ${netH} hrs ${shift.breakMinutes ? `· ${shift.breakMinutes}m break` : ""}
+                      </div>
+                    </div>
+                    <div class="planday-shift-chevron">›</div>
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          `).join("")
+          }
+        </div>
+
+        <!-- Open / Available Shifts Card (if any) -->
+        ${
+          openShifts.length > 0
+            ? `
+          <div class="planday-card">
+            <div class="planday-card-header">
+              <div class="planday-card-title">
+                <div class="planday-icon-badge red">📅</div>
+                <span>Open shifts</span>
+              </div>
+              <button class="planday-see-all-link" id="btn-overview-open-shifts">
+                See all (${openShifts.length}) ›
+              </button>
+            </div>
+
+            ${openShifts.slice(0, 3).map(shift => {
+              const shiftDate = parseDate(shift.date);
+              const dayNum = String(shiftDate.getDate()).padStart(2, "0");
+              const dayName = shiftDate.toLocaleDateString("en-GB", { weekday: "short" });
+              const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "Staff" };
+
+              return `
+                <div class="planday-shift-row" style="margin-bottom: 0.75rem;">
+                  <div class="planday-date-box" style="background-color: #fee2e2; border-color: #fca5a5;">
+                    <span class="planday-date-num" style="color: #b91c1c;">${dayNum}</span>
+                    <span class="planday-date-day" style="color: #b91c1c;">${dayName}</span>
+                  </div>
+                  <div class="planday-shift-content" style="background-color: #fff1f2; border-color: #fecdd3;">
+                    <div class="planday-shift-main">
+                      <div class="planday-shift-time" style="color: #b91c1c;">
+                        ${formatShiftRange(shift.startTime, shift.endTime)}
+                      </div>
+                      <div class="planday-shift-role" style="color: #9f1239;">
+                        ${shift.role || "Staff Member"} · Tudor Local (${dept.name})
+                      </div>
+                    </div>
+                    ${
+                      myEmpId
+                        ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="font-size: 11px; padding: 4px 8px; white-space: nowrap;">Claim</button>`
+                        : `<span class="planday-shift-chevron">›</span>`
+                    }
+                  </div>
+                </div>
+              `;
+            }).join("")}
+          </div>
+        `
+            : ""
+        }
+
+        <!-- Quick Jump to Team Schedule Banner -->
+        <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: var(--radius-lg); padding: 1.25rem 1.35rem; color: white; margin-top: 1rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
+          <div>
+            <div style="font-weight: 700; font-size: 1rem;">📅 Team Schedule</div>
+            <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 2px;">
+              See everyone's shifts & who is working with you
+            </div>
+          </div>
+          <button class="btn" id="btn-jump-to-schedule" style="background: white; color: #1e3a8a; font-weight: 700; font-size: 0.85rem; padding: 8px 14px; border-radius: 8px; border: none; white-space: nowrap; cursor: pointer;">
+            View Rota ›
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render Mobile Bottom Navigation Bar
+  function renderBottomNav() {
+    if (!state.currentUser) return "";
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    const pendingResets = (state.data.resetRequests || []).filter(r => r.status === "pending").length;
+
+    return `
+      <nav class="mobile-bottom-nav">
+        <button class="mobile-nav-item ${state.activeTab === "overview" ? "active" : ""}" data-tab="overview">
+          <span class="mobile-nav-icon">🏠</span>
+          <span>Overview</span>
+        </button>
+        <button class="mobile-nav-item ${state.activeTab === "schedule" ? "active" : ""}" data-tab="schedule">
+          <span class="mobile-nav-icon">📅</span>
+          <span>Schedule</span>
+        </button>
+        ${
+          isAdmin
+            ? `
+          <button class="mobile-nav-item ${state.activeTab === "staff" ? "active" : ""}" data-tab="staff">
+            <span class="mobile-nav-icon" style="position:relative;">
+              👥
+              ${pendingResets > 0 ? `<span style="position:absolute;top:-4px;right:-8px;background:#ef4444;color:white;border-radius:50%;font-size:9px;padding:1px 4px;font-weight:700;">${pendingResets}</span>` : ""}
+            </span>
+            <span>Staff</span>
+          </button>
+        `
+            : ""
+        }
+        <button class="mobile-nav-item" id="mobile-nav-settings">
+          <span class="mobile-nav-icon">⚙️</span>
+          <span>Settings</span>
+        </button>
+      </nav>
+    `;
   }
 
   // Render Schedule Grid (Rota Table)
@@ -1702,14 +2098,12 @@
 
     // 2. Main Authenticated Application
     let mainContentHtml = "";
-    if (state.activeTab === "staff" && state.currentUser && state.currentUser.role === "admin") {
+    if (state.activeTab === "overview") {
+      mainContentHtml = renderMobileOverview();
+    } else if (state.activeTab === "staff" && state.currentUser && state.currentUser.role === "admin") {
       mainContentHtml = renderStaffTab();
     } else {
-      mainContentHtml = `
-        ${renderAdminResetBanner()}
-        ${renderRotaControls()}
-        ${renderScheduleGrid()}
-      `;
+      mainContentHtml = renderScheduleView();
     }
 
     root.innerHTML = `
@@ -1717,6 +2111,7 @@
       <main class="app-main">
         ${mainContentHtml}
       </main>
+      ${renderBottomNav()}
       ${renderShiftModal()}
       ${renderEmployeeModal()}
       ${renderSettingsModal()}
@@ -1958,6 +2353,138 @@
       tab.addEventListener("click", () => {
         state.activeTab = tab.dataset.tab;
         renderApp();
+      });
+    });
+
+    // Mobile Bottom Nav switching
+    document.querySelectorAll(".mobile-bottom-nav .mobile-nav-item").forEach(item => {
+      item.addEventListener("click", () => {
+        if (item.id === "mobile-nav-settings") {
+          state.showSettingsModal = true;
+          renderApp();
+          return;
+        }
+        const tab = item.dataset.tab;
+        if (tab) {
+          state.activeTab = tab;
+          renderApp();
+        }
+      });
+    });
+
+    // Overview buttons & clicks
+    const seeAllBtn = document.getElementById("btn-overview-see-all");
+    if (seeAllBtn) {
+      seeAllBtn.addEventListener("click", () => {
+        state.activeTab = "schedule";
+        state.scheduleViewMode = "list";
+        renderApp();
+      });
+    }
+
+    const openShiftsSeeAll = document.getElementById("btn-overview-open-shifts");
+    if (openShiftsSeeAll) {
+      openShiftsSeeAll.addEventListener("click", () => {
+        state.activeTab = "schedule";
+        state.scheduleViewMode = "list";
+        renderApp();
+      });
+    }
+
+    const jumpScheduleBtn = document.getElementById("btn-jump-to-schedule");
+    if (jumpScheduleBtn) {
+      jumpScheduleBtn.addEventListener("click", () => {
+        state.activeTab = "schedule";
+        state.scheduleViewMode = "list";
+        renderApp();
+      });
+    }
+
+    document.querySelectorAll(".overview-shift-item").forEach(item => {
+      item.addEventListener("click", () => {
+        const d = item.dataset.date;
+        state.activeTab = "schedule";
+        state.scheduleViewMode = "list";
+        state.selectedScheduleDate = d;
+        renderApp();
+      });
+    });
+
+    // Schedule: Mobile Day Strip Pills
+    document.querySelectorAll(".mobile-day-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        state.selectedScheduleDate = pill.dataset.date;
+        renderApp();
+      });
+    });
+
+    // Schedule: View Mode Toggle (Day View vs Week Grid)
+    const btnModeList = document.getElementById("btn-view-mode-list");
+    if (btnModeList) {
+      btnModeList.addEventListener("click", () => {
+        state.scheduleViewMode = "list";
+        renderApp();
+      });
+    }
+
+    const btnModeGrid = document.getElementById("btn-view-mode-grid");
+    if (btnModeGrid) {
+      btnModeGrid.addEventListener("click", () => {
+        state.scheduleViewMode = "grid";
+        renderApp();
+      });
+    }
+
+    // Schedule Day View: Add Shift
+    const btnDayAddShift = document.getElementById("btn-day-add-shift");
+    if (btnDayAddShift) {
+      btnDayAddShift.addEventListener("click", () => {
+        const date = btnDayAddShift.dataset.date;
+        const firstEmp = (state.data.employees || [])[0];
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: firstEmp ? firstEmp.role : "Staff Member",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: firstEmp ? "draft" : "open",
+          employeeId: firstEmp ? firstEmp.id : null,
+          rate: firstEmp ? firstEmp.hourlyRate : 10.0
+        });
+      });
+    }
+
+    const btnEmptyDayAdd = document.getElementById("btn-empty-day-add");
+    if (btnEmptyDayAdd) {
+      btnEmptyDayAdd.addEventListener("click", () => {
+        const date = btnEmptyDayAdd.dataset.date;
+        const firstEmp = (state.data.employees || [])[0];
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: firstEmp ? firstEmp.role : "Staff Member",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: firstEmp ? "draft" : "open",
+          employeeId: firstEmp ? firstEmp.id : null,
+          rate: firstEmp ? firstEmp.hourlyRate : 10.0
+        });
+      });
+    }
+
+    // Schedule Day View: Click Card to Edit Shift (Admin only)
+    document.querySelectorAll(".day-roster-card").forEach(card => {
+      card.addEventListener("click", () => {
+        if (!isAdmin) return;
+        const shiftId = card.dataset.shiftId;
+        const shift = (state.data.shifts || []).find(s => s.id === shiftId);
+        if (shift) {
+          openShiftModal(JSON.parse(JSON.stringify(shift)));
+        }
       });
     });
 
