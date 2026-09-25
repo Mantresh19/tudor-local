@@ -360,7 +360,7 @@
               <form id="form-forgot-request">
                 <div class="form-group">
                   <label class="form-label">Your Username</label>
-                  <input type="text" class="form-input" id="forgot-username" placeholder="e.g. shon or mantresh" required autofocus>
+                  <input type="text" class="form-input" id="forgot-username" placeholder="Enter your username" required autofocus>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem; margin-top: 0.5rem; font-weight: 600;">
                   📢 Notify Manager for Password Reset
@@ -408,7 +408,7 @@
               <form id="form-otp-login">
                 <div class="form-group">
                   <label class="form-label">Username</label>
-                  <input type="text" class="form-input" id="otp-login-username" placeholder="e.g. shon" required autofocus>
+                  <input type="text" class="form-input" id="otp-login-username" placeholder="Enter your username" required autofocus>
                 </div>
                 <div class="form-group">
                   <label class="form-label">One-Time Password (OTP)</label>
@@ -459,7 +459,7 @@
             <form id="form-login">
               <div class="form-group">
                 <label class="form-label">Username</label>
-                <input type="text" class="form-input" id="login-username" placeholder="e.g. mantresh or admin" required autofocus>
+                <input type="text" class="form-input" id="login-username" placeholder="Enter your username" required autofocus>
               </div>
 
               <div class="form-group">
