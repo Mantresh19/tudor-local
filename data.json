@@ -752,5 +752,30 @@
       "breaks": [],
       "status": "completed"
     }
-  ]
+  ],
+  "users": [
+    {
+      "id": "user_admin",
+      "username": "admin",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "admin",
+      "name": "Manager (Admin)",
+      "employeeId": null,
+      "hasRotaAccess": true,
+      "isActive": true,
+      "mustChangePassword": false
+    },
+    {
+      "id": "user_mantresh",
+      "username": "mantresh",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+      "role": "admin",
+      "name": "Mantresh",
+      "employeeId": "emp_1790267945703",
+      "hasRotaAccess": true,
+      "isActive": true,
+      "mustChangePassword": false
+    }
+  ],
+  "resetRequests": []
 }

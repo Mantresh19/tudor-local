@@ -1019,3 +1019,107 @@ table.rota-table th.col-day {
   }
 }
 
+/* Authentication & Login Screen Styles */
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  padding: 1.5rem;
+}
+
+.login-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  width: 100%;
+  max-width: 420px;
+  overflow: hidden;
+  animation: modalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-card-header {
+  padding: 2rem 2rem 1.25rem;
+  text-align: center;
+}
+
+.login-card-body {
+  padding: 0 2rem 2rem;
+}
+
+.auth-user-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #f1f5f9;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.65rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.auth-user-badge .role-tag {
+  background: #2563eb;
+  color: white;
+  font-size: 0.65rem;
+  padding: 0.1rem 0.4rem;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.auth-user-badge .role-tag.staff {
+  background: #10b981;
+}
+
+.reset-alert-banner {
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  border-left: 4px solid #2563eb;
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.otp-display-box {
+  background: #f8fafc;
+  border: 2px dashed #3b82f6;
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.otp-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #1d4ed8;
+  user-select: all;
+}
+
+.access-active {
+  color: #059669;
+  font-weight: 600;
+}
+
+.access-revoked {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.shift-card.my-shift {
+  border-right: 4px solid #2563eb;
+  background-color: #f0f7ff;
+}
+
+

@@ -1,4 +1,4 @@
-// Planday Rota Application Core Engine
+// Planday / Tudor Local Rota Application Core Engine with Auth & Access Control
 
 (function () {
   "use strict";
@@ -9,7 +9,7 @@
       currency: "£",
       targetLaborPercentage: 20.0,
       projectedWeeklyRevenue: 0,
-      businessName: "My Business"
+      businessName: "Tudor Local"
     },
     departments: [
       { id: "general", name: "General Staff", color: "#0ea5e9" },
@@ -20,11 +20,40 @@
     employees: [],
     shifts: [],
     requests: [],
-    punches: []
+    punches: [],
+    users: [
+      {
+        id: "user_admin",
+        username: "admin",
+        passwordHash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+        role: "admin",
+        name: "Manager (Admin)",
+        employeeId: null,
+        hasRotaAccess: true,
+        isActive: true,
+        mustChangePassword: false
+      },
+      {
+        id: "user_mantresh",
+        username: "mantresh",
+        passwordHash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
+        role: "admin",
+        name: "Mantresh",
+        employeeId: "emp_1790267945703",
+        hasRotaAccess: true,
+        isActive: true,
+        mustChangePassword: false
+      }
+    ],
+    resetRequests: []
   };
 
   // Application State
   const state = {
+    currentUser: JSON.parse(localStorage.getItem("tudor_rota_user") || "null"),
+    authView: "login", // 'login' | 'forgot' | 'reset_otp'
+    authError: "",
+    authSuccess: "",
     activeTab: "schedule",
     currentMonday: getMonday(new Date("2026-09-21")),
     groupingMode: "employee", // 'employee' or 'department'
@@ -35,8 +64,19 @@
     editingEmployee: null,
     showSettingsModal: false,
     showInstallModal: false,
-    showShareModal: false
+    showShareModal: false,
+    showGrantAccessModal: null, // employee object
+    showOtpModal: null, // { name, username, otp }
+    showMustChangePasswordModal: false
   };
+
+  // Utility: SHA-256 for browser fallback
+  async function sha256(str) {
+    const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
+    return Array.from(new Uint8Array(buf))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+  }
 
   // Utility: Get Monday of a given date
   function getMonday(d) {
@@ -101,9 +141,10 @@
       const res = await fetch("/api/data");
       if (res.ok) {
         state.data = await res.json();
-        // Ensure structure exists
         if (!state.data.employees) state.data.employees = [];
         if (!state.data.shifts) state.data.shifts = [];
+        if (!state.data.users) state.data.users = CLEAN_DATA.users;
+        if (!state.data.resetRequests) state.data.resetRequests = [];
         if (!state.data.settings) state.data.settings = CLEAN_DATA.settings;
         if (!state.data.departments) state.data.departments = CLEAN_DATA.departments;
         renderApp();
@@ -117,6 +158,8 @@
     if (local) {
       try {
         state.data = JSON.parse(local);
+        if (!state.data.users) state.data.users = CLEAN_DATA.users;
+        if (!state.data.resetRequests) state.data.resetRequests = [];
         renderApp();
         return;
       } catch (e) {}
@@ -127,12 +170,13 @@
       const res = await fetch("./data.json");
       if (res.ok) {
         state.data = await res.json();
+        if (!state.data.users) state.data.users = CLEAN_DATA.users;
+        if (!state.data.resetRequests) state.data.resetRequests = [];
         renderApp();
         return;
       }
     } catch (e) {}
 
-    // Fallback to clean state
     state.data = JSON.parse(JSON.stringify(CLEAN_DATA));
     renderApp();
   }
@@ -277,9 +321,179 @@
     }, 3200);
   }
 
+  // Render Authentication Screen (Login / Forgot / Reset OTP)
+  function renderAuthScreen() {
+    const business = state.data.settings.businessName || "Tudor Local";
+
+    if (state.authView === "forgot") {
+      return `
+        <div class="login-screen">
+          <div class="login-card">
+            <div class="login-card-header">
+              <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md mx-auto mb-3">
+                P
+              </div>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a;">Password Recovery</h2>
+              <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
+                ${business} · Account Access
+              </p>
+            </div>
+
+            <div class="login-card-body">
+              ${
+                state.authError
+                  ? `<div class="alert-box alert-danger" style="margin-bottom: 1rem;">⚠️ ${state.authError}</div>`
+                  : ""
+              }
+              ${
+                state.authSuccess
+                  ? `<div class="alert-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46; margin-bottom: 1rem;">✓ ${state.authSuccess}</div>`
+                  : ""
+              }
+
+              <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm); padding: 0.75rem; margin-bottom: 1rem; font-size: 0.8rem; color: #475569;">
+                <strong>Step 1:</strong> Enter your username below to notify your manager.<br>
+                <strong>Step 2:</strong> Your manager will generate your <strong>One-Time Password (OTP)</strong>.<br>
+                <strong>Step 3:</strong> Use that OTP to log in and choose your new password.
+              </div>
+
+              <form id="form-forgot-request">
+                <div class="form-group">
+                  <label class="form-label">Your Username</label>
+                  <input type="text" class="form-input" id="forgot-username" placeholder="e.g. shon or mantresh" required autofocus>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem; margin-top: 0.5rem; font-weight: 600;">
+                  📢 Notify Manager for Password Reset
+                </button>
+              </form>
+
+              <div style="border-top: 1px solid #e2e8f0; margin-top: 1.25rem; padding-top: 1rem; text-align: center;">
+                <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 0.5rem;">Already have your One-Time Password from your manager?</p>
+                <button class="btn btn-secondary btn-sm" id="btn-goto-otp-login" style="width: 100%;">
+                  🔑 Log In with One-Time Password (OTP)
+                </button>
+                <div style="margin-top: 0.75rem;">
+                  <a href="#" id="link-back-login" style="font-size: 0.8rem; color: #2563eb; text-decoration: none; font-weight: 600;">
+                    ← Back to Sign In
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    if (state.authView === "reset_otp") {
+      return `
+        <div class="login-screen">
+          <div class="login-card">
+            <div class="login-card-header">
+              <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md mx-auto mb-3">
+                P
+              </div>
+              <h2 style="font-size: 1.25rem; font-weight: 800; color: #0f172a;">One-Time Password Login</h2>
+              <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
+                Enter the OTP given by your manager
+              </p>
+            </div>
+
+            <div class="login-card-body">
+              ${
+                state.authError
+                  ? `<div class="alert-box alert-danger" style="margin-bottom: 1rem;">⚠️ ${state.authError}</div>`
+                  : ""
+              }
+
+              <form id="form-otp-login">
+                <div class="form-group">
+                  <label class="form-label">Username</label>
+                  <input type="text" class="form-input" id="otp-login-username" placeholder="e.g. shon" required autofocus>
+                </div>
+                <div class="form-group">
+                  <label class="form-label">One-Time Password (OTP)</label>
+                  <input type="text" class="form-input" id="otp-login-code" placeholder="e.g. TL-7294" style="font-family: monospace; letter-spacing: 0.1em; font-weight: 700;" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 0.65rem; margin-top: 0.5rem; font-weight: 600;">
+                  Verify OTP & Log In
+                </button>
+              </form>
+
+              <div style="text-align: center; margin-top: 1.25rem;">
+                <a href="#" id="link-back-login" style="font-size: 0.8rem; color: #2563eb; text-decoration: none; font-weight: 600;">
+                  ← Back to Sign In
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Default Login View
+    return `
+      <div class="login-screen">
+        <div class="login-card">
+          <div class="login-card-header">
+            <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold text-xl shadow-md mx-auto mb-3">
+              P
+            </div>
+            <h2 style="font-size: 1.35rem; font-weight: 800; color: #0f172a;">${business}</h2>
+            <p style="font-size: 0.8rem; color: #64748b; margin-top: 0.25rem;">
+              Sign in to view your rota & punch clock
+            </p>
+          </div>
+
+          <div class="login-card-body">
+            ${
+              state.authError
+                ? `<div class="alert-box alert-danger" style="margin-bottom: 1rem;">⚠️ ${state.authError}</div>`
+                : ""
+            }
+            ${
+              state.authSuccess
+                ? `<div class="alert-box" style="background: #ecfdf5; border-color: #a7f3d0; color: #065f46; margin-bottom: 1rem;">✓ ${state.authSuccess}</div>`
+                : ""
+            }
+
+            <form id="form-login">
+              <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" class="form-input" id="login-username" placeholder="e.g. mantresh or admin" required autofocus>
+              </div>
+
+              <div class="form-group">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                  <label class="form-label" style="margin-bottom: 0;">Password</label>
+                  <a href="#" id="link-forgot-password" style="font-size: 0.75rem; color: #2563eb; text-decoration: none; font-weight: 500;">
+                    Forgot Password?
+                  </a>
+                </div>
+                <input type="password" class="form-input" id="login-password" placeholder="••••••••" required>
+              </div>
+
+              <button type="submit" class="btn btn-primary" id="btn-submit-login" style="width: 100%; padding: 0.65rem; margin-top: 0.5rem; font-weight: 600;">
+                Sign In
+              </button>
+            </form>
+
+            <div style="background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: var(--radius-sm); padding: 0.75rem; margin-top: 1.5rem; font-size: 0.75rem; color: #64748b; text-align: center;">
+              <strong>Manager Initial Login:</strong><br>
+              Username: <code style="color: #2563eb;">mantresh</code> or <code style="color: #2563eb;">admin</code><br>
+              Password: <code style="color: #2563eb;">admin123</code>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // Render Header
   function renderHeader() {
+    const user = state.currentUser;
+    const isAdmin = user && user.role === "admin";
     const pendingRequests = (state.data.requests || []).filter(r => r.status === "pending").length;
+    const pendingResets = (state.data.resetRequests || []).filter(r => r.status === "pending").length;
     const activePunches = (state.data.punches || []).filter(p => p.status === "active").length;
 
     return `
@@ -288,7 +502,7 @@
           <div class="brand-logo">P</div>
           <div>
             <div class="brand-title">
-              <span id="header-business-title">${state.data.settings.businessName || "My Business"}</span>
+              <span id="header-business-title">${state.data.settings.businessName || "Tudor Local"}</span>
               <span class="brand-tag">ROTA PRO</span>
             </div>
           </div>
@@ -306,30 +520,50 @@
             🔄 Shift Swaps & Leave
             ${pendingRequests > 0 ? `<span class="nav-badge" style="background:#fee2e2;color:#b91c1c">${pendingRequests}</span>` : ""}
           </button>
-          <button class="nav-tab ${state.activeTab === "staff" ? "active" : ""}" data-tab="staff">
-            👥 Staff Roster (${(state.data.employees || []).length})
-          </button>
+          ${
+            isAdmin
+              ? `
+            <button class="nav-tab ${state.activeTab === "staff" ? "active" : ""}" data-tab="staff">
+              👥 Staff & Access (${(state.data.employees || []).length})
+              ${pendingResets > 0 ? `<span class="nav-badge" style="background:#fef3c7;color:#b45309;">🔔 ${pendingResets}</span>` : ""}
+            </button>
+          `
+              : ""
+          }
         </nav>
 
         <div class="header-actions">
-          <button class="btn btn-secondary btn-sm" id="btn-share-team-header" style="font-weight: 600; color: #2563eb; background: #eff6ff; border-color: #bfdbfe;" title="Share link with team members">
-            🔗 Share with Team
+          <div class="auth-user-badge">
+            <span>👤 ${user ? user.name || user.username : "User"}</span>
+            <span class="role-tag ${isAdmin ? "admin" : "staff"}">${isAdmin ? "Admin" : "Staff"}</span>
+          </div>
+
+          <button class="btn btn-secondary btn-sm" id="btn-logout" title="Sign out of your account">
+            Log Out
           </button>
-          <button class="btn-install-pwa" id="btn-install-app-header" title="Download & Install Rota on iPhone or Android">
-            📱 Install App
-          </button>
-          <button class="btn btn-secondary btn-sm" id="btn-open-settings" title="Change Currency, Business Name, Labor Budget, or Reset Rota">
-            ⚙️ Settings & Budget
-          </button>
-          <button class="btn btn-secondary btn-sm" id="btn-print-rota" title="Print physical rota sheet">
-            🖨️ Print
-          </button>
-          <button class="btn btn-secondary btn-sm" id="btn-export-csv" title="Export current schedule as CSV">
-            📥 Export CSV
-          </button>
-          <button class="btn btn-primary btn-sm" id="btn-add-shift-header">
-            + Add Shift
-          </button>
+
+          ${
+            isAdmin
+              ? `
+            <button class="btn btn-secondary btn-sm" id="btn-share-team-header" style="font-weight: 600; color: #2563eb; background: #eff6ff; border-color: #bfdbfe;" title="Share link with team members">
+              🔗 Share Link
+            </button>
+            <button class="btn-install-pwa" id="btn-install-app-header" title="Download & Install Rota on iPhone or Android">
+              📱 Install App
+            </button>
+            <button class="btn btn-secondary btn-sm" id="btn-open-settings" title="Change Currency, Business Name, Labor Budget, or Reset Rota">
+              ⚙️ Settings
+            </button>
+            <button class="btn btn-primary btn-sm" id="btn-add-shift-header">
+              + Add Shift
+            </button>
+          `
+              : `
+            <button class="btn-install-pwa" id="btn-install-app-header" title="Download & Install Rota on iPhone or Android">
+              📱 Install App
+            </button>
+          `
+          }
         </div>
       </header>
     `;
@@ -338,6 +572,52 @@
   // Render Top KPI Metrics Bar
   function renderKpiBar() {
     const kpis = getWeekKPIs();
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+
+    // If staff member, hide total labor cost and business revenue for privacy
+    if (!isAdmin) {
+      // Find staff member's shifts this week
+      const myEmpId = state.currentUser.employeeId;
+      const weekDates = getWeekDates().map(formatDate);
+      let myHours = 0;
+      let myShiftsCount = 0;
+      (state.data.shifts || [])
+        .filter(s => s.employeeId === myEmpId && weekDates.includes(s.date))
+        .forEach(s => {
+          myHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
+          myShiftsCount++;
+        });
+
+      return `
+        <div class="kpi-bar" style="grid-template-columns: 1fr 1fr 1fr;">
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#eff6ff; color:#2563eb;">🕒</div>
+            <div class="kpi-info">
+              <h4>My Scheduled Hours</h4>
+              <div class="kpi-value">${myHours.toFixed(1)} hrs</div>
+              <div class="kpi-sub">This week</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#f0fdf4; color:#16a34a;">📅</div>
+            <div class="kpi-info">
+              <h4>My Shifts</h4>
+              <div class="kpi-value">${myShiftsCount} shifts</div>
+              <div class="kpi-sub">Scheduled</div>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-icon" style="background:#f8fafc; color:#64748b;">👥</div>
+            <div class="kpi-info">
+              <h4>Team on Rota</h4>
+              <div class="kpi-value">${kpis.activeStaffCount} Colleagues</div>
+              <div class="kpi-sub">Working this week</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
     return `
       <div class="kpi-bar">
         <div class="kpi-card">
@@ -390,12 +670,38 @@
     `;
   }
 
+  // Render Admin Password Reset Alert Banner
+  function renderAdminResetBanner() {
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    if (!isAdmin) return "";
+
+    const pending = (state.data.resetRequests || []).filter(r => r.status === "pending");
+    if (pending.length === 0) return "";
+
+    const first = pending[0];
+    return `
+      <div class="reset-alert-banner">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span style="font-size: 1.25rem;">🔔</span>
+          <div>
+            <strong style="color: #1e3a8a;">Password Reset Request:</strong>
+            <span style="color: #1e40af;"> ${first.name || first.username} requested a password reset (${first.requestedAt || "recently"}).</span>
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm btn-generate-otp-banner" data-user-id="${first.userId}" style="white-space: nowrap;">
+          🔑 Generate One-Time Password
+        </button>
+      </div>
+    `;
+  }
+
   // Render Rota Controls Bar
   function renderRotaControls() {
     const weekDates = getWeekDates();
     const startStr = weekDates[0].toLocaleDateString("en-GB", { day: "numeric", month: "short" });
     const endStr = weekDates[6].toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
     const kpis = getWeekKPIs();
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
 
     const deptOptions = (state.data.departments || [])
       .map(d => `<option value="${d.id}" ${state.selectedDepartment === d.id ? "selected" : ""}>${d.name}</option>`)
@@ -423,14 +729,19 @@
             <button class="${state.groupingMode === "department" ? "active" : ""}" id="toggle-group-dept">By Dept</button>
           </div>
 
-          <button class="btn btn-secondary btn-sm" id="btn-copy-prev-week" title="Copy all shifts from previous week into this week">
-            📋 Copy Prev Week
-          </button>
-
           ${
-            kpis.draftCount > 0
-              ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">🚀 Publish Rota (${kpis.draftCount})</button>`
-              : `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.7;">✓ All Published</button>`
+            isAdmin
+              ? `
+            <button class="btn btn-secondary btn-sm" id="btn-copy-prev-week" title="Copy all shifts from previous week into this week">
+              📋 Copy Prev Week
+            </button>
+            ${
+              kpis.draftCount > 0
+                ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">🚀 Publish Rota (${kpis.draftCount})</button>`
+                : `<button class="btn btn-secondary btn-sm" disabled style="opacity:0.7;">✓ All Published</button>`
+            }
+          `
+              : ""
           }
         </div>
       </div>
@@ -441,6 +752,7 @@
   function renderOpenShifts() {
     const weekDates = getWeekDates().map(formatDate);
     const openShifts = (state.data.shifts || []).filter(s => weekDates.includes(s.date) && (!s.employeeId || s.status === "open"));
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
 
     if (openShifts.length === 0) {
       return `
@@ -450,7 +762,7 @@
             <div class="open-shifts-desc">No unassigned shifts</div>
           </div>
           <div style="font-size: 0.8rem; color: #94a3b8; padding-top: 0.25rem;">
-            No open shifts scheduled for this week. Click <strong>+ Add Shift</strong> to create a shift for your team.
+            No open shifts scheduled for this week.
           </div>
         </div>
       `;
@@ -470,9 +782,11 @@
             <div class="shift-role-title"><strong>${shift.role}</strong> (${dayLabel})</div>
             <div class="shift-footer">
               <span>${hours}h net</span>
-              <button class="btn btn-secondary btn-sm btn-claim-shift" data-shift-id="${shift.id}" style="padding: 2px 6px; font-size: 10px;">
-                Assign
-              </button>
+              ${
+                isAdmin
+                  ? `<button class="btn btn-secondary btn-sm btn-claim-shift" data-shift-id="${shift.id}" style="padding: 2px 6px; font-size: 10px;">Assign</button>`
+                  : `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="padding: 2px 6px; font-size: 10px;">Claim</button>`
+              }
             </div>
           </div>
         `;
@@ -483,7 +797,7 @@
       <div class="open-shifts-container">
         <div class="open-shifts-header">
           <div class="open-shifts-title">⚡ Open Shifts (${openShifts.length})</div>
-          <div class="open-shifts-desc">Needs assignment</div>
+          <div class="open-shifts-desc">Available for team</div>
         </div>
         <div class="open-shifts-grid">
           ${cardsHtml}
@@ -497,27 +811,26 @@
     const weekDates = getWeekDates();
     const todayStr = formatDate(new Date("2026-09-24"));
     const currency = state.data.settings.currency || "£";
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    const myEmpId = state.currentUser ? state.currentUser.employeeId : null;
 
-    // If no employees exist yet, show clean slate welcome screen
     if ((state.data.employees || []).length === 0) {
       return `
         <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4rem 2rem; text-align: center; box-shadow: var(--shadow-sm);">
           <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
           <h2 style="font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">Your Rota is Clean & Blank</h2>
           <p style="color: #64748b; font-size: 0.9rem; max-width: 480px; margin: 0 auto 1.5rem;">
-            All previous names, demo shifts, and costs have been removed. You have a fresh, blank canvas ready for your business.
+            Add your staff members in the Staff tab to begin scheduling.
           </p>
-          <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-            <button class="btn btn-primary" id="btn-empty-add-emp">
-              + Add Your First Employee
-            </button>
-            <button class="btn btn-secondary" id="btn-empty-add-shift">
-              + Create Open Shift
-            </button>
-            <button class="btn btn-secondary" id="btn-empty-settings">
-              ⚙️ Customize Business & Currency
-            </button>
-          </div>
+          ${
+            isAdmin
+              ? `
+            <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+              <button class="btn btn-primary" id="btn-empty-add-emp">+ Add Your First Employee</button>
+            </div>
+          `
+              : ""
+          }
         </div>
       `;
     }
@@ -554,7 +867,7 @@
             <div class="day-header">
               <span class="day-name">${dayName}</span>
               <span class="day-date">${dayNumber}</span>
-              <span class="day-stats">${stats.hours}h · ${currency}${stats.cost}</span>
+              <span class="day-stats">${stats.hours}h ${isAdmin ? `· ${currency}${stats.cost}` : ""}</span>
             </div>
           </th>
         `;
@@ -579,6 +892,7 @@
       rowsHtml = filteredEmployees
         .map(emp => {
           const dept = (state.data.departments || []).find(d => d.id === emp.departmentId) || { name: "", color: "#64748b" };
+          const isMe = myEmpId && emp.id === myEmpId;
 
           // Total hours for employee this week
           const weekDateStrs = weekDates.map(formatDate);
@@ -601,21 +915,23 @@
                 .map(shift => {
                   const sDept = (state.data.departments || []).find(dep => dep.id === shift.departmentId) || dept;
                   const hours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
-                  const cost = (hours * (shift.rate || emp.hourlyRate || 0)).toFixed(0);
                   const isDraft = shift.status === "draft";
+                  const isMyShift = isMe;
 
                   return `
-                    <div class="shift-card ${isDraft ? "status-draft" : "status-published"}" 
+                    <div class="shift-card ${isDraft ? "status-draft" : "status-published"} ${isMyShift ? "my-shift" : ""}" 
                          style="border-left-color: ${sDept.color};" 
                          data-shift-id="${shift.id}" 
-                         title="${shift.notes ? `Note: ${shift.notes}` : "Click to edit"}">
+                         title="${shift.notes ? `Note: ${shift.notes}` : "Shift details"}">
                       <div class="shift-time">
                         <span>${shift.startTime} - ${shift.endTime}</span>
                         ${shift.breakMinutes ? `<span class="shift-break">-${shift.breakMinutes}m</span>` : ""}
                       </div>
-                      <div class="shift-role-title">${shift.role}</div>
+                      <div class="shift-role-title">
+                        ${shift.role} ${isMyShift ? `<span style="color:#2563eb;font-weight:700;">★ Me</span>` : ""}
+                      </div>
                       <div class="shift-footer">
-                        <span>${hours}h · ${currency}${cost}</span>
+                        <span>${hours}h net ${isAdmin ? `· ${currency}${(hours * (shift.rate || emp.hourlyRate || 0)).toFixed(0)}` : ""}</span>
                         ${
                           isDraft
                             ? `<span class="shift-badge badge-draft">Draft</span>`
@@ -628,28 +944,36 @@
                 .join("");
 
               return `
-                <td class="shift-cell" data-emp-id="${emp.id}" data-date="${dateStr}">
+                <td class="shift-cell ${isMe ? "bg-blue-50/20" : ""}" data-emp-id="${emp.id}" data-date="${dateStr}">
                   <div class="shift-cards-wrap">
                     ${shiftCards}
                   </div>
-                  <button class="add-shift-btn btn-cell-add" data-emp-id="${emp.id}" data-date="${dateStr}">
-                    + Shift
-                  </button>
+                  ${
+                    isAdmin
+                      ? `
+                    <button class="add-shift-btn btn-cell-add" data-emp-id="${emp.id}" data-date="${dateStr}">
+                      + Shift
+                    </button>
+                  `
+                      : ""
+                  }
                 </td>
               `;
             })
             .join("");
 
           return `
-            <tr>
-              <td class="entity-cell">
+            <tr class="${isMe ? "bg-blue-50/30" : ""}">
+              <td class="entity-cell ${isMe ? "bg-blue-50/40" : ""}">
                 <div class="employee-row-info">
                   <div class="emp-avatar" style="background-color: ${emp.avatarColor || dept.color};">
                     ${(emp.name || "E").split(" ").map(n => n[0]).join("")}
                   </div>
                   <div class="emp-details">
-                    <div class="emp-name" title="${emp.name}">${emp.name}</div>
-                    <div class="emp-role-tag">${emp.role} · ${currency}${emp.hourlyRate}/h</div>
+                    <div class="emp-name" title="${emp.name}">
+                      ${emp.name} ${isMe ? `<span style="font-size:10px;background:#2563eb;color:white;padding:1px 5px;border-radius:4px;font-weight:bold;">YOU</span>` : ""}
+                    </div>
+                    <div class="emp-role-tag">${emp.role} ${isAdmin ? `· ${currency}${emp.hourlyRate}/h` : ""}</div>
                     <div class="emp-stats-pill">
                       <span class="${isOvertime ? "overtime" : ""}">${empWeeklyHours.toFixed(1)} / ${contracted} hrs</span>
                       ${isOvertime ? " (Overtime)" : ""}
@@ -675,9 +999,10 @@
                 .map(shift => {
                   const emp = (state.data.employees || []).find(e => e.id === shift.employeeId);
                   const hours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
+                  const isMe = myEmpId && shift.employeeId === myEmpId;
 
                   return `
-                    <div class="shift-card ${shift.status === "draft" ? "status-draft" : "status-published"}" 
+                    <div class="shift-card ${shift.status === "draft" ? "status-draft" : "status-published"} ${isMe ? "my-shift" : ""}" 
                          style="border-left-color: ${dept.color};" 
                          data-shift-id="${shift.id}">
                       <div class="shift-time">
@@ -696,9 +1021,15 @@
                   <div class="shift-cards-wrap">
                     ${shiftCards}
                   </div>
-                  <button class="add-shift-btn btn-cell-add" data-dept-id="${dept.id}" data-date="${dateStr}">
-                    + Shift
-                  </button>
+                  ${
+                    isAdmin
+                      ? `
+                    <button class="add-shift-btn btn-cell-add" data-dept-id="${dept.id}" data-date="${dateStr}">
+                      + Shift
+                    </button>
+                  `
+                      : ""
+                  }
                 </td>
               `;
             })
@@ -742,12 +1073,21 @@
 
   // Render Punch Clock & Timesheets Tab
   function renderPunchClockTab() {
-    const currency = state.data.settings.currency || "£";
     const activePunches = (state.data.punches || []).filter(p => p.status === "active");
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    const myEmpId = state.currentUser ? state.currentUser.employeeId : null;
 
-    const empOptions = (state.data.employees || []).length > 0
-      ? (state.data.employees || []).map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join("")
-      : `<option value="">-- No Employees Available --</option>`;
+    let empOptions = "";
+    if (isAdmin) {
+      empOptions = (state.data.employees || []).length > 0
+        ? (state.data.employees || []).map(e => `<option value="${e.id}">${e.name} (${e.role})</option>`).join("")
+        : `<option value="">-- No Employees Available --</option>`;
+    } else {
+      const myEmp = (state.data.employees || []).find(e => e.id === myEmpId);
+      empOptions = myEmp
+        ? `<option value="${myEmp.id}" selected>${myEmp.name} (${myEmp.role})</option>`
+        : `<option value="">-- No Profile Linked --</option>`;
+    }
 
     const activeListHtml = activePunches.length === 0
       ? `<tr><td colspan="5" style="text-align:center;color:#94a3b8;padding:24px;">No employees are currently clocked in.</td></tr>`
@@ -755,6 +1095,8 @@
           .map(punch => {
             const emp = (state.data.employees || []).find(e => e.id === punch.employeeId) || { name: "Unknown", role: "" };
             const clockInTime = new Date(punch.clockIn).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            const canClockOut = isAdmin || (myEmpId && punch.employeeId === myEmpId);
+
             return `
               <tr>
                 <td><strong>${emp.name}</strong></td>
@@ -762,7 +1104,11 @@
                 <td><span style="color:#16a34a;font-weight:600;">● Active</span></td>
                 <td>${clockInTime}</td>
                 <td>
-                  <button class="btn btn-secondary btn-sm btn-clock-out" data-punch-id="${punch.id}">Clock Out</button>
+                  ${
+                    canClockOut
+                      ? `<button class="btn btn-secondary btn-sm btn-clock-out" data-punch-id="${punch.id}">Clock Out</button>`
+                      : `<span style="color:#94a3b8;font-size:0.75rem;">On Duty</span>`
+                  }
                 </td>
               </tr>
             `;
@@ -779,14 +1125,14 @@
           <div class="kiosk-date" id="live-digital-date">Today</div>
 
           <div class="form-group" style="text-align: left;">
-            <label class="form-label">Select Employee</label>
-            <select class="form-select" id="punch-employee-select">
+            <label class="form-label">${isAdmin ? "Select Employee" : "Your Account"}</label>
+            <select class="form-select" id="punch-employee-select" ${!isAdmin ? "disabled" : ""}>
               ${empOptions}
             </select>
           </div>
 
           <div style="display:flex;gap:10px;margin-top:1.5rem;">
-            <button class="btn btn-success" id="btn-terminal-clock-in" style="flex:1;padding:10px;" ${(state.data.employees || []).length === 0 ? "disabled" : ""}>
+            <button class="btn btn-success" id="btn-terminal-clock-in" style="flex:1;padding:10px;">
               ▶ Clock In
             </button>
             <button class="btn btn-secondary" id="btn-terminal-break" style="padding:10px;">
@@ -794,14 +1140,14 @@
             </button>
           </div>
           <p style="font-size:0.75rem;color:#94a3b8;margin-top:1rem;">
-            GPS & PIN verified. Punches synchronize directly with timesheet variance records.
+            GPS & attendance verified. Punches record directly to timesheets.
           </p>
         </div>
 
         <div class="live-punches-card">
           <h3 style="font-size:1.05rem;font-weight:700;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between;">
             <span>Staff Currently On Duty (${activePunches.length})</span>
-            <span style="font-size:0.8rem;font-weight:normal;color:#16a34a;">Real-time Attendance</span>
+            <span style="font-size:0.8rem;font-weight:normal;color:#16a34a;">● Real-time Attendance</span>
           </h3>
 
           <table class="table-standard">
@@ -827,6 +1173,7 @@
   function renderRequestsTab() {
     const swapRequests = (state.data.requests || []).filter(r => r.type === "swap");
     const leaveRequests = (state.data.requests || []).filter(r => r.type === "time_off");
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
 
     const swapHtml = swapRequests.length === 0
       ? `<div style="padding: 30px; text-align: center; color: #94a3b8; font-size: 0.85rem; background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md);">No shift swap requests at this time.</div>`
@@ -852,7 +1199,7 @@
                   "${req.reason}"
                 </div>
                 ${
-                  req.status === "pending"
+                  isAdmin && req.status === "pending"
                     ? `
                   <div style="display:flex;gap:8px;margin-top:0.5rem;">
                     <button class="btn btn-success btn-sm btn-approve-swap" data-req-id="${req.id}">Approve Swap</button>
@@ -887,7 +1234,7 @@
                   "${req.reason}"
                 </div>
                 ${
-                  req.status === "pending"
+                  isAdmin && req.status === "pending"
                     ? `
                   <div style="display:flex;gap:8px;margin-top:0.5rem;">
                     <button class="btn btn-success btn-sm btn-approve-leave" data-req-id="${req.id}">Approve Leave</button>
@@ -915,36 +1262,38 @@
     `;
   }
 
-  // Render Staff Roster Tab
+  // Render Staff Roster & Access Control Tab (Admin Only)
   function renderStaffTab() {
     const currency = state.data.settings.currency || "£";
     const employees = state.data.employees || [];
-
-    if (employees.length === 0) {
-      return `
-        <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4rem 2rem; text-align: center;">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">👥</div>
-          <h3 style="font-size: 1.25rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">No Employees Added Yet</h3>
-          <p style="color: #64748b; font-size: 0.875rem; max-width: 440px; margin: 0 auto 1.5rem;">
-            Add your team members with their custom names, roles, hourly wage rates, and contracted hours to begin scheduling.
-          </p>
-          <button class="btn btn-primary" id="btn-add-employee">+ Add First Employee</button>
-        </div>
-      `;
-    }
+    const users = state.data.users || [];
+    const resetRequests = state.data.resetRequests || [];
 
     const cardsHtml = employees
       .map(emp => {
         const dept = (state.data.departments || []).find(d => d.id === emp.departmentId) || { name: "", color: "#64748b" };
+        const user = users.find(u => u.employeeId === emp.id);
+        const hasAccess = user && user.hasRotaAccess && user.isActive;
+        const pendingReset = resetRequests.find(r => user && r.userId === user.id && r.status === "pending");
+
         return `
           <div class="staff-card">
             <div class="staff-card-header">
               <div class="emp-avatar" style="background-color: ${emp.avatarColor || dept.color};">
                 ${(emp.name || "E").split(" ").map(n => n[0]).join("")}
               </div>
-              <div style="overflow:hidden;">
+              <div style="overflow:hidden;flex:1;">
                 <h4 style="font-size:0.95rem;font-weight:700;color:#0f172a;">${emp.name}</h4>
                 <div style="font-size:0.75rem;color:#64748b;">${emp.role}</div>
+              </div>
+              <div>
+                ${
+                  user
+                    ? hasAccess
+                      ? `<span class="access-badge access-active" style="background:#dcfce7;color:#166534;font-size:11px;padding:2px 7px;border-radius:9999px;">● Active</span>`
+                      : `<span class="access-badge access-revoked" style="background:#fee2e2;color:#991b1b;font-size:11px;padding:2px 7px;border-radius:9999px;">Revoked</span>`
+                    : `<span class="access-badge" style="background:#f1f5f9;color:#64748b;font-size:11px;padding:2px 7px;border-radius:9999px;">No Login</span>`
+                }
               </div>
             </div>
 
@@ -957,16 +1306,48 @@
               <strong>${currency}${Number(emp.hourlyRate || 0).toFixed(2)}/hr</strong>
             </div>
             <div class="staff-info-row">
-              <span>Contracted Hours</span>
+              <span>Contracted</span>
               <strong>${emp.contractedHours || 0} hrs/wk</strong>
             </div>
-            <div class="staff-info-row">
-              <span>Contact</span>
-              <span style="font-size:0.75rem;">${emp.email || "No email"}</span>
+
+            <!-- Login & Access Section -->
+            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;margin-top:4px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;">
+                <span style="font-weight:600;color:#475569;">Rota Login Access:</span>
+                <strong>${user ? user.username : "Not Set"}</strong>
+              </div>
+              ${
+                pendingReset
+                  ? `
+                <div style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:4px 6px;border-radius:4px;font-size:10px;margin-top:6px;font-weight:600;">
+                  ⚠️ Requested password reset!
+                </div>
+              `
+                  : ""
+              }
             </div>
 
-            <div style="display:flex;gap:6px;margin-top:0.5rem;">
-              <button class="btn btn-secondary btn-sm btn-edit-emp" data-emp-id="${emp.id}" style="flex:1;">Edit Staff</button>
+            <div style="display:flex;gap:6px;margin-top:0.5rem;flex-wrap:wrap;">
+              <button class="btn btn-secondary btn-sm btn-edit-emp" data-emp-id="${emp.id}" style="flex:1;">
+                Edit Profile
+              </button>
+
+              ${
+                !user
+                  ? `
+                <button class="btn btn-primary btn-sm btn-grant-access" data-emp-id="${emp.id}" style="flex:1;background:#2563eb;">
+                  🔑 Grant Access
+                </button>
+              `
+                  : `
+                <button class="btn btn-secondary btn-sm btn-toggle-access" data-user-id="${user.id}" data-current="${hasAccess}">
+                  ${hasAccess ? "Revoke" : "Restore"}
+                </button>
+                <button class="btn btn-secondary btn-sm btn-generate-otp" data-user-id="${user.id}" title="Generate One-Time Password for this employee">
+                  🔑 Reset OTP
+                </button>
+              `
+              }
             </div>
           </div>
         `;
@@ -977,13 +1358,140 @@
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;">
           <div>
-            <h3 style="font-size:1.15rem;font-weight:700;">Employee Directory (${employees.length})</h3>
-            <p style="font-size:0.8rem;color:#64748b;">Manage wage rates, contracted commitments, and roles.</p>
+            <h3 style="font-size:1.15rem;font-weight:700;">Staff Roster & Rota Access (${employees.length})</h3>
+            <p style="font-size:0.8rem;color:#64748b;">
+              Manage employee profiles and grant user ID / passwords for mobile rota access.
+            </p>
           </div>
-          <button class="btn btn-primary btn-sm" id="btn-add-employee">+ New Employee</button>
+          <button class="btn btn-primary btn-sm" id="btn-add-employee">+ New Staff Member</button>
         </div>
         <div class="staff-grid">
           ${cardsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // Render One-Time Password Display Modal
+  function renderOtpModal() {
+    if (!state.showOtpModal) return "";
+    const info = state.showOtpModal;
+
+    return `
+      <div class="modal-overlay" id="otp-modal-overlay">
+        <div class="modal-content" style="max-width: 440px;">
+          <div class="modal-header">
+            <h3 class="modal-title">🔑 One-Time Password Generated</h3>
+            <button class="modal-close" id="btn-close-otp-modal">&times;</button>
+          </div>
+
+          <div class="modal-body" style="text-align: center;">
+            <p style="font-size: 0.85rem; color: #475569;">
+              One-Time Temporary Password for <strong>${info.name || info.username}</strong>:
+            </p>
+
+            <div class="otp-display-box">
+              <div class="otp-code" id="display-otp-code">${info.otp}</div>
+            </div>
+
+            <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-sm); padding: 0.75rem; text-align: left; font-size: 0.8rem; color: #1e40af; margin-bottom: 1rem;">
+              <strong>Instructions for ${info.name || info.username}:</strong>
+              <ol style="margin-left: 18px; margin-top: 4px;">
+                <li>Open the Tudor Local app on their phone.</li>
+                <li>Tap <strong>"Forgot Password"</strong> ➔ <strong>"Log In with OTP"</strong>.</li>
+                <li>Enter their username (<code>${info.username}</code>) and this code.</li>
+                <li>They will be prompted to set their new permanent password!</li>
+              </ol>
+            </div>
+
+            <button class="btn btn-primary" id="btn-copy-otp" style="width: 100%; font-weight: 600;">
+              📋 Copy Code & Done
+            </button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render Grant Access Modal
+  function renderGrantAccessModal() {
+    if (!state.showGrantAccessModal) return "";
+    const emp = state.showGrantAccessModal;
+    const defaultUsername = emp.name.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const defaultPassword = defaultUsername + "2026";
+
+    return `
+      <div class="modal-overlay" id="grant-access-modal-overlay">
+        <div class="modal-content" style="max-width: 440px;">
+          <div class="modal-header">
+            <h3 class="modal-title">🔑 Grant Rota Access to ${emp.name}</h3>
+            <button class="modal-close" id="btn-close-grant-modal">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <p style="font-size: 0.825rem; color: #64748b; margin-bottom: 1rem;">
+              Create login credentials for ${emp.name} so they can download the app and view their shifts.
+            </p>
+
+            <div class="form-group">
+              <label class="form-label">Username</label>
+              <input type="text" class="form-input" id="grant-username" value="${defaultUsername}" required>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Temporary Initial Password</label>
+              <input type="text" class="form-input" id="grant-password" value="${defaultPassword}" required>
+              <p style="font-size: 0.75rem; color: #64748b; margin-top: 0.25rem;">
+                Share this initial password with ${emp.name}.
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Access Role</label>
+              <select class="form-select" id="grant-role">
+                <option value="staff" selected>Staff Member (Can view shifts & punch clock)</option>
+                <option value="admin">Manager / Admin (Full rota editing & settings)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button class="btn btn-secondary" id="btn-cancel-grant">Cancel</button>
+            <button class="btn btn-primary" id="btn-save-grant">Grant Access</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render Must Change Password Modal
+  function renderMustChangePasswordModal() {
+    if (!state.showMustChangePasswordModal) return "";
+
+    return `
+      <div class="modal-overlay" id="must-change-modal-overlay">
+        <div class="modal-content" style="max-width: 400px;">
+          <div class="modal-header">
+            <h3 class="modal-title">🔒 Set Your New Password</h3>
+          </div>
+          <div class="modal-body">
+            <p style="font-size: 0.825rem; color: #64748b; margin-bottom: 1rem;">
+              You signed in with a temporary One-Time Password. Please choose your new permanent password to continue.
+            </p>
+            <div class="form-group">
+              <label class="form-label">New Password</label>
+              <input type="password" class="form-input" id="must-new-password" placeholder="••••••••" required autofocus>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Confirm New Password</label>
+              <input type="password" class="form-input" id="must-confirm-password" placeholder="••••••••" required>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="btn btn-primary" id="btn-save-must-change" style="width: 100%;">
+              Save Password & Enter Rota
+            </button>
+          </div>
         </div>
       </div>
     `;
@@ -1005,7 +1513,7 @@
           <div class="modal-body">
             <div class="form-group">
               <label class="form-label">Business / Venue Name</label>
-              <input type="text" class="form-input" id="set-business-name" value="${s.businessName || ""}" placeholder="e.g. Acme Coffee Roasters">
+              <input type="text" class="form-input" id="set-business-name" value="${s.businessName || ""}">
             </div>
 
             <div class="form-row">
@@ -1028,23 +1536,16 @@
 
             <div class="form-group">
               <label class="form-label">Projected Weekly Revenue (${s.currency})</label>
-              <input type="number" class="form-input" id="set-revenue" value="${s.projectedWeeklyRevenue || 0}" step="100" placeholder="e.g. 15000">
-              <p style="font-size:0.75rem; color:#64748b; margin-top:0.25rem;">Used to calculate your real-time Labor Cost % metric.</p>
+              <input type="number" class="form-input" id="set-revenue" value="${s.projectedWeeklyRevenue || 0}" step="100">
             </div>
 
             <div style="border-top: 1px solid var(--border-color); margin-top: 1.5rem; padding-top: 1rem;">
               <h4 style="font-size: 0.85rem; font-weight: 700; color: #b91c1c; margin-bottom: 0.5rem; text-transform: uppercase;">
                 ⚠️ Clear & Clean Slate Tools
               </h4>
-              <p style="font-size: 0.775rem; color: #64748b; margin-bottom: 0.75rem;">
-                Easily wipe all demo shifts or reset the entire application to an empty state.
-              </p>
               <div style="display: flex; gap: 8px; flex-direction: column;">
                 <button class="btn btn-secondary btn-sm" id="btn-action-clear-shifts" style="color: #b45309; border-color: #fde68a; justify-content: flex-start;">
                   🧹 Clear All Shifts (Keep Staff)
-                </button>
-                <button class="btn btn-danger-outline btn-sm" id="btn-action-wipe-all" style="justify-content: flex-start;">
-                  🗑️ Wipe Entire Rota & Staff (100% Clean Slate)
                 </button>
               </div>
             </div>
@@ -1059,7 +1560,7 @@
     `;
   }
 
-  // Render Install to Phone Modal
+  // Render Install Modal
   function renderInstallModal() {
     if (!state.showInstallModal) return "";
 
@@ -1072,7 +1573,7 @@
           </div>
           <div class="modal-body" style="font-size: 0.85rem;">
             <p style="color: #64748b; margin-bottom: 1.25rem;">
-              You and your team members can install this app directly onto your <strong>iPhone</strong> or <strong>Android</strong> device. It will appear on your home screen, work offline, and open full-screen like a native app.
+              Install this app directly onto your <strong>iPhone</strong> or <strong>Android</strong> device. It opens full-screen and works offline!
             </p>
 
             <div style="margin-bottom: 1.25rem;">
@@ -1081,11 +1582,11 @@
               </h4>
               <div class="install-guide-step">
                 <div class="step-num">1</div>
-                <div>Open this rota website in <strong>Safari</strong> on your iPhone.</div>
+                <div>Open this link in <strong>Safari</strong> on your iPhone.</div>
               </div>
               <div class="install-guide-step">
                 <div class="step-num">2</div>
-                <div>Tap the <strong>Share</strong> button at the bottom of the screen (the square with an arrow pointing up 📤).</div>
+                <div>Tap the <strong>Share</strong> button (the square with an arrow pointing up 📤).</div>
               </div>
               <div class="install-guide-step">
                 <div class="step-num">3</div>
@@ -1093,7 +1594,7 @@
               </div>
               <div class="install-guide-step">
                 <div class="step-num">4</div>
-                <div>Tap <strong>Add</strong> at top right. The Rota app is now on your home screen!</div>
+                <div>Tap <strong>Add</strong> at top right. Done!</div>
               </div>
             </div>
 
@@ -1103,15 +1604,11 @@
               </h4>
               <div class="install-guide-step">
                 <div class="step-num">1</div>
-                <div>Open this rota website in <strong>Google Chrome</strong> on Android.</div>
+                <div>Open this link in <strong>Google Chrome</strong> on Android.</div>
               </div>
               <div class="install-guide-step">
                 <div class="step-num">2</div>
-                <div>Tap the <strong>three dots (⋮)</strong> menu at top right.</div>
-              </div>
-              <div class="install-guide-step">
-                <div class="step-num">3</div>
-                <div>Tap <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.</div>
+                <div>Tap the <strong>three dots (⋮)</strong> at top right -> <strong>"Install app"</strong>.</div>
               </div>
             </div>
           </div>
@@ -1125,11 +1622,10 @@
     `;
   }
 
-  // Render Share with Team Modal
+  // Render Share Modal
   function renderShareModal() {
     if (!state.showShareModal) return "";
-
-    const localUrl = `http://192.168.1.237:8080`;
+    const currentUrl = window.location.origin;
 
     return `
       <div class="modal-overlay" id="share-modal-overlay">
@@ -1140,36 +1636,21 @@
           </div>
           <div class="modal-body" style="font-size: 0.85rem;">
             <p style="color: #64748b; margin-bottom: 1.25rem;">
-              Send this link to your team so they can view their shifts and install the app on their phones:
+              Send this link to your team members so they can log in and view their shifts:
             </p>
 
             <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: var(--radius-md); padding: 1rem; margin-bottom: 1.25rem;">
               <div style="font-size: 0.75rem; font-weight: 700; color: #1e40af; text-transform: uppercase; margin-bottom: 0.35rem;">
-                📶 On the Same Wi-Fi (Venue / Store / Office)
+                🌐 Your Live Rota URL
               </div>
               <div style="display: flex; gap: 8px; align-items: center;">
-                <input type="text" id="share-link-input" readonly value="${localUrl}" class="form-input" style="font-family: monospace; font-weight: 600; background: white; font-size: 0.9rem;">
+                <input type="text" id="share-link-input" readonly value="${currentUrl}" class="form-input" style="font-family: monospace; font-weight: 600; background: white; font-size: 0.9rem;">
                 <button class="btn btn-primary" id="btn-copy-share-url" style="white-space: nowrap;">
                   📋 Copy Link
                 </button>
               </div>
               <p style="font-size: 0.75rem; color: #3b82f6; margin-top: 0.5rem;">
-                ✓ Paste this link into your team WhatsApp or group chat. Any phone connected to your Wi-Fi will open Tudor Local immediately!
-              </p>
-            </div>
-
-            <div style="border-top: 1px solid var(--border-color); padding-top: 1rem;">
-              <div style="font-size: 0.75rem; font-weight: 700; color: #475569; text-transform: uppercase; margin-bottom: 0.35rem;">
-                🌐 If Staff are at Home (Mobile 4G/5G)
-              </div>
-              <p style="font-size: 0.775rem; color: #64748b; margin-bottom: 0.5rem;">
-                To let staff check shifts from home when they are not on your Wi-Fi, run a free tunnel or deploy it online:
-              </p>
-              <div style="background: #f1f5f9; padding: 0.5rem 0.75rem; border-radius: 6px; font-family: monospace; font-size: 0.75rem; color: #0f172a; margin-bottom: 0.5rem;">
-                npx localtunnel --port 8080
-              </div>
-              <p style="font-size: 0.725rem; color: #94a3b8;">
-                This gives you a free <code>https://...</code> public link that works anywhere in the world.
+                ✓ Paste this link in your team WhatsApp group. They can open it on their phones, log in, and tap "Install App"!
               </p>
             </div>
           </div>
@@ -1208,7 +1689,7 @@
 
     const conflicts = checkShiftConflicts(shift, shift.id);
     const netHours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
-    const rate = shift.rate || (shift.employeeId ? ((state.data.employees || []).find(e => e.id === shift.employeeId) || {}).hourlyRate : 15) || 15;
+    const rate = shift.rate || (shift.employeeId ? ((state.data.employees || []).find(e => e.id === shift.employeeId) || {}).hourlyRate : 10) || 10;
     const estCost = (netHours * rate).toFixed(2);
 
     return `
@@ -1252,7 +1733,7 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Role / Position</label>
-                <input type="text" class="form-input" id="shift-role-input" value="${shift.role || "Staff"}">
+                <input type="text" class="form-input" id="shift-role-input" value="${shift.role || "Staff Member"}">
               </div>
             </div>
 
@@ -1306,7 +1787,7 @@
 
             <div class="form-group">
               <label class="form-label">Shift Notes & Instructions</label>
-              <textarea class="form-textarea" id="shift-notes-input" rows="2" placeholder="e.g. Opening duty, closing cash register...">${shift.notes || ""}</textarea>
+              <textarea class="form-textarea" id="shift-notes-input" rows="2" placeholder="e.g. Opening register, floor lead...">${shift.notes || ""}</textarea>
             </div>
           </div>
 
@@ -1339,14 +1820,14 @@
       <div class="modal-overlay" id="emp-modal-overlay">
         <div class="modal-content">
           <div class="modal-header">
-            <h3 class="modal-title">${isNew ? "Add Employee" : "Edit Employee"}</h3>
+            <h3 class="modal-title">${isNew ? "Add Staff Member" : "Edit Staff Member"}</h3>
             <button class="modal-close" id="emp-modal-close-btn">&times;</button>
           </div>
 
           <div class="modal-body">
             <div class="form-group">
               <label class="form-label">Full Name</label>
-              <input type="text" class="form-input" id="emp-name-input" value="${emp.name || ""}" placeholder="e.g. Sarah Jenkins">
+              <input type="text" class="form-input" id="emp-name-input" value="${emp.name || ""}" placeholder="e.g. John Smith">
             </div>
 
             <div class="form-row">
@@ -1358,14 +1839,14 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Primary Role</label>
-                <input type="text" class="form-input" id="emp-role-input" value="${emp.role || ""}" placeholder="e.g. Shift Lead / Barista">
+                <input type="text" class="form-input" id="emp-role-input" value="${emp.role || ""}" placeholder="Staff Member">
               </div>
             </div>
 
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Hourly Wage (${currency})</label>
-                <input type="number" class="form-input" id="emp-rate-input" value="${emp.hourlyRate || 15}" step="0.5">
+                <input type="number" class="form-input" id="emp-rate-input" value="${emp.hourlyRate || 10}" step="0.5">
               </div>
               <div class="form-group">
                 <label class="form-label">Contracted Hours / Wk</label>
@@ -1376,11 +1857,11 @@
             <div class="form-row">
               <div class="form-group">
                 <label class="form-label">Email</label>
-                <input type="email" class="form-input" id="emp-email-input" value="${emp.email || ""}" placeholder="staff@example.com">
+                <input type="email" class="form-input" id="emp-email-input" value="${emp.email || ""}" placeholder="email@example.com">
               </div>
               <div class="form-group">
                 <label class="form-label">Phone</label>
-                <input type="text" class="form-input" id="emp-phone-input" value="${emp.phone || ""}" placeholder="+44 7700 900000">
+                <input type="text" class="form-input" id="emp-phone-input" value="${emp.phone || ""}">
               </div>
             </div>
           </div>
@@ -1404,9 +1885,18 @@
     const root = document.getElementById("app-root");
     if (!root) return;
 
+    // 1. If not authenticated, render Login/Auth Screen
+    if (!state.currentUser) {
+      root.innerHTML = renderAuthScreen();
+      bindAuthEvents();
+      return;
+    }
+
+    // 2. Main Authenticated Application
     let mainContentHtml = "";
     if (state.activeTab === "schedule") {
       mainContentHtml = `
+        ${renderAdminResetBanner()}
         ${renderRotaControls()}
         ${renderOpenShifts()}
         ${renderScheduleGrid()}
@@ -1430,13 +1920,208 @@
       ${renderSettingsModal()}
       ${renderInstallModal()}
       ${renderShareModal()}
+      ${renderGrantAccessModal()}
+      ${renderOtpModal()}
+      ${renderMustChangePasswordModal()}
     `;
 
     bindEvents();
   }
 
-  // Event Listeners Binding
+  // Event Listeners for Authentication Screen
+  function bindAuthEvents() {
+    // Switch to forgot password
+    const linkForgot = document.getElementById("link-forgot-password");
+    if (linkForgot) {
+      linkForgot.addEventListener("click", e => {
+        e.preventDefault();
+        state.authView = "forgot";
+        state.authError = "";
+        state.authSuccess = "";
+        renderApp();
+      });
+    }
+
+    // Back to login
+    const linkBack = document.getElementById("link-back-login");
+    if (linkBack) {
+      linkBack.addEventListener("click", e => {
+        e.preventDefault();
+        state.authView = "login";
+        state.authError = "";
+        state.authSuccess = "";
+        renderApp();
+      });
+    }
+
+    // Go to OTP login
+    const btnGotoOtp = document.getElementById("btn-goto-otp-login");
+    if (btnGotoOtp) {
+      btnGotoOtp.addEventListener("click", () => {
+        state.authView = "reset_otp";
+        state.authError = "";
+        renderApp();
+      });
+    }
+
+    // Submit Login
+    const formLogin = document.getElementById("form-login");
+    if (formLogin) {
+      formLogin.addEventListener("submit", async e => {
+        e.preventDefault();
+        const username = document.getElementById("login-username").value.trim().toLowerCase();
+        const password = document.getElementById("login-password").value;
+
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+            state.currentUser = data.user;
+            localStorage.setItem("tudor_rota_user", JSON.stringify(data.user));
+            state.authError = "";
+            if (data.mustChangePassword) {
+              state.showMustChangePasswordModal = true;
+            }
+            renderApp();
+            showToast(`Welcome back, ${data.user.name || data.user.username}!`);
+          } else {
+            state.authError = data.error || "Login failed.";
+            renderApp();
+          }
+        } catch (err) {
+          // Client-side fallback check
+          const pwHash = await sha256(password);
+          const user = (state.data.users || []).find(u => u.username.toLowerCase() === username);
+
+          if (user && (user.passwordHash === pwHash || user.password === password || user.tempPassword === password)) {
+            if (!user.hasRotaAccess || !user.isActive) {
+              state.authError = "Access denied. Rota access has not been granted by your manager.";
+              renderApp();
+              return;
+            }
+            state.currentUser = user;
+            localStorage.setItem("tudor_rota_user", JSON.stringify(user));
+            if (user.tempPassword === password || user.mustChangePassword) {
+              state.showMustChangePasswordModal = true;
+            }
+            renderApp();
+            showToast(`Welcome, ${user.name || user.username}!`);
+          } else {
+            state.authError = "Invalid username or password.";
+            renderApp();
+          }
+        }
+      });
+    }
+
+    // Submit Forgot Password Request
+    const formForgot = document.getElementById("form-forgot-request");
+    if (formForgot) {
+      formForgot.addEventListener("submit", async e => {
+        e.preventDefault();
+        const username = document.getElementById("forgot-username").value.trim().toLowerCase();
+
+        try {
+          const res = await fetch("/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username })
+          });
+          const data = await res.json();
+          if (data.success) {
+            state.authSuccess = data.message;
+            state.authError = "";
+            renderApp();
+          } else {
+            state.authError = data.error || "Request failed.";
+            renderApp();
+          }
+        } catch (err) {
+          // Offline fallback
+          const user = (state.data.users || []).find(u => u.username.toLowerCase() === username);
+          if (user) {
+            state.data.resetRequests.unshift({
+              id: "reset_" + Date.now(),
+              userId: user.id,
+              username: user.username,
+              name: user.name || user.username,
+              requestedAt: new Date().toLocaleString(),
+              status: "pending"
+            });
+            await saveData();
+            state.authSuccess = `Password reset request submitted for ${user.name || username}! Your manager has been notified.`;
+            state.authError = "";
+          } else {
+            state.authError = "Username not found. Please contact your manager.";
+          }
+          renderApp();
+        }
+      });
+    }
+
+    // Submit OTP Login
+    const formOtp = document.getElementById("form-otp-login");
+    if (formOtp) {
+      formOtp.addEventListener("submit", async e => {
+        e.preventDefault();
+        const username = document.getElementById("otp-login-username").value.trim().toLowerCase();
+        const code = document.getElementById("otp-login-code").value.trim().toUpperCase();
+
+        try {
+          const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, password: code })
+          });
+          const data = await res.json();
+          if (data.success) {
+            state.currentUser = data.user;
+            localStorage.setItem("tudor_rota_user", JSON.stringify(data.user));
+            state.showMustChangePasswordModal = true;
+            state.authError = "";
+            renderApp();
+          } else {
+            state.authError = "Invalid One-Time Password or username.";
+            renderApp();
+          }
+        } catch (err) {
+          const user = (state.data.users || []).find(u => u.username.toLowerCase() === username);
+          if (user && user.tempPassword === code) {
+            state.currentUser = user;
+            localStorage.setItem("tudor_rota_user", JSON.stringify(user));
+            state.showMustChangePasswordModal = true;
+            state.authError = "";
+            renderApp();
+          } else {
+            state.authError = "Invalid One-Time Password or username.";
+            renderApp();
+          }
+        }
+      });
+    }
+  }
+
+  // Event Listeners for Authenticated Application
   function bindEvents() {
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+
+    // Logout Button
+    const logoutBtn = document.getElementById("btn-logout");
+    if (logoutBtn) {
+      logoutBtn.addEventListener("click", () => {
+        state.currentUser = null;
+        localStorage.removeItem("tudor_rota_user");
+        state.authView = "login";
+        renderApp();
+        showToast("Signed out successfully.");
+      });
+    }
+
     // Tab switching
     document.querySelectorAll(".nav-tab").forEach(tab => {
       tab.addEventListener("click", () => {
@@ -1514,6 +2199,199 @@
       });
     }
 
+    // Generate OTP from Admin Alert Banner
+    document.querySelectorAll(".btn-generate-otp-banner").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const userId = btn.dataset.userId;
+        await generateOtpForUser(userId);
+      });
+    });
+
+    // Generate OTP from Staff Roster
+    document.querySelectorAll(".btn-generate-otp").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const userId = btn.dataset.userId;
+        await generateOtpForUser(userId);
+      });
+    });
+
+    // Grant Access button in Staff Roster
+    document.querySelectorAll(".btn-grant-access").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const empId = btn.dataset.empId;
+        const emp = (state.data.employees || []).find(e => e.id === empId);
+        if (emp) {
+          state.showGrantAccessModal = emp;
+          renderApp();
+        }
+      });
+    });
+
+    // Toggle Access (Revoke/Enable) in Staff Roster
+    document.querySelectorAll(".btn-toggle-access").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const userId = btn.dataset.userId;
+        const currentAccess = btn.dataset.current === "true";
+        const newAccess = !currentAccess;
+
+        try {
+          const res = await fetch("/api/auth/toggle-access", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, hasRotaAccess: newAccess })
+          });
+          const data = await res.json();
+          if (data.success) {
+            const user = (state.data.users || []).find(u => u.id === userId);
+            if (user) user.hasRotaAccess = newAccess;
+            await saveData();
+            showToast(data.message);
+          }
+        } catch (e) {
+          const user = (state.data.users || []).find(u => u.id === userId);
+          if (user) {
+            user.hasRotaAccess = newAccess;
+            user.isActive = newAccess;
+            await saveData();
+            showToast(`Access ${newAccess ? "granted" : "revoked"}!`);
+          }
+        }
+      });
+    });
+
+    // Grant Access Modal Save
+    const saveGrantBtn = document.getElementById("btn-save-grant");
+    if (saveGrantBtn) {
+      saveGrantBtn.addEventListener("click", async () => {
+        const emp = state.showGrantAccessModal;
+        const username = document.getElementById("grant-username").value.trim().toLowerCase();
+        const password = document.getElementById("grant-password").value.trim();
+        const role = document.getElementById("grant-role").value;
+
+        if (!username || !password) {
+          alert("Please provide username and initial password.");
+          return;
+        }
+
+        try {
+          const res = await fetch("/api/auth/grant-access", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              employeeId: emp.id,
+              username,
+              password,
+              role
+            })
+          });
+          const data = await res.json();
+          if (data.success) {
+            state.showGrantAccessModal = null;
+            await loadData();
+            showToast(data.message);
+          } else {
+            alert(data.error || "Failed to grant access.");
+          }
+        } catch (err) {
+          // Client fallback
+          const pwHash = await sha256(password);
+          let user = (state.data.users || []).find(u => u.employeeId === emp.id);
+          if (user) {
+            user.username = username;
+            user.passwordHash = pwHash;
+            user.hasRotaAccess = true;
+            user.role = role;
+          } else {
+            user = {
+              id: "user_" + Date.now(),
+              username,
+              passwordHash: pwHash,
+              role,
+              employeeId: emp.id,
+              name: emp.name,
+              hasRotaAccess: true,
+              isActive: true,
+              mustChangePassword: false
+            };
+            if (!state.data.users) state.data.users = [];
+            state.data.users.push(user);
+          }
+          state.showGrantAccessModal = null;
+          await saveData();
+          showToast(`Rota access granted to ${emp.name}!`);
+        }
+      });
+    }
+
+    const cancelGrantBtn = document.getElementById("btn-cancel-grant");
+    const closeGrantBtn = document.getElementById("btn-close-grant-modal");
+    if (cancelGrantBtn) cancelGrantBtn.addEventListener("click", () => { state.showGrantAccessModal = null; renderApp(); });
+    if (closeGrantBtn) closeGrantBtn.addEventListener("click", () => { state.showGrantAccessModal = null; renderApp(); });
+
+    // OTP Modal close & copy
+    const closeOtpBtn = document.getElementById("btn-close-otp-modal");
+    if (closeOtpBtn) closeOtpBtn.addEventListener("click", () => { state.showOtpModal = null; renderApp(); });
+
+    const copyOtpBtn = document.getElementById("btn-copy-otp");
+    if (copyOtpBtn) {
+      copyOtpBtn.addEventListener("click", () => {
+        const code = document.getElementById("display-otp-code").innerText.trim();
+        navigator.clipboard.writeText(code);
+        state.showOtpModal = null;
+        renderApp();
+        showToast("One-Time Password copied to clipboard!");
+      });
+    }
+
+    // Must Change Password Modal save
+    const saveMustChangeBtn = document.getElementById("btn-save-must-change");
+    if (saveMustChangeBtn) {
+      saveMustChangeBtn.addEventListener("click", async () => {
+        const newPw = document.getElementById("must-new-password").value;
+        const confirmPw = document.getElementById("must-confirm-password").value;
+
+        if (newPw.length < 4) {
+          alert("Password must be at least 4 characters long.");
+          return;
+        }
+        if (newPw !== confirmPw) {
+          alert("Passwords do not match.");
+          return;
+        }
+
+        const userId = state.currentUser.id;
+        try {
+          const res = await fetch("/api/auth/change-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, newPassword: newPw })
+          });
+          const data = await res.json();
+          if (data.success) {
+            state.showMustChangePasswordModal = false;
+            state.currentUser.mustChangePassword = false;
+            state.currentUser.tempPassword = null;
+            localStorage.setItem("tudor_rota_user", JSON.stringify(state.currentUser));
+            renderApp();
+            showToast("Password updated successfully! Welcome to your rota.");
+          } else {
+            alert(data.error || "Failed to update password.");
+          }
+        } catch (e) {
+          const user = (state.data.users || []).find(u => u.id === userId);
+          if (user) {
+            user.passwordHash = await sha256(newPw);
+            user.tempPassword = null;
+            user.mustChangePassword = false;
+            await saveData();
+          }
+          state.showMustChangePasswordModal = false;
+          renderApp();
+          showToast("New password saved!");
+        }
+      });
+    }
+
     // Share Modal
     const shareBtn = document.getElementById("btn-share-team-header");
     if (shareBtn) {
@@ -1574,7 +2452,7 @@
     const saveSettingsBtn = document.getElementById("btn-save-settings");
     if (saveSettingsBtn) {
       saveSettingsBtn.addEventListener("click", async () => {
-        const name = document.getElementById("set-business-name").value.trim() || "My Business";
+        const name = document.getElementById("set-business-name").value.trim() || "Tudor Local";
         const curr = document.getElementById("set-currency").value;
         const target = Number(document.getElementById("set-target-labor").value || 20);
         const rev = Number(document.getElementById("set-revenue").value || 0);
@@ -1596,70 +2474,11 @@
     const clearShiftsBtn = document.getElementById("btn-action-clear-shifts");
     if (clearShiftsBtn) {
       clearShiftsBtn.addEventListener("click", async () => {
-        if (!confirm("Are you sure you want to remove all shifts? Employee records will be kept.")) return;
+        if (!confirm("Are you sure you want to remove all shifts? Staff and logins will be kept.")) return;
         state.data.shifts = [];
         state.showSettingsModal = false;
         await saveData();
-        showToast("All shifts removed. Rota is clean!");
-      });
-    }
-
-    // Wipe Entire Rota & Staff Action (100% Clean Slate)
-    const wipeAllBtn = document.getElementById("btn-action-wipe-all");
-    if (wipeAllBtn) {
-      wipeAllBtn.addEventListener("click", async () => {
-        if (!confirm("⚠️ This will permanently remove all shifts, employees, requests, and clock records. Proceed with 100% clean slate?")) return;
-        state.data.employees = [];
-        state.data.shifts = [];
-        state.data.requests = [];
-        state.data.punches = [];
-        state.showSettingsModal = false;
-        await saveData();
-        showToast("Application completely reset to clean slate!");
-      });
-    }
-
-    // Empty state triggers
-    const emptyAddEmp = document.getElementById("btn-empty-add-emp");
-    if (emptyAddEmp) {
-      emptyAddEmp.addEventListener("click", () => {
-        state.editingEmployee = {
-          isNew: true,
-          name: "",
-          departmentId: state.data.departments[0]?.id || "general",
-          role: "Staff Member",
-          hourlyRate: 15.0,
-          contractedHours: 35,
-          email: "",
-          phone: ""
-        };
-        renderApp();
-      });
-    }
-
-    const emptyAddShift = document.getElementById("btn-empty-add-shift");
-    if (emptyAddShift) {
-      emptyAddShift.addEventListener("click", () => {
-        openShiftModal({
-          isNew: true,
-          date: formatDate(state.currentMonday),
-          startTime: "09:00",
-          endTime: "17:00",
-          breakMinutes: 30,
-          role: "General Staff",
-          departmentId: state.data.departments[0]?.id || "general",
-          status: "open",
-          employeeId: null,
-          rate: 15.0
-        });
-      });
-    }
-
-    const emptySettings = document.getElementById("btn-empty-settings");
-    if (emptySettings) {
-      emptySettings.addEventListener("click", () => {
-        state.showSettingsModal = true;
-        renderApp();
+        showToast("All shifts removed. Rota schedule is clear!");
       });
     }
 
@@ -1690,17 +2509,17 @@
           date: formatDate(state.currentMonday),
           startTime: "09:00",
           endTime: "17:00",
-          breakMinutes: 30,
-          role: firstEmp ? firstEmp.role : "General Staff",
+          breakMinutes: 0,
+          role: firstEmp ? firstEmp.role : "Staff Member",
           departmentId: state.data.departments[0]?.id || "general",
           status: firstEmp ? "draft" : "open",
           employeeId: firstEmp ? firstEmp.id : null,
-          rate: firstEmp ? firstEmp.hourlyRate : 15.0
+          rate: firstEmp ? firstEmp.hourlyRate : 10.0
         });
       });
     }
 
-    // Cell Add Shift Buttons
+    // Cell Add Shift Buttons (Admin only)
     document.querySelectorAll(".btn-cell-add").forEach(btn => {
       btn.addEventListener("click", e => {
         e.stopPropagation();
@@ -1714,12 +2533,12 @@
           date: date,
           startTime: "09:00",
           endTime: "17:00",
-          breakMinutes: 30,
-          role: emp ? emp.role : "Staff",
+          breakMinutes: 0,
+          role: emp ? emp.role : "Staff Member",
           departmentId: deptId,
           status: empId ? "draft" : "open",
           employeeId: empId,
-          rate: emp ? emp.hourlyRate : 15.0
+          rate: emp ? emp.hourlyRate : 10.0
         });
       });
     });
@@ -1727,10 +2546,10 @@
     // Edit Shift on card click
     document.querySelectorAll(".shift-card").forEach(card => {
       card.addEventListener("click", e => {
-        if (e.target.closest(".btn-claim-shift")) return;
+        if (e.target.closest(".btn-claim-shift") || e.target.closest(".btn-request-claim")) return;
         const shiftId = card.dataset.shiftId;
         const shift = (state.data.shifts || []).find(s => s.id === shiftId);
-        if (shift) {
+        if (shift && isAdmin) {
           openShiftModal(JSON.parse(JSON.stringify(shift)));
         }
       });
@@ -1744,6 +2563,26 @@
         const shift = (state.data.shifts || []).find(s => s.id === shiftId);
         if (shift) {
           openShiftModal(JSON.parse(JSON.stringify(shift)));
+        }
+      });
+    });
+
+    // Staff Claim open shift request
+    document.querySelectorAll(".btn-request-claim").forEach(btn => {
+      btn.addEventListener("click", async e => {
+        e.stopPropagation();
+        const shiftId = btn.dataset.shiftId;
+        const myEmpId = state.currentUser ? state.currentUser.employeeId : null;
+        if (!myEmpId) {
+          alert("Your user account is not linked to an employee profile.");
+          return;
+        }
+        const shift = (state.data.shifts || []).find(s => s.id === shiftId);
+        if (shift) {
+          shift.employeeId = myEmpId;
+          shift.status = "draft";
+          await saveData();
+          showToast("You claimed this shift! Pending manager sign-off.");
         }
       });
     });
@@ -1873,7 +2712,7 @@
           name: "",
           departmentId: state.data.departments[0]?.id || "general",
           role: "Staff Member",
-          hourlyRate: 15.0,
+          hourlyRate: 10.0,
           contractedHours: 35,
           email: "",
           phone: ""
@@ -1908,7 +2747,7 @@
         const name = document.getElementById("emp-name-input").value.trim();
         const deptId = document.getElementById("emp-dept-input").value;
         const role = document.getElementById("emp-role-input").value.trim();
-        const rate = Number(document.getElementById("emp-rate-input").value || 15);
+        const rate = Number(document.getElementById("emp-rate-input").value || 10);
         const hours = Number(document.getElementById("emp-hours-input").value || 35);
         const email = document.getElementById("emp-email-input").value.trim();
         const phone = document.getElementById("emp-phone-input").value.trim();
@@ -1925,7 +2764,7 @@
           id: state.editingEmployee.id || "emp_" + Date.now(),
           name,
           departmentId: deptId,
-          role: role || "Staff",
+          role: role || "Staff Member",
           hourlyRate: rate,
           contractedHours: hours,
           email,
@@ -1947,7 +2786,7 @@
 
         state.editingEmployee = null;
         await saveData();
-        showToast("Employee details saved!");
+        showToast("Staff member saved!");
       });
     }
 
@@ -1958,7 +2797,6 @@
         if (!confirm("Are you sure you want to remove this employee?")) return;
         const empId = state.editingEmployee.id;
         state.data.employees = state.data.employees.filter(e => e.id !== empId);
-        // Unassign their shifts to open shifts
         (state.data.shifts || []).forEach(s => {
           if (s.employeeId === empId) {
             s.employeeId = null;
@@ -1978,14 +2816,14 @@
         const empSelect = document.getElementById("punch-employee-select");
         const empId = empSelect.value;
         if (!empId) {
-          alert("Please select or add an employee first.");
+          alert("Please select or configure an employee first.");
           return;
         }
         const emp = (state.data.employees || []).find(e => e.id === empId);
 
         const existing = (state.data.punches || []).find(p => p.employeeId === empId && p.status === "active");
         if (existing) {
-          alert(`${emp.name} is already clocked in.`);
+          alert(`${emp ? emp.name : "Staff"} is already clocked in.`);
           return;
         }
 
@@ -2000,7 +2838,7 @@
         });
 
         await saveData();
-        showToast(`${emp.name} clocked in!`);
+        showToast(`${emp ? emp.name : "Staff"} clocked in!`);
       });
     }
 
@@ -2016,20 +2854,48 @@
         }
       });
     });
+  }
 
-    // Print & Export
-    const printBtn = document.getElementById("btn-print-rota");
-    if (printBtn) {
-      printBtn.addEventListener("click", () => {
-        window.print();
+  // Generate OTP helper for Admin
+  async function generateOtpForUser(userId) {
+    try {
+      const res = await fetch("/api/auth/generate-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
       });
-    }
-
-    const exportCsvBtn = document.getElementById("btn-export-csv");
-    if (exportCsvBtn) {
-      exportCsvBtn.addEventListener("click", () => {
-        exportRotaCSV();
-      });
+      const data = await res.json();
+      if (data.success) {
+        state.showOtpModal = {
+          name: data.name,
+          username: data.username,
+          otp: data.otp
+        };
+        await loadData();
+      } else {
+        alert(data.error || "Failed to generate OTP.");
+      }
+    } catch (e) {
+      // Offline fallback
+      const user = (state.data.users || []).find(u => u.id === userId);
+      if (user) {
+        const otp = "TL-" + Math.floor(1000 + Math.random() * 9000);
+        user.tempPassword = otp;
+        user.mustChangePassword = true;
+        for (const r of state.data.resetRequests) {
+          if (r.userId === userId) {
+            r.status = "otp_generated";
+            r.otp = otp;
+          }
+        }
+        await saveData();
+        state.showOtpModal = {
+          name: user.name || user.username,
+          username: user.username,
+          otp: otp
+        };
+        renderApp();
+      }
     }
   }
 
@@ -2037,32 +2903,6 @@
   function openShiftModal(shift) {
     state.editingShift = shift;
     renderApp();
-  }
-
-  // Export CSV
-  function exportRotaCSV() {
-    const weekDates = getWeekDates().map(formatDate);
-    const shifts = (state.data.shifts || []).filter(s => weekDates.includes(s.date));
-
-    let csv = "Shift ID,Date,Day,Start Time,End Time,Break (mins),Net Hours,Employee,Department,Role,Hourly Rate,Estimated Cost,Status,Notes\n";
-    shifts.forEach(s => {
-      const emp = (state.data.employees || []).find(e => e.id === s.employeeId) || { name: "Open Shift" };
-      const dept = (state.data.departments || []).find(d => d.id === s.departmentId) || { name: "" };
-      const hours = calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
-      const cost = (hours * (s.rate || 0)).toFixed(2);
-      const day = parseDate(s.date).toLocaleDateString("en-GB", { weekday: "short" });
-
-      csv += `"${s.id}","${s.date}","${day}","${s.startTime}","${s.endTime}",${s.breakMinutes || 0},${hours},"${emp.name}","${dept.name}","${s.role}",${s.rate || 0},${cost},"${s.status}","${(s.notes || "").replace(/"/g, '""')}"\n`;
-    });
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `rota_schedule_week_${weekDates[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   }
 
   // Real-time clock updater for Punch terminal
