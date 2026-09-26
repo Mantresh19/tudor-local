@@ -2442,10 +2442,6 @@
               <button type="button" class="preset-btn" id="btn-preset-zero">0 (Out of stock)</button>
               <button type="button" class="preset-btn" id="btn-preset-clear">Clear</button>
             </div>
-
-            <p style="font-size:0.75rem;color:var(--text-muted);margin:0;">
-              Type the exact number using your mobile numpad. No +/- buttons needed.
-            </p>
           </div>
 
           <div class="modal-footer" style="justify-content:space-between;padding-top:0.75rem;border-top:1px solid var(--border-color);">
@@ -3868,7 +3864,7 @@
           const res = await fetch("/api/inventory/delete-product", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId: prodId })
+            body: JSON.stringify({ id: prodId, productId: prodId })
           });
           const data = await res.json();
           if (data.success) {
@@ -3964,7 +3960,7 @@
           const res = await fetch("/api/inventory/update-stock", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId: prodId, stock: newCount })
+            body: JSON.stringify({ id: prodId, productId: prodId, stock: newCount })
           });
           const data = await res.json();
           if (data.success) {
@@ -4043,7 +4039,7 @@
           const res = await fetch("/api/inventory/delete-product", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ productId: prodId })
+            body: JSON.stringify({ id: prodId, productId: prodId })
           });
           const data = await res.json();
           if (data.success) {
@@ -4097,7 +4093,7 @@
           const res = await fetch("/api/inventory/save-product", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ product: productPayload })
+            body: JSON.stringify({ ...productPayload, product: productPayload, id: productPayload.id, productId: productPayload.id })
           });
           const data = await res.json();
           if (data.success) {

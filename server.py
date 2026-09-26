@@ -391,7 +391,7 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
 
         # 9. Inventory: Update Stock Count (Quick Mobile Numpad)
         if parsed.path == "/api/inventory/update-stock":
-            item_id = req_data.get("id")
+            item_id = req_data.get("id") or req_data.get("productId")
             new_stock = req_data.get("stock")
             if item_id is None or new_stock is None:
                 self.send_json(400, {"success": False, "error": "Item ID and stock count are required."})
@@ -403,7 +403,7 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                 self.send_json(404, {"success": False, "error": "Inventory item not found."})
                 return
             item["stock"] = max(0, int(new_stock))
-            item["updatedAt"] = datetime.now().isoformat()
+            item["lastUpdated"] = datetime.now().isoformat()
             write_db(db)
             self.send_json(200, {"success": True, "item": item, "message": f"Stock updated to {item['stock']}."})
             return
@@ -412,12 +412,14 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
         if parsed.path == "/api/inventory/save-product":
             db = read_db()
             inv = db.setdefault("inventory", [])
-            item_id = req_data.get("id")
-            name = req_data.get("name", "").strip()
-            category = req_data.get("category", "General").strip()
-            size = req_data.get("size", "").strip()
-            stock = max(0, int(req_data.get("stock", 0)))
-            image_url = req_data.get("imageUrl", "").strip()
+            prod_data = req_data.get("product") if isinstance(req_data.get("product"), dict) else req_data
+            item_id = prod_data.get("id") or prod_data.get("productId")
+            name = prod_data.get("name", "").strip()
+            category = prod_data.get("category", "Small Drinks").strip()
+            unit = prod_data.get("unit") or prod_data.get("size") or "Unit"
+            stock = max(0, int(prod_data.get("stock", 0)))
+            min_threshold = max(1, int(prod_data.get("minThreshold", 6)))
+            image_url = prod_data.get("image") or prod_data.get("imageUrl") or ""
 
             if not name:
                 self.send_json(400, {"success": False, "error": "Product name is required."})
@@ -429,42 +431,48 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                     item.update({
                         "name": name,
                         "category": category,
-                        "size": size,
+                        "unit": unit,
                         "stock": stock,
-                        "imageUrl": image_url,
-                        "updatedAt": datetime.now().isoformat()
+                        "minThreshold": min_threshold,
+                        "image": image_url,
+                        "lastUpdated": datetime.now().isoformat()
                     })
                 else:
                     item = {
                         "id": item_id,
                         "name": name,
                         "category": category,
-                        "size": size,
+                        "unit": unit,
                         "stock": stock,
-                        "imageUrl": image_url,
-                        "updatedAt": datetime.now().isoformat()
+                        "minThreshold": min_threshold,
+                        "image": image_url,
+                        "lastUpdated": datetime.now().isoformat()
                     }
                     inv.append(item)
             else:
-                item_id = f"inv_{int(time.time()*1000)}"
+                item_id = f"prod_{int(time.time()*1000)}"
                 item = {
                     "id": item_id,
                     "name": name,
                     "category": category,
-                    "size": size,
+                    "unit": unit,
                     "stock": stock,
-                    "imageUrl": image_url,
-                    "updatedAt": datetime.now().isoformat()
+                    "minThreshold": min_threshold,
+                    "image": image_url,
+                    "lastUpdated": datetime.now().isoformat()
                 }
                 inv.append(item)
 
             write_db(db)
-            self.send_json(200, {"success": True, "item": item, "message": "Product saved successfully."})
+            self.send_json(200, {"success": True, "product": item, "item": item, "message": "Product saved successfully."})
             return
 
         # 11. Inventory: Delete Product
         if parsed.path == "/api/inventory/delete-product":
-            item_id = req_data.get("id")
+            item_id = req_data.get("id") or req_data.get("productId")
+            if not item_id:
+                self.send_json(400, {"success": False, "error": "Product ID is required."})
+                return
             db = read_db()
             inv = db.get("inventory", [])
             orig_len = len(inv)
