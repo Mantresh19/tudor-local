@@ -45,8 +45,24 @@
         mustChangePassword: false
       }
     ],
-    resetRequests: []
+    resetRequests: [],
+    inventory: []
   };
+
+  // Inventory Categories List
+  const INVENTORY_CATEGORIES = [
+    { id: "all", name: "All Items", icon: "📦" },
+    { id: "Small Drinks", name: "Small Drinks", icon: "🥤" },
+    { id: "Big Drinks", name: "Big Drinks", icon: "🍾" },
+    { id: "Water", name: "Water", icon: "💧" },
+    { id: "Juices & Smoothies", name: "Juices & Smoothies", icon: "🧃" },
+    { id: "Milk Drinks & Coffee", name: "Milk Drinks & Coffee", icon: "☕" },
+    { id: "Medicine", name: "Medicine", icon: "💊" },
+    { id: "Beers & Ciders", name: "Beers & Ciders", icon: "🍺" },
+    { id: "Wines & Spirits", name: "Wines & Spirits", icon: "🍷" },
+    { id: "Grocery", name: "Grocery", icon: "🥫" },
+    { id: "Pet Food", name: "Pet Food", icon: "🐾" }
+  ];
 
   // Application State
   const state = {
@@ -70,8 +86,58 @@
     showSettingsModal: false,
     showGrantAccessModal: null, // employee object
     showOtpModal: null, // { name, username, otp }
-    showMustChangePasswordModal: false
+    showMustChangePasswordModal: false,
+    // Inventory Management State
+    inventorySearchQuery: "",
+    selectedInventoryCategory: "all",
+    selectedInventoryStatus: "all", // 'all' | 'low' | 'out'
+    adjustingInventoryItem: null, // Item being adjusted with phone numpad
+    editingInventoryProduct: null // Item being added or edited
   };
+
+  // Permission helper: Check if user has access to Inventory Management
+  function hasInventoryAccess(user) {
+    if (!user) return false;
+    if (user.role === "admin") return true;
+    if (user.hasInventoryAccess === true) return true;
+    if (user.employeeId) {
+      const emp = (state.data.employees || []).find(e => e.id === user.employeeId);
+      if (emp) {
+        if (emp.departmentId === "mgmt") return true;
+        if (emp.role && (emp.role.toLowerCase().includes("manager") || emp.role.toLowerCase().includes("management") || emp.role.toLowerCase().includes("supervisor"))) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Category Icon helper
+  function getCategoryIcon(cat) {
+    const found = INVENTORY_CATEGORIES.find(c => c.id === cat || c.name === cat);
+    return found ? found.icon : "📦";
+  }
+
+  // Stock Badge helper
+  function getStockBadgeHtml(stock) {
+    if (stock > 5) {
+      return `<span class="inv-stock-indicator in-stock">✓ ${stock} in stock</span>`;
+    } else if (stock > 0) {
+      return `<span class="inv-stock-indicator low-stock">⚠️ ${stock} low stock</span>`;
+    } else {
+      return `<span class="inv-stock-indicator out-of-stock">✕ Out of stock</span>`;
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return "";
+    return String(str)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
+  }
 
   // Apply theme immediately
   document.documentElement.setAttribute("data-theme", state.theme);
@@ -512,6 +578,7 @@
   function renderHeader() {
     const user = state.currentUser;
     const isAdmin = user && user.role === "admin";
+    const canInv = hasInventoryAccess(user);
     const pendingResets = (state.data.resetRequests || []).filter(r => r.status === "pending").length;
     const userInitial = ((user ? user.name || user.username : "U")[0] || "U").toUpperCase();
 
@@ -531,6 +598,15 @@
           <button class="nav-tab ${state.activeTab === "schedule" ? "active" : ""}" data-tab="schedule">
             📅 Schedule
           </button>
+          ${
+            canInv
+              ? `
+            <button class="nav-tab ${state.activeTab === "inventory" ? "active" : ""}" data-tab="inventory">
+              📦 Inventory
+            </button>
+          `
+              : ""
+          }
           ${
             isAdmin
               ? `
@@ -1021,6 +1097,7 @@
   function renderBottomNav() {
     if (!state.currentUser) return "";
     const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    const canInv = hasInventoryAccess(state.currentUser);
     const pendingResets = (state.data.resetRequests || []).filter(r => r.status === "pending").length;
 
     return `
@@ -1033,6 +1110,16 @@
           <span class="mobile-nav-icon">📅</span>
           <span>Schedule</span>
         </button>
+        ${
+          canInv
+            ? `
+          <button class="mobile-nav-item ${state.activeTab === "inventory" ? "active" : ""}" data-tab="inventory">
+            <span class="mobile-nav-icon">📦</span>
+            <span>Inventory</span>
+          </button>
+        `
+            : ""
+        }
         ${
           isAdmin
             ? `
@@ -1565,6 +1652,16 @@
                 <strong>${user ? user.username : "Not Set"}</strong>
               </div>
               ${
+                user
+                  ? `
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-top:4px;padding-top:4px;border-top:1px dashed #cbd5e1;">
+                  <span style="font-weight:600;color:#475569;">📦 Store Inventory:</span>
+                  <strong style="color:${hasInventoryAccess(user) ? '#16a34a' : '#64748b'};">${hasInventoryAccess(user) ? '✓ Allowed' : '✕ Hidden'}</strong>
+                </div>
+              `
+                  : ""
+              }
+              ${
                 pendingReset
                   ? `
                 <div style="background:#fef3c7;border:1px solid #fde68a;color:#92400e;padding:4px 6px;border-radius:4px;font-size:10px;margin-top:6px;font-weight:600;">
@@ -1590,6 +1687,9 @@
                   : `
                 <button class="btn btn-secondary btn-sm btn-toggle-access" data-user-id="${user.id}" data-current="${hasAccess}">
                   ${hasAccess ? "Revoke" : "Restore"}
+                </button>
+                <button class="btn btn-secondary btn-sm btn-toggle-inventory-access" data-user-id="${user.id}" data-current="${hasInventoryAccess(user)}" title="Toggle Store Inventory Management Access">
+                  📦 ${hasInventoryAccess(user) ? "Lock Inv" : "Allow Inv"}
                 </button>
                 <button class="btn btn-secondary btn-sm btn-generate-otp" data-user-id="${user.id}" title="Generate One-Time Password for this employee">
                   🔑 Reset OTP
@@ -1700,6 +1800,16 @@
                 <option value="staff" selected>Staff Member (Can view shifts & punch clock)</option>
                 <option value="admin">Manager / Admin (Full rota editing & settings)</option>
               </select>
+            </div>
+
+            <div class="form-group" style="margin-top: 0.85rem; padding: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: var(--radius-sm);">
+              <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.825rem; font-weight: 600; color: #1e293b; user-select: none;">
+                <input type="checkbox" id="grant-inventory-access" ${emp.departmentId === "mgmt" ? "checked" : ""}>
+                <span>📦 Grant Store Inventory Management Access</span>
+              </label>
+              <p style="font-size: 0.72rem; color: #64748b; margin-top: 0.25rem; margin-left: 22px;">
+                Permits this user to see the Inventory tab and adjust stock counts. Normal users will not see it.
+              </p>
             </div>
           </div>
 
@@ -2095,6 +2205,332 @@
     `;
   }
 
+  // Render Store Inventory Management Tab
+  function renderInventoryTab() {
+    if (!hasInventoryAccess(state.currentUser)) {
+      return `
+        <div style="text-align: center; padding: 3rem 1rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+          <h3 style="font-size: 1.25rem; font-weight: 700; color: var(--text-main);">Access Restricted</h3>
+          <p style="font-size: 0.85rem; color: var(--text-muted); max-width: 400px; margin: 0.5rem auto 1.5rem;">
+            Store inventory management is restricted to authorized store management only.
+          </p>
+          <button class="btn btn-primary" id="btn-back-to-schedule">Return to Schedule</button>
+        </div>
+      `;
+    }
+
+    const items = state.data.inventory || [];
+    const searchQuery = (state.inventorySearchQuery || "").trim().toLowerCase();
+    const activeCategory = state.selectedInventoryCategory || "all";
+    const activeStatus = state.selectedInventoryStatus || "all";
+
+    // Filtering
+    const filteredItems = items.filter(item => {
+      // Category filter
+      if (activeCategory !== "all" && item.category !== activeCategory) {
+        return false;
+      }
+      // Status filter
+      const stock = Number(item.stock || 0);
+      const minThreshold = Number(item.minThreshold || 5);
+      if (activeStatus === "low_stock" && !(stock > 0 && stock <= minThreshold)) {
+        return false;
+      }
+      if (activeStatus === "out_of_stock" && stock > 0) {
+        return false;
+      }
+      if (activeStatus === "in_stock" && stock <= minThreshold) {
+        return false;
+      }
+      // Search query
+      if (searchQuery) {
+        const nameMatch = (item.name || "").toLowerCase().includes(searchQuery);
+        const catMatch = (item.category || "").toLowerCase().includes(searchQuery);
+        const unitMatch = (item.unit || "").toLowerCase().includes(searchQuery);
+        if (!nameMatch && !catMatch && !unitMatch) return false;
+      }
+      return true;
+    });
+
+    // Counts for stats chips
+    const totalCount = items.length;
+    const inStockCount = items.filter(i => Number(i.stock || 0) > Number(i.minThreshold || 5)).length;
+    const lowStockCount = items.filter(i => Number(i.stock || 0) > 0 && Number(i.stock || 0) <= Number(i.minThreshold || 5)).length;
+    const outOfStockCount = items.filter(i => Number(i.stock || 0) <= 0).length;
+
+    // Categories pill HTML
+    const categoryPillsHtml = INVENTORY_CATEGORIES.map(cat => {
+      const isActive = activeCategory === cat.id;
+      const count = cat.id === "all" ? items.length : items.filter(i => i.category === cat.id).length;
+      return `
+        <button class="inv-category-pill ${isActive ? "active" : ""}" data-category="${cat.id}">
+          <span>${cat.icon}</span>
+          <span>${cat.name}</span>
+          <span style="font-size: 0.725rem; opacity: 0.75; margin-left: 2px;">(${count})</span>
+        </button>
+      `;
+    }).join("");
+
+    // Items Cards HTML
+    let itemsHtml = "";
+    if (filteredItems.length === 0) {
+      itemsHtml = `
+        <div style="grid-column: 1 / -1; text-align: center; padding: 3rem 1rem; background: var(--bg-card); border: 1px dashed var(--border-color); border-radius: var(--radius-lg);">
+          <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🔍</div>
+          <h4 style="font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 0.5rem;">No products found</h4>
+          <p style="font-size: 0.825rem; color: var(--text-muted); margin-bottom: 1rem;">
+            No items matched your search ${state.inventorySearchQuery ? `"${escapeHtml(state.inventorySearchQuery)}"` : ""}.
+          </p>
+          <div style="display:flex; justify-content:center; gap:8px; flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" id="btn-reset-inv-filter">Reset Filters</button>
+            <button class="btn btn-primary btn-sm" id="btn-add-product-empty">+ Add New Product</button>
+          </div>
+        </div>
+      `;
+    } else {
+      itemsHtml = filteredItems.map(item => {
+        const stock = Number(item.stock || 0);
+        const icon = getCategoryIcon(item.category);
+        const hasImg = !!item.image;
+
+        return `
+          <div class="inv-card" data-id="${item.id}">
+            <div class="inv-card-thumb-wrap">
+              ${
+                hasImg
+                  ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="inv-card-img" onerror="this.style.display='none'; if(this.nextElementSibling) this.nextElementSibling.style.display='flex';" loading="lazy">`
+                  : ""
+              }
+              <span class="inv-card-fallback-icon" style="${hasImg ? "display:none;" : "display:flex;"}">${icon}</span>
+            </div>
+
+            <div class="inv-card-info">
+              <div class="inv-card-name" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+              <div class="inv-card-meta">
+                <span class="inv-category-tag">${icon} ${escapeHtml(item.category)}</span>
+                <span style="color:#94a3b8;">•</span>
+                <span>${escapeHtml(item.unit || "Unit")}</span>
+              </div>
+              <div>
+                ${getStockBadgeHtml(stock, item.minThreshold)}
+              </div>
+            </div>
+
+            <div class="inv-card-actions">
+              <button class="inv-adjust-btn btn-open-stock-numpad" data-id="${item.id}" title="Tap to enter count from phone numpad">
+                <span class="inv-adjust-count">${stock}</span>
+                <span class="inv-adjust-lbl">ADJUST</span>
+              </button>
+              <div class="inv-card-row-actions">
+                <button class="inv-icon-btn btn-edit-product" data-id="${item.id}" title="Edit product details">✏️</button>
+                <button class="inv-icon-btn btn-delete-product" data-id="${item.id}" title="Delete product">🗑️</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    return `
+      <div class="inventory-container">
+        <!-- Header -->
+        <div class="inventory-header-bar">
+          <div class="inventory-title-group">
+            <h2>📦 Store Inventory <span style="font-size:0.8rem;font-weight:600;background:var(--border-light);border:1px solid var(--border-color);padding:2px 8px;border-radius:9999px;color:var(--text-muted);">${filteredItems.length} items</span></h2>
+            <p>Tap any item's count button to adjust directly using your phone numpad.</p>
+          </div>
+          <button class="btn btn-primary btn-sm" id="btn-add-product-header" style="white-space:nowrap;">
+            + Add New Item
+          </button>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="inventory-search-wrap">
+          <span class="inventory-search-icon">🔍</span>
+          <input 
+            type="text" 
+            id="inv-search-input" 
+            class="inventory-search-input" 
+            placeholder="Search products by name (e.g. Monster, Red Bull, Beans)..." 
+            value="${escapeHtml(state.inventorySearchQuery || "")}" 
+            autocomplete="off"
+          />
+          ${
+            state.inventorySearchQuery
+              ? `<button class="inventory-search-clear" id="btn-clear-inv-search" title="Clear search">✕</button>`
+              : ""
+          }
+        </div>
+
+        <!-- Category Filter Horizontal Strip -->
+        <div class="inventory-category-strip">
+          ${categoryPillsHtml}
+        </div>
+
+        <!-- Status Filter Bar -->
+        <div class="inventory-status-bar">
+          <div class="inventory-filter-chips">
+            <button class="inv-status-chip ${activeStatus === "all" ? "active" : ""}" data-status="all">
+              All (${totalCount})
+            </button>
+            <button class="inv-status-chip ${activeStatus === "in_stock" ? "active" : ""}" data-status="in_stock" style="${activeStatus === "in_stock" ? "background:#dcfce7;border-color:#86efac;color:#15803d;" : ""}">
+              ✓ In Stock (${inStockCount})
+            </button>
+            <button class="inv-status-chip ${activeStatus === "low_stock" ? "active" : ""}" data-status="low_stock" style="${activeStatus === "low_stock" ? "background:#fef3c7;border-color:#fde68a;color:#b45309;" : ""}">
+              ⚠️ Low Stock (${lowStockCount})
+            </button>
+            <button class="inv-status-chip ${activeStatus === "out_of_stock" ? "active" : ""}" data-status="out_of_stock" style="${activeStatus === "out_of_stock" ? "background:#fee2e2;border-color:#fca5a5;color:#b91c1c;" : ""}">
+              ✕ Out of Stock (${outOfStockCount})
+            </button>
+          </div>
+          <div style="font-size: 0.775rem; color: var(--text-muted);">
+            Showing <strong>${filteredItems.length}</strong> of ${totalCount} items
+          </div>
+        </div>
+
+        <!-- Products List -->
+        <div class="inventory-list">
+          ${itemsHtml}
+        </div>
+      </div>
+    `;
+  }
+
+  // Render Stock Adjustment Numpad Modal
+  function renderStockNumpadModal() {
+    if (!state.adjustingInventoryItem) return "";
+    const item = state.adjustingInventoryItem;
+    const icon = getCategoryIcon(item.category);
+
+    return `
+      <div class="modal-overlay" id="stock-numpad-overlay" style="display:flex;align-items:center;justify-content:center;">
+        <div class="modal-content stock-numpad-modal-card">
+          <div class="modal-header" style="justify-content:space-between;padding-bottom:0.75rem;border-bottom:1px solid var(--border-color);">
+            <h3 class="modal-title" style="font-size:1.05rem;display:flex;align-items:center;gap:6px;">
+              <span>🔢 Adjust Inventory Count</span>
+            </h3>
+            <button class="modal-close" id="btn-close-stock-numpad">&times;</button>
+          </div>
+
+          <div class="modal-body" style="padding:1.25rem 1rem;">
+            <div style="font-size:1.05rem;font-weight:700;color:var(--text-main);line-height:1.3;margin-bottom:4px;">
+              ${escapeHtml(item.name)}
+            </div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:1.25rem;">
+              <span>${icon} ${escapeHtml(item.category)}</span> • <span>${escapeHtml(item.unit || "Unit")}</span>
+            </div>
+
+            <div style="font-size:0.825rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;">
+              Enter Quantity
+            </div>
+
+            <input
+              type="number"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              class="stock-numpad-input"
+              id="stock-numpad-value"
+              value="${item.stock !== undefined && item.stock !== null ? item.stock : 0}"
+              min="0"
+              max="99999"
+              step="1"
+              autocomplete="off"
+            />
+
+            <div class="stock-quick-presets">
+              <button type="button" class="preset-btn" id="btn-preset-zero">0 (Out of stock)</button>
+              <button type="button" class="preset-btn" id="btn-preset-clear">Clear</button>
+            </div>
+
+            <p style="font-size:0.75rem;color:var(--text-muted);margin:0;">
+              Type the exact number using your mobile numpad. No +/- buttons needed.
+            </p>
+          </div>
+
+          <div class="modal-footer" style="justify-content:space-between;padding-top:0.75rem;border-top:1px solid var(--border-color);">
+            <button type="button" class="btn btn-secondary" id="btn-cancel-stock-numpad" style="flex:1;">Cancel</button>
+            <button type="button" class="btn btn-primary" id="btn-save-stock-numpad" style="flex:1.5;">✓ Update Count</button>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Render Add / Edit Product Modal
+  function renderProductModal() {
+    if (!state.editingInventoryProduct) return "";
+    const prod = state.editingInventoryProduct;
+    const isNew = !prod.id || prod.isNew;
+
+    const categoryOptions = INVENTORY_CATEGORIES
+      .filter(c => c.id !== "all")
+      .map(c => `<option value="${c.id}" ${prod.category === c.id ? "selected" : ""}>${c.icon} ${c.name}</option>`)
+      .join("");
+
+    return `
+      <div class="modal-overlay" id="product-modal-overlay" style="display:flex;align-items:center;justify-content:center;">
+        <div class="modal-content" style="max-width:480px;width:94%;">
+          <div class="modal-header">
+            <h3 class="modal-title">${isNew ? "✨ Add New Product" : "✏️ Edit Product Details"}</h3>
+            <button class="modal-close" id="btn-close-product-modal">&times;</button>
+          </div>
+
+          <div class="modal-body">
+            <div class="form-group">
+              <label class="form-label">Product Name *</label>
+              <input type="text" class="form-input" id="prod-name-input" value="${escapeHtml(prod.name || "")}" placeholder="e.g. Monster Energy Ultra White 500ml" required>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Category *</label>
+                <select class="form-select" id="prod-category-input">
+                  ${categoryOptions}
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Packaging / Unit</label>
+                <input type="text" class="form-input" id="prod-unit-input" value="${escapeHtml(prod.unit || "500ml Can")}" placeholder="e.g. 500ml Can, 2L Bottle, Pack">
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Current Stock Count</label>
+                <input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="prod-stock-input" value="${prod.stock !== undefined ? prod.stock : 0}" min="0">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Low Stock Alert Level</label>
+                <input type="number" inputmode="numeric" pattern="[0-9]*" class="form-input" id="prod-threshold-input" value="${prod.minThreshold || 6}" min="1">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Product Image URL (Optional)</label>
+              <input type="url" class="form-input" id="prod-image-input" value="${escapeHtml(prod.image || "")}" placeholder="https://images.unsplash.com/...">
+              <p style="font-size:0.75rem;color:var(--text-muted);margin-top:0.25rem;">
+                Optional image link. Default category icon will be used if blank.
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-footer" style="justify-content:space-between;">
+            ${
+              !isNew
+                ? `<button type="button" class="btn btn-danger-outline" id="btn-delete-product-from-modal">Delete</button>`
+                : `<div></div>`
+            }
+            <div style="display:flex;gap:8px;">
+              <button type="button" class="btn btn-secondary" id="btn-cancel-product-modal">Cancel</button>
+              <button type="button" class="btn btn-primary" id="btn-save-product-modal">${isNew ? "Add Product" : "Save Changes"}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // Master Render Function
   function renderApp() {
     const root = document.getElementById("app-root");
@@ -2111,6 +2547,8 @@
     let mainContentHtml = "";
     if (state.activeTab === "overview") {
       mainContentHtml = renderMobileOverview();
+    } else if (state.activeTab === "inventory" && hasInventoryAccess(state.currentUser)) {
+      mainContentHtml = renderInventoryTab();
     } else if (state.activeTab === "staff" && state.currentUser && state.currentUser.role === "admin") {
       mainContentHtml = renderStaffTab();
     } else {
@@ -2129,9 +2567,22 @@
       ${renderGrantAccessModal()}
       ${renderOtpModal()}
       ${renderMustChangePasswordModal()}
+      ${renderStockNumpadModal()}
+      ${renderProductModal()}
     `;
 
     bindEvents();
+
+    // Auto-focus and select input in Stock Numpad Modal if open
+    if (state.adjustingInventoryItem) {
+      setTimeout(() => {
+        const numInput = document.getElementById("stock-numpad-value");
+        if (numInput) {
+          numInput.focus();
+          numInput.select();
+        }
+      }, 50);
+    }
   }
 
   // Event Listeners for Authentication Screen
@@ -2630,6 +3081,36 @@
       });
     });
 
+    // Toggle Inventory Management Access
+    document.querySelectorAll(".btn-toggle-inventory-access").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const userId = btn.dataset.userId;
+        const current = btn.dataset.current === "true";
+        const newSetting = !current;
+        try {
+          const res = await fetch("/api/auth/toggle-inventory-access", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId, hasInventoryAccess: newSetting })
+          });
+          const data = await res.json();
+          if (data.success) {
+            await loadData();
+            showToast(data.message);
+          } else {
+            alert(data.error || "Failed to update inventory access.");
+          }
+        } catch (e) {
+          const user = (state.data.users || []).find(u => u.id === userId);
+          if (user) {
+            user.hasInventoryAccess = newSetting;
+            await saveData();
+            showToast(`Inventory access ${newSetting ? "granted" : "revoked"}!`);
+          }
+        }
+      });
+    });
+
     // Grant Access Modal Save
     const saveGrantBtn = document.getElementById("btn-save-grant");
     if (saveGrantBtn) {
@@ -2638,6 +3119,8 @@
         const username = document.getElementById("grant-username").value.trim().toLowerCase();
         const password = document.getElementById("grant-password").value.trim();
         const role = document.getElementById("grant-role").value;
+        const invCheckbox = document.getElementById("grant-inventory-access");
+        const hasInvAccess = invCheckbox ? invCheckbox.checked : false;
 
         if (!username || !password) {
           alert("Please provide username and initial password.");
@@ -2652,7 +3135,8 @@
               employeeId: emp.id,
               username,
               password,
-              role
+              role,
+              hasInventoryAccess: hasInvAccess
             })
           });
           const data = await res.json();
@@ -2672,6 +3156,7 @@
             user.passwordHash = pwHash;
             user.hasRotaAccess = true;
             user.role = role;
+            user.hasInventoryAccess = hasInvAccess;
           } else {
             user = {
               id: "user_" + Date.now(),
@@ -2681,6 +3166,7 @@
               employeeId: emp.id,
               name: emp.name,
               hasRotaAccess: true,
+              hasInventoryAccess: hasInvAccess,
               isActive: true,
               mustChangePassword: false
             };
@@ -3257,6 +3743,393 @@
         }
       });
     });
+
+    // --- STORE INVENTORY EVENT LISTENERS ---
+    const backScheduleBtn = document.getElementById("btn-back-to-schedule");
+    if (backScheduleBtn) {
+      backScheduleBtn.addEventListener("click", () => {
+        state.activeTab = "schedule";
+        renderApp();
+      });
+    }
+
+    // Live search input
+    const invSearchInput = document.getElementById("inv-search-input");
+    if (invSearchInput) {
+      invSearchInput.addEventListener("input", (e) => {
+        state.inventorySearchQuery = e.target.value;
+        const q = e.target.value.toLowerCase().trim();
+        document.querySelectorAll(".inv-card").forEach(card => {
+          const name = (card.querySelector(".inv-card-name")?.textContent || "").toLowerCase();
+          const meta = (card.querySelector(".inv-card-meta")?.textContent || "").toLowerCase();
+          if (!q || name.includes(q) || meta.includes(q)) {
+            card.style.display = "flex";
+          } else {
+            card.style.display = "none";
+          }
+        });
+        const clearBtn = document.getElementById("btn-clear-inv-search");
+        if (clearBtn) clearBtn.style.display = q ? "block" : "none";
+      });
+      invSearchInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          renderApp();
+        }
+      });
+    }
+
+    const clearInvSearchBtn = document.getElementById("btn-clear-inv-search");
+    if (clearInvSearchBtn) {
+      clearInvSearchBtn.addEventListener("click", () => {
+        state.inventorySearchQuery = "";
+        renderApp();
+      });
+    }
+
+    // Category pills
+    document.querySelectorAll(".inv-category-pill").forEach(pill => {
+      pill.addEventListener("click", () => {
+        state.selectedInventoryCategory = pill.dataset.category;
+        renderApp();
+      });
+    });
+
+    // Status chips
+    document.querySelectorAll(".inv-status-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        state.selectedInventoryStatus = chip.dataset.status;
+        renderApp();
+      });
+    });
+
+    // Reset filters
+    const resetInvFilterBtn = document.getElementById("btn-reset-inv-filter");
+    if (resetInvFilterBtn) {
+      resetInvFilterBtn.addEventListener("click", () => {
+        state.inventorySearchQuery = "";
+        state.selectedInventoryCategory = "all";
+        state.selectedInventoryStatus = "all";
+        renderApp();
+      });
+    }
+
+    // Add Product Modal trigger
+    const addProdHeaderBtn = document.getElementById("btn-add-product-header");
+    if (addProdHeaderBtn) {
+      addProdHeaderBtn.addEventListener("click", () => {
+        state.editingInventoryProduct = {
+          isNew: true,
+          category: state.selectedInventoryCategory !== "all" ? state.selectedInventoryCategory : "Small Drinks",
+          stock: 0,
+          minThreshold: 6,
+          unit: "500ml Can"
+        };
+        renderApp();
+      });
+    }
+
+    const addProdEmptyBtn = document.getElementById("btn-add-product-empty");
+    if (addProdEmptyBtn) {
+      addProdEmptyBtn.addEventListener("click", () => {
+        state.editingInventoryProduct = {
+          isNew: true,
+          category: state.selectedInventoryCategory !== "all" ? state.selectedInventoryCategory : "Small Drinks",
+          stock: 0,
+          minThreshold: 6,
+          unit: "500ml Can"
+        };
+        renderApp();
+      });
+    }
+
+    // Edit Product
+    document.querySelectorAll(".btn-edit-product").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const prodId = btn.dataset.id;
+        const prod = (state.data.inventory || []).find(p => p.id === prodId);
+        if (prod) {
+          state.editingInventoryProduct = JSON.parse(JSON.stringify(prod));
+          renderApp();
+        }
+      });
+    });
+
+    // Delete Product
+    document.querySelectorAll(".btn-delete-product").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        e.stopPropagation();
+        const prodId = btn.dataset.id;
+        const prod = (state.data.inventory || []).find(p => p.id === prodId);
+        if (!prod) return;
+        if (!confirm(`Are you sure you want to delete "${prod.name}" from inventory?`)) return;
+
+        try {
+          const res = await fetch("/api/inventory/delete-product", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: prodId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            state.data.inventory = (state.data.inventory || []).filter(p => p.id !== prodId);
+            await saveData();
+            renderApp();
+            showToast(`Deleted ${prod.name}`);
+          } else {
+            alert(data.error || "Failed to delete product.");
+          }
+        } catch (err) {
+          state.data.inventory = (state.data.inventory || []).filter(p => p.id !== prodId);
+          await saveData();
+          renderApp();
+          showToast(`Deleted ${prod.name}`);
+        }
+      });
+    });
+
+    // Open Stock Adjustment Numpad Modal
+    document.querySelectorAll(".btn-open-stock-numpad").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const prodId = btn.dataset.id;
+        const prod = (state.data.inventory || []).find(p => p.id === prodId);
+        if (prod) {
+          state.adjustingInventoryItem = prod;
+          renderApp();
+        }
+      });
+    });
+
+    // Stock Numpad Presets & Controls
+    const presetZeroBtn = document.getElementById("btn-preset-zero");
+    if (presetZeroBtn) {
+      presetZeroBtn.addEventListener("click", () => {
+        const input = document.getElementById("stock-numpad-value");
+        if (input) {
+          input.value = "0";
+          input.focus();
+        }
+      });
+    }
+
+    const presetClearBtn = document.getElementById("btn-preset-clear");
+    if (presetClearBtn) {
+      presetClearBtn.addEventListener("click", () => {
+        const input = document.getElementById("stock-numpad-value");
+        if (input) {
+          input.value = "";
+          input.focus();
+        }
+      });
+    }
+
+    const closeStockNumpadBtn = document.getElementById("btn-close-stock-numpad");
+    if (closeStockNumpadBtn) {
+      closeStockNumpadBtn.addEventListener("click", () => {
+        state.adjustingInventoryItem = null;
+        renderApp();
+      });
+    }
+
+    const cancelStockNumpadBtn = document.getElementById("btn-cancel-stock-numpad");
+    if (cancelStockNumpadBtn) {
+      cancelStockNumpadBtn.addEventListener("click", () => {
+        state.adjustingInventoryItem = null;
+        renderApp();
+      });
+    }
+
+    const stockOverlay = document.getElementById("stock-numpad-overlay");
+    if (stockOverlay) {
+      stockOverlay.addEventListener("click", (e) => {
+        if (e.target === stockOverlay) {
+          state.adjustingInventoryItem = null;
+          renderApp();
+        }
+      });
+    }
+
+    // Save Stock from Numpad Modal
+    const saveStockNumpadBtn = document.getElementById("btn-save-stock-numpad");
+    if (saveStockNumpadBtn) {
+      saveStockNumpadBtn.addEventListener("click", async () => {
+        const input = document.getElementById("stock-numpad-value");
+        if (!input || !state.adjustingInventoryItem) return;
+        const rawVal = input.value.trim();
+        const newCount = rawVal === "" ? 0 : Math.max(0, parseInt(rawVal, 10) || 0);
+        const prodId = state.adjustingInventoryItem.id;
+        const prodName = state.adjustingInventoryItem.name;
+
+        try {
+          const res = await fetch("/api/inventory/update-stock", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: prodId, stock: newCount })
+          });
+          const data = await res.json();
+          if (data.success) {
+            const prod = (state.data.inventory || []).find(p => p.id === prodId);
+            if (prod) {
+              prod.stock = newCount;
+              prod.lastUpdated = new Date().toISOString();
+            }
+            state.adjustingInventoryItem = null;
+            await saveData();
+            renderApp();
+            showToast(`Updated ${prodName} stock to ${newCount}!`);
+          } else {
+            alert(data.error || "Failed to update stock.");
+          }
+        } catch (err) {
+          const prod = (state.data.inventory || []).find(p => p.id === prodId);
+          if (prod) {
+            prod.stock = newCount;
+            prod.lastUpdated = new Date().toISOString();
+          }
+          state.adjustingInventoryItem = null;
+          await saveData();
+          renderApp();
+          showToast(`Updated ${prodName} stock to ${newCount}!`);
+        }
+      });
+    }
+
+    const stockInput = document.getElementById("stock-numpad-value");
+    if (stockInput && saveStockNumpadBtn) {
+      stockInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          saveStockNumpadBtn.click();
+        }
+      });
+    }
+
+    // Product Modal Controls (Add / Edit)
+    const closeProdModalBtn = document.getElementById("btn-close-product-modal");
+    if (closeProdModalBtn) {
+      closeProdModalBtn.addEventListener("click", () => {
+        state.editingInventoryProduct = null;
+        renderApp();
+      });
+    }
+
+    const cancelProdModalBtn = document.getElementById("btn-cancel-product-modal");
+    if (cancelProdModalBtn) {
+      cancelProdModalBtn.addEventListener("click", () => {
+        state.editingInventoryProduct = null;
+        renderApp();
+      });
+    }
+
+    const prodOverlay = document.getElementById("product-modal-overlay");
+    if (prodOverlay) {
+      prodOverlay.addEventListener("click", (e) => {
+        if (e.target === prodOverlay) {
+          state.editingInventoryProduct = null;
+          renderApp();
+        }
+      });
+    }
+
+    // Delete Product from Modal
+    const deleteProdFromModalBtn = document.getElementById("btn-delete-product-from-modal");
+    if (deleteProdFromModalBtn && state.editingInventoryProduct) {
+      deleteProdFromModalBtn.addEventListener("click", async () => {
+        const prodId = state.editingInventoryProduct.id;
+        const prodName = state.editingInventoryProduct.name;
+        if (!confirm(`Are you sure you want to delete "${prodName}" from inventory?`)) return;
+
+        try {
+          const res = await fetch("/api/inventory/delete-product", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ productId: prodId })
+          });
+          const data = await res.json();
+          if (data.success) {
+            state.data.inventory = (state.data.inventory || []).filter(p => p.id !== prodId);
+            state.editingInventoryProduct = null;
+            await saveData();
+            renderApp();
+            showToast(`Deleted ${prodName}`);
+          } else {
+            alert(data.error || "Failed to delete product.");
+          }
+        } catch (err) {
+          state.data.inventory = (state.data.inventory || []).filter(p => p.id !== prodId);
+          state.editingInventoryProduct = null;
+          await saveData();
+          renderApp();
+          showToast(`Deleted ${prodName}`);
+        }
+      });
+    }
+
+    // Save Product Modal
+    const saveProdModalBtn = document.getElementById("btn-save-product-modal");
+    if (saveProdModalBtn && state.editingInventoryProduct) {
+      saveProdModalBtn.addEventListener("click", async () => {
+        const name = document.getElementById("prod-name-input").value.trim();
+        const category = document.getElementById("prod-category-input").value;
+        const unit = document.getElementById("prod-unit-input").value.trim() || "Unit";
+        const stock = Math.max(0, parseInt(document.getElementById("prod-stock-input").value, 10) || 0);
+        const minThreshold = Math.max(1, parseInt(document.getElementById("prod-threshold-input").value, 10) || 6);
+        const image = document.getElementById("prod-image-input").value.trim();
+
+        if (!name) {
+          alert("Please enter a product name.");
+          return;
+        }
+
+        const isNew = !state.editingInventoryProduct.id || state.editingInventoryProduct.isNew;
+        const productPayload = {
+          id: isNew ? "prod_" + Date.now() : state.editingInventoryProduct.id,
+          name,
+          category,
+          unit,
+          stock,
+          minThreshold,
+          image: image || null,
+          lastUpdated: new Date().toISOString()
+        };
+
+        try {
+          const res = await fetch("/api/inventory/save-product", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ product: productPayload })
+          });
+          const data = await res.json();
+          if (data.success) {
+            if (!state.data.inventory) state.data.inventory = [];
+            if (isNew) {
+              state.data.inventory.push(data.product || productPayload);
+            } else {
+              const idx = state.data.inventory.findIndex(p => p.id === productPayload.id);
+              if (idx !== -1) state.data.inventory[idx] = data.product || productPayload;
+            }
+            state.editingInventoryProduct = null;
+            await saveData();
+            renderApp();
+            showToast(data.message || "Product saved!");
+          } else {
+            alert(data.error || "Failed to save product.");
+          }
+        } catch (err) {
+          if (!state.data.inventory) state.data.inventory = [];
+          if (isNew) {
+            state.data.inventory.push(productPayload);
+          } else {
+            const idx = state.data.inventory.findIndex(p => p.id === productPayload.id);
+            if (idx !== -1) state.data.inventory[idx] = productPayload;
+          }
+          state.editingInventoryProduct = null;
+          await saveData();
+          renderApp();
+          showToast("Product saved successfully!");
+        }
+      });
+    }
   }
 
   // Generate OTP helper for Admin

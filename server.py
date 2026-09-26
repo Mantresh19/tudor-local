@@ -108,6 +108,9 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                 if "resetRequests" not in req_data:
                     req_data["resetRequests"] = db.get("resetRequests", [])
 
+                if "inventory" not in req_data:
+                    req_data["inventory"] = db.get("inventory", [])
+
                 write_db(req_data)
                 self.send_json(200, {"success": True, "message": "Saved successfully"})
             except Exception as e:
@@ -313,11 +316,13 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
 
             # Update existing user for this employee or create new
             user = next((u for u in db.get("users", []) if u.get("employeeId") == employee_id), None)
+            has_inv = bool(req_data.get("hasInventoryAccess", role == "admin"))
             if user:
                 user["username"] = username
                 user["passwordHash"] = hash_pw(password)
                 user["role"] = role
                 user["hasRotaAccess"] = True
+                user["hasInventoryAccess"] = has_inv
                 user["isActive"] = True
             else:
                 user = {
@@ -328,6 +333,7 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                     "employeeId": employee_id,
                     "name": emp_name,
                     "hasRotaAccess": True,
+                    "hasInventoryAccess": has_inv,
                     "isActive": True,
                     "mustChangePassword": False,
                     "createdAt": datetime.now().isoformat()
@@ -338,7 +344,7 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
             self.send_json(200, {
                 "success": True,
                 "user": {k: v for k, v in user.items() if k != "passwordHash"},
-                "message": f"Rota access granted for {emp_name} (Username: {username})"
+                "message": f"Access granted for {emp_name} (Username: {username})"
             })
             return
 
@@ -361,6 +367,113 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                 "hasRotaAccess": has_access,
                 "message": f"Access {'granted' if has_access else 'revoked'} for {user.get('name', 'user')}."
             })
+            return
+
+        # 8. Toggle Inventory Access
+        if parsed.path == "/api/auth/toggle-inventory-access":
+            user_id = req_data.get("userId")
+            has_inv = bool(req_data.get("hasInventoryAccess", True))
+
+            db = read_db()
+            user = next((u for u in db.get("users", []) if u.get("id") == user_id), None)
+            if not user:
+                self.send_json(404, {"success": False, "error": "User not found."})
+                return
+
+            user["hasInventoryAccess"] = has_inv
+            write_db(db)
+            self.send_json(200, {
+                "success": True,
+                "hasInventoryAccess": has_inv,
+                "message": f"Inventory access {'granted' if has_inv else 'revoked'} for {user.get('name', 'user')}."
+            })
+            return
+
+        # 9. Inventory: Update Stock Count (Quick Mobile Numpad)
+        if parsed.path == "/api/inventory/update-stock":
+            item_id = req_data.get("id")
+            new_stock = req_data.get("stock")
+            if item_id is None or new_stock is None:
+                self.send_json(400, {"success": False, "error": "Item ID and stock count are required."})
+                return
+            db = read_db()
+            inv = db.get("inventory", [])
+            item = next((i for i in inv if i.get("id") == item_id), None)
+            if not item:
+                self.send_json(404, {"success": False, "error": "Inventory item not found."})
+                return
+            item["stock"] = max(0, int(new_stock))
+            item["updatedAt"] = datetime.now().isoformat()
+            write_db(db)
+            self.send_json(200, {"success": True, "item": item, "message": f"Stock updated to {item['stock']}."})
+            return
+
+        # 10. Inventory: Add or Edit Product
+        if parsed.path == "/api/inventory/save-product":
+            db = read_db()
+            inv = db.setdefault("inventory", [])
+            item_id = req_data.get("id")
+            name = req_data.get("name", "").strip()
+            category = req_data.get("category", "General").strip()
+            size = req_data.get("size", "").strip()
+            stock = max(0, int(req_data.get("stock", 0)))
+            image_url = req_data.get("imageUrl", "").strip()
+
+            if not name:
+                self.send_json(400, {"success": False, "error": "Product name is required."})
+                return
+
+            if item_id:
+                item = next((i for i in inv if i.get("id") == item_id), None)
+                if item:
+                    item.update({
+                        "name": name,
+                        "category": category,
+                        "size": size,
+                        "stock": stock,
+                        "imageUrl": image_url,
+                        "updatedAt": datetime.now().isoformat()
+                    })
+                else:
+                    item = {
+                        "id": item_id,
+                        "name": name,
+                        "category": category,
+                        "size": size,
+                        "stock": stock,
+                        "imageUrl": image_url,
+                        "updatedAt": datetime.now().isoformat()
+                    }
+                    inv.append(item)
+            else:
+                item_id = f"inv_{int(time.time()*1000)}"
+                item = {
+                    "id": item_id,
+                    "name": name,
+                    "category": category,
+                    "size": size,
+                    "stock": stock,
+                    "imageUrl": image_url,
+                    "updatedAt": datetime.now().isoformat()
+                }
+                inv.append(item)
+
+            write_db(db)
+            self.send_json(200, {"success": True, "item": item, "message": "Product saved successfully."})
+            return
+
+        # 11. Inventory: Delete Product
+        if parsed.path == "/api/inventory/delete-product":
+            item_id = req_data.get("id")
+            db = read_db()
+            inv = db.get("inventory", [])
+            orig_len = len(inv)
+            db["inventory"] = [i for i in inv if i.get("id") != item_id]
+            if len(db["inventory"]) < orig_len:
+                write_db(db)
+                self.send_json(200, {"success": True, "message": "Product deleted successfully."})
+            else:
+                self.send_json(404, {"success": False, "error": "Product not found."})
             return
 
         self.send_json(404, {"error": "Endpoint not found"})

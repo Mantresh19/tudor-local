@@ -777,5 +777,2149 @@
       "mustChangePassword": false
     }
   ],
-  "resetRequests": []
+  "resetRequests": [],
+  "inventory": [
+    {
+      "id": "inv_001",
+      "name": "Monster Energy Original 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/016/669/0315/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_002",
+      "name": "Monster Energy Ripper 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/033/750/0270/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_003",
+      "name": "Monster Energy VR 46 The Doctor 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 11,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/033/750/0942/front_en.10.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_004",
+      "name": "Monster Energy Ultra Strawberry Dreams 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/094/716/8122/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_005",
+      "name": "Monster Energy Pipeline Punch 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 19,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/051/788/3646/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_006",
+      "name": "Monster Energy The Doctor 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/033/750/0942/front_en.10.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_007",
+      "name": "Monster Energy Rio Punch 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/101/476/0147/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_008",
+      "name": "Monster Energy Mango Loco 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/051/788/3677/front_en.14.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_009",
+      "name": "Monster Energy Juiced Monarch 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/075/121/0451/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_010",
+      "name": "Monster Energy Full Throttle 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/004/900/003/6122/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_011",
+      "name": "Monster Energy Zero Sugar 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/094/716/3295/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_012",
+      "name": "Monster Energy Pacific Punch 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/051/788/7798/front_en.10.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_013",
+      "name": "Monster Energy Ultra Peachy Keen 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 11,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/094/716/5497/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_014",
+      "name": "Monster Energy Ultra Rosa 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/075/121/7214/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_015",
+      "name": "Monster Energy Aussie Style Lemonade 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/094/716/3813/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_016",
+      "name": "Monster Energy Lando Norris Edition 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/101/476/3032/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_017",
+      "name": "Monster Energy Khaotic 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 13,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/075/121/6996/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_018",
+      "name": "Monster Energy Absolutely Zero 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/016/669/2463/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_019",
+      "name": "Monster Energy Ultra Fiesta Mango 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/075/121/1168/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_020",
+      "name": "Monster Energy Viking Berry 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 11,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/101/476/5791/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_021",
+      "name": "Monster Energy Super Dry Nitro 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/075/121/3391/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_022",
+      "name": "Monster Energy MixxD Punch 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/016/669/3491/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_023",
+      "name": "Monster Energy Ultra White Zero 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/033/750/0416/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_024",
+      "name": "Relentless Origin 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/017/8009/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_025",
+      "name": "Relentless White Citrus 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/027/9478/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_026",
+      "name": "Relentless Cherry 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 14,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/017/8047/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_027",
+      "name": "Lucozade Alert Tropical Burst 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/740/0104/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_028",
+      "name": "Lucozade Alert Original 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/740/0081/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_029",
+      "name": "Lucozade Alert Blue Rush 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/740/0098/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_030",
+      "name": "Red Bull Cherry Sakura 473ml",
+      "category": "Small Drinks",
+      "size": "473ml Can",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/024/7614/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_031",
+      "name": "Red Bull Cherry Sakura 250ml",
+      "category": "Small Drinks",
+      "size": "250ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/024/7614/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_032",
+      "name": "Red Bull Citrus Zest 473ml",
+      "category": "Small Drinks",
+      "size": "473ml Can",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/024/7614/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_033",
+      "name": "Red Bull Energy Drink 473ml",
+      "category": "Small Drinks",
+      "size": "473ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/020/5904/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_034",
+      "name": "Red Bull Energy Drink 355ml",
+      "category": "Small Drinks",
+      "size": "355ml Can",
+      "stock": 27,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/010/0070/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_035",
+      "name": "Red Bull Energy Drink 250ml",
+      "category": "Small Drinks",
+      "size": "250ml Can",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/010/0070/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_036",
+      "name": "Red Bull Sugar Free 355ml",
+      "category": "Small Drinks",
+      "size": "355ml Can",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/010/0087/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_037",
+      "name": "Red Bull Sugar Free 250ml",
+      "category": "Small Drinks",
+      "size": "250ml Can",
+      "stock": 21,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/900/249/010/0087/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_038",
+      "name": "Boost Energy Original 250ml",
+      "category": "Small Drinks",
+      "size": "250ml Can",
+      "stock": 11,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/503/499/100/0014/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_039",
+      "name": "Boost Energy Sugar Free Zero 250ml",
+      "category": "Small Drinks",
+      "size": "250ml Can",
+      "stock": 11,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/503/499/100/0038/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_040",
+      "name": "Calypso Ocean Blue Lemonade 473ml",
+      "category": "Small Drinks",
+      "size": "473ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/007/909/400/0018/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_041",
+      "name": "Calypso Triple Melon Lemonade 473ml",
+      "category": "Small Drinks",
+      "size": "473ml Bottle",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/007/909/400/0063/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_042",
+      "name": "Calypso Strawberry Lemonade 473ml",
+      "category": "Small Drinks",
+      "size": "473ml Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/007/909/400/0025/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_043",
+      "name": "Calypso Yuzu Lychee Lemonade 473ml",
+      "category": "Small Drinks",
+      "size": "473ml Bottle",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/007/909/400/0254/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_044",
+      "name": "Powerade Attack 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0997/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_045",
+      "name": "Powerade Berry & Tropical Fruits 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/005/3344/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_046",
+      "name": "Lucozade Sport Raspberry 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 27,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/740/0173/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_047",
+      "name": "Lucozade Sport Fruit Punch 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/740/0203/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_048",
+      "name": "Lucozade Sport Ice Kick 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/740/0210/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_049",
+      "name": "Lucozade Sport Orange 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0014/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_050",
+      "name": "Lucozade Energy Original 380ml",
+      "category": "Small Drinks",
+      "size": "380ml Bottle",
+      "stock": 25,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0007/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_051",
+      "name": "Lucozade Energy Orange 380ml",
+      "category": "Small Drinks",
+      "size": "380ml Bottle",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0014/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_052",
+      "name": "Lucozade Energy Pink Lemonade 380ml",
+      "category": "Small Drinks",
+      "size": "380ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0021/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_053",
+      "name": "Lucozade Energy Grafruitti 380ml",
+      "category": "Small Drinks",
+      "size": "380ml Bottle",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0038/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_054",
+      "name": "Lucozade Energy Blue Burst 380ml",
+      "category": "Small Drinks",
+      "size": "380ml Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0045/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_055",
+      "name": "Lucozade Energy Caribbean Crush 380ml",
+      "category": "Small Drinks",
+      "size": "380ml Bottle",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0052/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_056",
+      "name": "IRN-BRU 500ml Original Orange",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/1041/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_057",
+      "name": "IRN-BRU 500ml Cherry",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/1058/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_058",
+      "name": "KA Bottle 500ml Karnival Twist",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/2031/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_059",
+      "name": "KA Bottle 500ml Sparkling Pineapple",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 15,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/2017/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_060",
+      "name": "Levi Roots 500ml Caribbean Crush",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/3014/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_061",
+      "name": "Levi Roots 500ml Tropical Punch",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/3021/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_062",
+      "name": "Lipton Ice Tea 500ml Peach",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 18,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/011/804/4051/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_063",
+      "name": "Lipton Ice Tea 500ml Lemon",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/011/804/4044/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_064",
+      "name": "Oasis 500ml Real Fruit Citrus Punch",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/4475/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_065",
+      "name": "Oasis 500ml Summer Fruits",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/4482/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_066",
+      "name": "Ribena 500ml Strawberry",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/1011/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_067",
+      "name": "Ribena 500ml Refreshing Light",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/1004/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_068",
+      "name": "Ribena 500ml Pineapple & Passion Fruit",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/1028/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_069",
+      "name": "Ribena 500ml Very Berry",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/1035/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_070",
+      "name": "Ribena 500ml Blackcurrant",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/1004/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_071",
+      "name": "Ribena 500ml Summer Fruits",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/1011/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_072",
+      "name": "Vimto 500ml Original",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/049/300/0101/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_073",
+      "name": "Prime Hydration 500ml Dragon Fruit Fusion",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 13,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/085/004/042/9024/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_074",
+      "name": "Prime Hydration 500ml Frost Bite Fusion",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/085/004/042/9017/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_075",
+      "name": "Capri-Sun 330ml Orange Pouch",
+      "category": "Small Drinks",
+      "size": "330ml Pouch",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/019/1459/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_076",
+      "name": "Capri-Sun 330ml Cherry Pouch",
+      "category": "Small Drinks",
+      "size": "330ml Pouch",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/019/1466/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_077",
+      "name": "Capri-Sun 330ml Mango Passion Fruit",
+      "category": "Small Drinks",
+      "size": "330ml Pouch",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/019/1473/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_078",
+      "name": "Simplee Aloe Vera Drink 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/039/428/0023/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_079",
+      "name": "Coca-Cola 500ml Original Taste",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0052/front_en.12.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_080",
+      "name": "Diet Coke 500ml Bottle",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0090/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_081",
+      "name": "Coca-Cola Cherry Float 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/002/0971/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_082",
+      "name": "Coca-Cola Zero Sugar 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0281/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_083",
+      "name": "Pepsi 500ml Original",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6323/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_084",
+      "name": "Pepsi Max 500ml No Sugar",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6330/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_085",
+      "name": "Pepsi Max Cherry 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6347/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_086",
+      "name": "Pepsi Cream Soda Flavour 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6354/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_087",
+      "name": "Pepsi Strawberries N Cream 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6361/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_088",
+      "name": "Dr Pepper 500ml Original",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/003/3872/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_089",
+      "name": "Dr Pepper 500ml Cherry Crush",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/003/3889/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_090",
+      "name": "Dr Pepper 500ml Cream Swirl",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 13,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/003/3896/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_091",
+      "name": "Sprite 500ml Original",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/0170/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_092",
+      "name": "7UP 500ml Original",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6378/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_093",
+      "name": "Fanta 500ml Orange",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/0163/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_094",
+      "name": "Fanta 500ml Fruit Twist",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/1818/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_095",
+      "name": "Fanta 500ml Lemon",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/1825/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_096",
+      "name": "Bigga Grape 600ml Bottle",
+      "category": "Small Drinks",
+      "size": "600ml Bottle",
+      "stock": 24,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/073/576/000/0012/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_097",
+      "name": "Bigga Pineapple 600ml Bottle",
+      "category": "Small Drinks",
+      "size": "600ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/073/576/000/0029/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_098",
+      "name": "Mountain Dew 500ml Citrus Blast",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6385/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_099",
+      "name": "Mirinda 500ml Tropical",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6392/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_100",
+      "name": "Mirinda 500ml Orange",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6408/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_101",
+      "name": "Jarritos Mexican Soda 370ml Mango",
+      "category": "Small Drinks",
+      "size": "370ml Glass",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/009/047/821/6011/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_102",
+      "name": "Jarritos Mexican Soda 370ml Guava",
+      "category": "Small Drinks",
+      "size": "370ml Glass",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/009/047/821/6028/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_103",
+      "name": "Jarritos Mexican Soda 370ml Mandarin",
+      "category": "Small Drinks",
+      "size": "370ml Glass",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/009/047/821/6035/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_104",
+      "name": "Jarritos Mexican Soda 370ml Mexican Cola",
+      "category": "Small Drinks",
+      "size": "370ml Glass",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/009/047/821/6042/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_105",
+      "name": "Hata Ramune Japanese Soda Lemon 200ml",
+      "category": "Small Drinks",
+      "size": "200ml Glass",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/490/249/409/0014/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_106",
+      "name": "Hata Ramune Japanese Soda Original 200ml",
+      "category": "Small Drinks",
+      "size": "200ml Glass",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/490/249/409/0007/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_107",
+      "name": "Club Orange 500ml Bottle",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/049/300/0200/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_108",
+      "name": "BPM Energy Berry Red 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/019/3330/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_109",
+      "name": "Nash's Red Lemonade 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/049/300/0309/front_en.3.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_110",
+      "name": "Snapple 473ml Apple Juice Drink",
+      "category": "Small Drinks",
+      "size": "473ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/007/618/300/3015/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_111",
+      "name": "Snapple 473ml Pink Lemonade",
+      "category": "Small Drinks",
+      "size": "473ml Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/007/618/300/3022/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_112",
+      "name": "Snapple 473ml Strawberry",
+      "category": "Small Drinks",
+      "size": "473ml Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/007/618/300/3039/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_113",
+      "name": "J2O Fruit Blend Apple & Mango 275ml",
+      "category": "Small Drinks",
+      "size": "275ml Glass",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/010/600/1018/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_114",
+      "name": "Appletiser 100% Sparkling Apple Juice 275ml",
+      "category": "Small Drinks",
+      "size": "275ml Glass",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/005/0015/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_115",
+      "name": "Say Aloe Vera Drink Mango 500ml",
+      "category": "Small Drinks",
+      "size": "500ml Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/016/483/0119/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_116",
+      "name": "Coca-Cola 330ml Can Original",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 28,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0996/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_117",
+      "name": "Coca-Cola Zero Sugar 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/013/1805/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_118",
+      "name": "Diet Coke 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0410/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_119",
+      "name": "Coca-Cola Cherry 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 24,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/3652/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_120",
+      "name": "Pepsi 330ml Can Original",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6002/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_121",
+      "name": "Pepsi Max 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 20,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6019/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_122",
+      "name": "Pepsi Max Cherry 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6026/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_123",
+      "name": "Pepsi Wild Cherry 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/012/000/000/1234/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_124",
+      "name": "Dr Pepper 330ml Can Original",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 15,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/003/3803/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_125",
+      "name": "Dr Pepper Cherry Crush Zero Sugar 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 24,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/003/3827/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_126",
+      "name": "Sprite 330ml Can Original",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 24,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/0101/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_127",
+      "name": "Fanta 330ml Can Orange",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 21,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/0118/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_128",
+      "name": "Fanta 330ml Can Fruit Twist",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 15,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/0125/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_129",
+      "name": "Fanta 330ml Can Lemon",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 22,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/0132/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_130",
+      "name": "Rio Tropical 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/4011/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_131",
+      "name": "Rio Light Tropical 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/4028/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_132",
+      "name": "R White's Lemonade 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/010/600/2015/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_133",
+      "name": "IRN-BRU 330ml Can Original",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 20,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/1010/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_134",
+      "name": "Rubicon Sparkling Mango 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 18,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/5018/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_135",
+      "name": "KA Sparkling Pineapple 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 17,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/2000/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_136",
+      "name": "KA Black Grape 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/2024/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_137",
+      "name": "KA Strawberry 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/2048/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_138",
+      "name": "KA Fruit Punch 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/2055/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_139",
+      "name": "Barr Cherryade 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/6015/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_140",
+      "name": "Mountain Dew 330ml Citrus Punch",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/012/000/000/1241/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_141",
+      "name": "Mountain Dew Voltage Raspberry 330ml",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/012/000/000/1258/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_142",
+      "name": "Fanta Strawberry Fraise 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/0149/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_143",
+      "name": "Fanta Grape 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/049/000/001/0111/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_144",
+      "name": "Fanta Berry 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/049/000/001/0128/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_145",
+      "name": "Fanta Peach 330ml Can",
+      "category": "Small Drinks",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/049/000/001/0135/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_146",
+      "name": "Gatorade Cool Blue 591ml",
+      "category": "Small Drinks",
+      "size": "591ml Bottle",
+      "stock": 15,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/052/000/328/7783/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_147",
+      "name": "Gatorade Fruit Punch 591ml",
+      "category": "Small Drinks",
+      "size": "591ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/052/000/328/7790/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_148",
+      "name": "Dr Pepper US 355ml Creamy Coconut",
+      "category": "Small Drinks",
+      "size": "355ml Can",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/078/000/000/1234/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_149",
+      "name": "Dr Pepper US 355ml Cherry",
+      "category": "Small Drinks",
+      "size": "355ml Can",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/078/000/000/1241/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_150",
+      "name": "Tropical Vibes Ocean Blue Lemonade 300ml",
+      "category": "Small Drinks",
+      "size": "300ml Glass",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/039/428/0108/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_151",
+      "name": "Fruit Shoot Orange 275ml",
+      "category": "Small Drinks",
+      "size": "275ml Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/010/600/3012/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_152",
+      "name": "Peanut Punch Drink 250ml",
+      "category": "Small Drinks",
+      "size": "250ml Can",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/7012/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_153",
+      "name": "Coca-Cola Original Taste 1.75L",
+      "category": "Big Drinks",
+      "size": "1.75L Bottle",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0106/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_154",
+      "name": "Diet Coke 2L Bottle",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 11,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0113/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_155",
+      "name": "Coca-Cola Zero Sugar 2L Bottle",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/000/0120/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_156",
+      "name": "Coca-Cola Cherry 1.75L Bottle",
+      "category": "Big Drinks",
+      "size": "1.75L Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/001/3669/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_157",
+      "name": "Pepsi 2L Bottle Original",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6101/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_158",
+      "name": "Pepsi Max 2L Bottle",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6118/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_159",
+      "name": "Diet Pepsi 2L Bottle",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/406/080/017/6125/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_160",
+      "name": "Dr Pepper 2L Bottle Original",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/003/3810/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_161",
+      "name": "Schweppes 2L Original Lemonade",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/544/900/002/0018/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_162",
+      "name": "R White's 2L Premium Lemonade",
+      "category": "Big Drinks",
+      "size": "2L Bottle",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/010/600/2022/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_163",
+      "name": "Lucozade Energy Original 900ml",
+      "category": "Big Drinks",
+      "size": "900ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0106/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_164",
+      "name": "Lucozade Energy Orange 900ml",
+      "category": "Big Drinks",
+      "size": "900ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/505/426/700/0113/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_165",
+      "name": "Say Aloe Vera Drink 1.5L Original",
+      "category": "Big Drinks",
+      "size": "1.5L Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/016/483/0126/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_166",
+      "name": "San Pellegrino 500ml Sparkling Mineral Water",
+      "category": "Water",
+      "size": "500ml Bottle",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/800/227/001/4904/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_167",
+      "name": "San Pellegrino 750ml Glass Sparkling Water",
+      "category": "Water",
+      "size": "750ml Glass",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/800/227/001/4911/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_168",
+      "name": "Evian Natural Mineral Water 75cl Sports Cap",
+      "category": "Water",
+      "size": "75cl Bottle",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/306/832/011/4912/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_169",
+      "name": "Evian Natural Mineral Water 1.5L",
+      "category": "Water",
+      "size": "1.5L Bottle",
+      "stock": 16,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/306/832/005/5000/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_170",
+      "name": "Volvic Touch of Fruit Strawberry 500ml",
+      "category": "Water",
+      "size": "500ml Bottle",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/305/764/025/7778/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_171",
+      "name": "Volvic Touch of Fruit Summer Fruits 500ml",
+      "category": "Water",
+      "size": "500ml Bottle",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/305/764/025/7785/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_172",
+      "name": "Volvic Natural Mineral Water 75cl Sports Cap",
+      "category": "Water",
+      "size": "75cl Bottle",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/305/764/011/7775/front_en.9.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_173",
+      "name": "Volvic Natural Mineral Water 1.5L",
+      "category": "Water",
+      "size": "1.5L Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/305/764/010/0111/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_174",
+      "name": "Volvic Touch of Fruit Strawberry 1.5L",
+      "category": "Water",
+      "size": "1.5L Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/305/764/025/7792/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_175",
+      "name": "Volvic Touch of Fruit Summer Fruits 1.5L",
+      "category": "Water",
+      "size": "1.5L Bottle",
+      "stock": 3,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/305/764/025/7808/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_176",
+      "name": "Perrier Sparkling Mineral Water 75cl Glass",
+      "category": "Water",
+      "size": "75cl Glass",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/761/303/462/5402/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_177",
+      "name": "Voss Sparkling Water 800ml Glass",
+      "category": "Water",
+      "size": "800ml Glass",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/682/430/000/0170/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_178",
+      "name": "Voss Still Water 800ml Glass",
+      "category": "Water",
+      "size": "800ml Glass",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/682/430/000/0163/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_179",
+      "name": "Highland Spring Sparkling Water 1.5L",
+      "category": "Water",
+      "size": "1.5L Bottle",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/043/800/1010/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_180",
+      "name": "Princes 100% Pure Orange Juice 1L",
+      "category": "Juices & Smoothies",
+      "size": "1L Carton",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/023/284/1017/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_181",
+      "name": "Del Monte 100% Pineapple Juice 1L",
+      "category": "Juices & Smoothies",
+      "size": "1L Carton",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/023/284/2014/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_182",
+      "name": "Tropicana Smooth Orange Juice with Bits 850ml",
+      "category": "Juices & Smoothies",
+      "size": "850ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/502/236/700/0014/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_183",
+      "name": "Sanpellegrino Aranciata Rossa Blood Orange 330ml",
+      "category": "Juices & Smoothies",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/800/227/001/4928/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_184",
+      "name": "Sanpellegrino Limonata Lemon 330ml",
+      "category": "Juices & Smoothies",
+      "size": "330ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/800/227/001/4935/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_185",
+      "name": "TRIP CBD Infused Blood Orange 250ml",
+      "category": "Juices & Smoothies",
+      "size": "250ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/071/582/0016/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_186",
+      "name": "TRIP CBD Infused Elderflower Mint 250ml",
+      "category": "Juices & Smoothies",
+      "size": "250ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/071/582/0023/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_187",
+      "name": "Mars Chocolate Milk Drink 350ml Original",
+      "category": "Milk Drinks & Coffee",
+      "size": "350ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/040/290/1018/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_188",
+      "name": "Mars Caramel Milk Drink 350ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "350ml Bottle",
+      "stock": 2,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/040/290/1025/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_189",
+      "name": "Snickers Milk Drink 350ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "350ml Bottle",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/040/290/1032/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_190",
+      "name": "Twix Milk Drink 350ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "350ml Bottle",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/040/290/1049/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_191",
+      "name": "Milky Way Milk Drink 350ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "350ml Bottle",
+      "stock": 1,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/506/040/290/1056/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_192",
+      "name": "Chocomel Original Dutch Chocolate Milk 300ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "300ml Can",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/871/280/017/6321/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_193",
+      "name": "Yazoo Chocolate Milk Drink 400ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "400ml Bottle",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/871/280/003/3013/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_194",
+      "name": "Yazoo Banana Milk Drink 400ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "400ml Bottle",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/871/280/003/3020/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_195",
+      "name": "Yazoo Strawberry Milk Drink 400ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "400ml Bottle",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/871/280/003/3037/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_196",
+      "name": "Starbucks Doubleshot Espresso 200ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "200ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/571/195/300/4019/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_197",
+      "name": "Starbucks Frappuccino Caramel 250ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "250ml Glass",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/571/195/300/4026/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_198",
+      "name": "Nourishment Vanilla Milk Drink 370ml",
+      "category": "Milk Drinks & Coffee",
+      "size": "370ml Can",
+      "stock": 0,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/8019/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_199",
+      "name": "Paracetamol 500mg Capsules 16s",
+      "category": "Medicine",
+      "size": "Pack of 16",
+      "stock": 15,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/261/616/0014/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_200",
+      "name": "Anadin Extra Caplets 16s",
+      "category": "Medicine",
+      "size": "Pack of 16",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/034/700/0118/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_201",
+      "name": "Flamingo Ibuprofen 200mg Tabs 16s",
+      "category": "Medicine",
+      "size": "Pack of 16",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/261/616/0021/front_en.4.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_202",
+      "name": "Panadol Extra Advance Tablets 14s",
+      "category": "Medicine",
+      "size": "Pack of 14",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/034/700/0125/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_203",
+      "name": "Paracetamol Tablets 500mg 16s",
+      "category": "Medicine",
+      "size": "Pack of 16",
+      "stock": 20,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/261/616/0014/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_204",
+      "name": "Nurofen Express 256mg Liquid Capsules 10s",
+      "category": "Medicine",
+      "size": "Pack of 10",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/015/806/5016/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_205",
+      "name": "Nurofen Cold & Flu Relief Tablets 16s",
+      "category": "Medicine",
+      "size": "Pack of 16",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/015/806/5023/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_206",
+      "name": "Nurofen 200mg Coated Tablets 16s",
+      "category": "Medicine",
+      "size": "Pack of 16",
+      "stock": 14,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/015/806/5009/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_207",
+      "name": "Sudocrem Antiseptic Healing Cream 60g",
+      "category": "Medicine",
+      "size": "60g Tub",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/102/500/8009/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_208",
+      "name": "Galpharm Ibuprofen 200mg Tablets 16s",
+      "category": "Medicine",
+      "size": "Pack of 16",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/261/616/0038/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_209",
+      "name": "Rennie Peppermint Antacid Tablets 24s",
+      "category": "Medicine",
+      "size": "Pack of 24",
+      "stock": 14,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/046/210/6011/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_210",
+      "name": "Rennie Spearmint Antacid Tablets 24s",
+      "category": "Medicine",
+      "size": "Pack of 24",
+      "stock": 16,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/046/210/6028/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_211",
+      "name": "Fabric Plasters Washproof 20s",
+      "category": "Medicine",
+      "size": "Pack of 20",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/261/616/0045/front_en.5.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_212",
+      "name": "Bonjela Mouth Ulcer Relief Gel 15g",
+      "category": "Medicine",
+      "size": "15g Tube",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/015/806/6013/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_213",
+      "name": "Imodium Classic Diarrhoea Relief 6s",
+      "category": "Medicine",
+      "size": "Pack of 6",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/357/466/000/1018/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_214",
+      "name": "Lemsip Max Cold & Flu Lemon Sachets 5s",
+      "category": "Medicine",
+      "size": "Pack of 5",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/015/806/7010/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_215",
+      "name": "Piriteze Allergy Relief Tablets 7s",
+      "category": "Medicine",
+      "size": "Pack of 7",
+      "stock": 9,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/034/700/0200/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_216",
+      "name": "Olbas Oil for Children Inhalant 12ml",
+      "category": "Medicine",
+      "size": "12ml Bottle",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/102/500/9013/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_217",
+      "name": "Stella Artois Premium Lager 4x440ml",
+      "category": "Beers & Ciders",
+      "size": "4x440ml Cans",
+      "stock": 14,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/541/022/814/2460/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_218",
+      "name": "Peroni Nastro Azzurro 4x330ml",
+      "category": "Beers & Ciders",
+      "size": "4x330ml Bottles",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/800/844/001/0101/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_219",
+      "name": "Corona Extra Premium Mexican Beer 4x330ml",
+      "category": "Beers & Ciders",
+      "size": "4x330ml Bottles",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/750/106/419/1234/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_220",
+      "name": "Heineken Original Lager 4x440ml",
+      "category": "Beers & Ciders",
+      "size": "4x440ml Cans",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/871/200/001/0101/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_221",
+      "name": "Thatchers Gold Somerset Cider 4x440ml",
+      "category": "Beers & Ciders",
+      "size": "4x440ml Cans",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/677/800/1017/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_222",
+      "name": "Casillero del Diablo Cabernet Sauvignon 75cl",
+      "category": "Wines & Spirits",
+      "size": "75cl Bottle",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/780/432/011/1018/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_223",
+      "name": "19 Crimes Red Wine 75cl",
+      "category": "Wines & Spirits",
+      "size": "75cl Bottle",
+      "stock": 7,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/931/104/304/0012/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_224",
+      "name": "Oyster Bay Sauvignon Blanc 75cl",
+      "category": "Wines & Spirits",
+      "size": "75cl Bottle",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/941/554/980/1014/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_225",
+      "name": "Gordon's London Dry Gin 70cl",
+      "category": "Wines & Spirits",
+      "size": "70cl Bottle",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/028/900/1013/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_226",
+      "name": "Smirnoff No. 21 Premium Vodka 70cl",
+      "category": "Wines & Spirits",
+      "size": "70cl Bottle",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/541/031/600/1012/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_227",
+      "name": "Jack Daniel's Old No. 7 Tennessee Whiskey 70cl",
+      "category": "Wines & Spirits",
+      "size": "70cl Bottle",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/509/987/304/5368/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_228",
+      "name": "Heinz Baked Beans in Rich Tomato Sauce 415g",
+      "category": "Grocery",
+      "size": "415g Can",
+      "stock": 24,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/015/702/4670/front_en.11.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_229",
+      "name": "Warburtons Toastie Thick Sliced White Bread 800g",
+      "category": "Grocery",
+      "size": "800g Loaf",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/004/400/0101/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_230",
+      "name": "Kellogg's Corn Flakes Breakfast Cereal 450g",
+      "category": "Grocery",
+      "size": "450g Box",
+      "stock": 8,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/006/400/0101/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_231",
+      "name": "Tilda Pure Original Basmati Rice 1kg",
+      "category": "Grocery",
+      "size": "1kg Bag",
+      "stock": 10,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/115/700/1012/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_232",
+      "name": "De Cecco Penne Rigate No. 41 Pasta 500g",
+      "category": "Grocery",
+      "size": "500g Pack",
+      "stock": 16,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/800/125/000/0415/front_en.8.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_233",
+      "name": "Cirio Chopped Tomatoes in Rich Juice 400g",
+      "category": "Grocery",
+      "size": "400g Can",
+      "stock": 20,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/800/050/000/0102/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_234",
+      "name": "Cravendale Whole Fresh British Milk 2L",
+      "category": "Grocery",
+      "size": "2L Bottle",
+      "stock": 14,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/501/008/800/9016/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_235",
+      "name": "Felix As Good As It Looks Meat Selection in Jelly 12x100g",
+      "category": "Pet Food",
+      "size": "12x100g Pouches",
+      "stock": 6,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/761/303/512/0012/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_236",
+      "name": "Whiskas 1+ Poultry Selection in Jelly 12x100g",
+      "category": "Pet Food",
+      "size": "12x100g Pouches",
+      "stock": 5,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/590/095/125/0014/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_237",
+      "name": "Pedigree Schmackos Beef Dog Treats 20 Sticks",
+      "category": "Pet Food",
+      "size": "Pack of 20",
+      "stock": 12,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/500/016/600/1012/front_en.6.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    },
+    {
+      "id": "inv_238",
+      "name": "Bakers Complete Adult Dog Food Beef & Country Veg 2.85kg",
+      "category": "Pet Food",
+      "size": "2.85kg Bag",
+      "stock": 4,
+      "imageUrl": "https://images.openfoodfacts.org/images/products/761/303/512/0029/front_en.7.400.jpg",
+      "updatedAt": "2026-09-26T01:30:00.000Z"
+    }
+  ]
 }
