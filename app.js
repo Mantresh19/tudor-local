@@ -3234,8 +3234,8 @@
     const unreadCount = userNotifs.filter(n => !(n.readBy || []).includes(user ? user.id : "")).length;
 
     return `
-      <div class="modal-backdrop" id="notifications-modal-backdrop" style="display: flex;">
-        <div class="modal-content" style="max-width: 440px; width: 92%; border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+      <div class="modal-overlay notifs-modal-overlay" id="notifications-modal-backdrop">
+        <div class="modal-content" style="max-width: 440px; width: 92%; border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.25);">
           <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); background: var(--bg-card);">
             <div style="display: flex; align-items: center; gap: 8px;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">

@@ -2209,7 +2209,7 @@ table.rota-table th.col-entity {
   max-width: 100vw;
   margin: 0;
   padding: 0;
-  background-color: var(--bg-main);
+  background-color: var(--bg-card);
   box-sizing: border-box;
   overflow-x: hidden;
 }
@@ -2369,6 +2369,7 @@ table.rota-table th.col-entity {
   background-color: var(--bg-card);
   width: 100%;
   box-sizing: border-box;
+  padding-bottom: calc(64px + env(safe-area-inset-bottom, 12px));
 }
 
 .planday-schedule-row {
@@ -2458,7 +2459,7 @@ table.rota-table th.col-entity {
 }
 
 .planday-cell {
-  min-height: 56px;
+  min-height: 74px;
   height: 100%;
   min-width: 0;
   border-radius: 4px;
@@ -2476,18 +2477,19 @@ table.rota-table th.col-entity {
   cursor: pointer;
 }
 
-/* Shift Box - SNUG VERTICAL RECTANGLE MATCHING IMAGE 2 */
+/* Shift Box - TALL VERTICAL RECTANGLE MATCHING IMAGE 2 */
 .planday-shift-box {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   border-radius: 4px;
-  padding: 4px 3px;
+  padding: 5px 3px 5px 3px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
-  min-height: 56px;
+  min-height: 74px;
+  height: 74px;
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   overflow: hidden;
@@ -2590,7 +2592,7 @@ table.rota-table th.col-entity {
   text-overflow: ellipsis;
   padding: 0;
   line-height: 1.15;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
   letter-spacing: -0.2px;
 }
 
@@ -2599,7 +2601,7 @@ table.rota-table th.col-entity {
   font-weight: 700;
   letter-spacing: -0.3px;
   padding: 0;
-  line-height: 1.15;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -2611,16 +2613,16 @@ table.rota-table th.col-entity {
   font-weight: 700;
   letter-spacing: -0.3px;
   padding: 0;
-  line-height: 1.15;
+  line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   width: 100%;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .shift-box-footer {
-  margin-top: 2px;
+  margin-top: auto;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -2674,10 +2676,33 @@ table.rota-table th.col-entity {
   color: #fde68a;
 }
 
+/* Notifications Modal Overlay - Top anchored on mobile */
+.notifs-modal-overlay {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  background-color: rgba(0, 0, 0, 0.55) !important;
+  backdrop-filter: blur(6px) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+  padding: 1rem !important;
+}
+
 /* Full-bleed Edge-to-Edge Mobile Layout without Margins Clipping */
 @media (max-width: 768px) {
+  .notifs-modal-overlay {
+    align-items: flex-start !important;
+    padding-top: calc(52px + env(safe-area-inset-top, 10px)) !important;
+  }
+
   body.planday-schedule-active {
-    padding-bottom: calc(52px + env(safe-area-inset-bottom, 8px)) !important;
+    padding-bottom: 0 !important;
+    background-color: var(--bg-card) !important;
   }
 
   body.planday-schedule-active header.app-header {
@@ -2688,6 +2713,7 @@ table.rota-table th.col-entity {
     padding: 0 !important;
     gap: 0 !important;
     margin: 0 !important;
+    flex: 1;
   }
 }
 
