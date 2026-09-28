@@ -347,6 +347,15 @@
       console.warn("User merge warning:", err);
     }
 
+    // Normalize legacy open shifts: ensure employeeId is null and status is standard draft/published
+    (state.data.shifts || []).forEach(s => {
+      if (s.employeeId === "" || s.employeeId === undefined) s.employeeId = null;
+      if (s.status === "open") {
+        s.status = "published";
+        s.employeeId = null;
+      }
+    });
+
     // Always update localStorage with the complete merged data
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
 
@@ -387,7 +396,7 @@
       const hours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
       totalHours += hours;
       totalCost += hours * (shift.rate || 0);
-      if (shift.status === "draft") draftCount++;
+      if (shift.status === "draft" || (!shift.employeeId && shift.status === "open")) draftCount++;
       if (shift.employeeId) staffSet.add(shift.employeeId);
     });
 
@@ -849,9 +858,13 @@
     const isAdmin = state.currentUser && state.currentUser.role === "admin";
     const myEmpId = state.currentUser ? state.currentUser.employeeId : null;
 
-    // Filter shifts for the selected date
+    // Filter shifts for the selected date (staff only see published shifts)
     const dayShifts = (state.data.shifts || [])
-      .filter(s => s.date === selectedDate)
+      .filter(s => {
+        if (s.date !== selectedDate) return false;
+        if (!isAdmin && s.status === "draft") return false;
+        return true;
+      })
       .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
 
     // Total hours for this day
@@ -873,7 +886,11 @@
       const dayShort = d.toLocaleDateString("en-GB", { weekday: "short" });
       const dayNum = d.toLocaleDateString("en-GB", { day: "numeric" });
       const isSelected = dateStr === selectedDate;
-      const count = (state.data.shifts || []).filter(s => s.date === dateStr).length;
+      const count = (state.data.shifts || []).filter(s => {
+        if (s.date !== dateStr) return false;
+        if (!isAdmin && s.status === "draft") return false;
+        return true;
+      }).length;
 
       return `
         <button class="mobile-day-pill ${isSelected ? "active" : ""}" data-date="${dateStr}">
@@ -905,15 +922,16 @@
         const emp = (state.data.employees || []).find(e => e.id === shift.employeeId);
         const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "General Staff", color: "#0ea5e9" };
         const isMyShift = myEmpId && shift.employeeId === myEmpId;
-        const empName = emp ? emp.name : "Unassigned / Open Shift";
-        const empInitial = empName[0].toUpperCase();
-        const avatarBg = emp ? emp.avatarColor || dept.color || "#0ea5e9" : "#f59e0b";
+        const isOpenShift = !shift.employeeId;
+        const empName = emp ? emp.name : "🔓 Open / Unassigned Shift";
+        const empInitial = emp ? emp.name[0].toUpperCase() : "🔓";
+        const avatarBg = emp ? emp.avatarColor || dept.color || "#0ea5e9" : "#ea580c";
         const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
         const isDraft = shift.status === "draft";
 
         return `
-          <div class="day-roster-card ${isMyShift ? "my-shift" : ""}" data-shift-id="${shift.id}" style="border-left-color: ${dept.color || "#0ea5e9"}; cursor: ${isAdmin ? "pointer" : "default"};">
-            <div class="day-roster-avatar" style="background-color: ${avatarBg};">
+          <div class="day-roster-card ${isMyShift ? "my-shift" : ""}" data-shift-id="${shift.id}" style="border-left-color: ${isOpenShift ? (isDraft ? "#d97706" : "#16a34a") : (dept.color || "#0ea5e9")}; cursor: ${isAdmin ? "pointer" : "default"};">
+            <div class="day-roster-avatar" style="background-color: ${avatarBg}; color: white;">
               ${empInitial}
             </div>
             <div class="day-roster-info">
@@ -921,6 +939,7 @@
                 <span>${empName}</span>
                 ${isMyShift ? `<span style="background:var(--primary);color:white;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700;">YOU</span>` : ""}
                 ${isDraft && isAdmin ? `<span class="badge badge-draft" style="font-size:10px;">Draft</span>` : ""}
+                ${isOpenShift && !isDraft ? `<span class="shift-badge badge-open-live" style="font-size:10px;">Open</span>` : ""}
               </div>
               <div class="day-roster-role">
                 ${shift.role || (emp ? emp.role : "Staff Member")} · <span style="color: ${dept.color}; font-weight: 600;">${dept.name}</span>
@@ -934,6 +953,11 @@
               <div class="day-roster-net">
                 ${netH} hrs ${shift.breakMinutes ? `(${shift.breakMinutes}m break)` : ""}
               </div>
+              ${
+                isOpenShift && myEmpId && !isDraft && !isAdmin
+                  ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="font-size: 11px; padding: 3px 8px; margin-top: 5px; font-weight: 700;">✋ Claim</button>`
+                  : ""
+              }
             </div>
           </div>
         `;
@@ -1036,8 +1060,13 @@
       shiftsByMonth[mKey].push(shift);
     });
 
-    // 3. Find Open Shifts
-    const openShifts = (state.data.shifts || []).filter(s => s.status === "open" || s.employeeId === null);
+    // 3. Find Open Shifts (Admin sees all draft & published; staff only see published)
+    const openShifts = (state.data.shifts || []).filter(s => {
+      const isOpen = !s.employeeId || s.status === "open";
+      if (!isOpen) return false;
+      if (isAdmin) return true;
+      return s.status === "published" || s.status === "open";
+    });
 
     return `
       <div class="mobile-overview-container">
@@ -1137,25 +1166,27 @@
               const dayNum = String(shiftDate.getDate()).padStart(2, "0");
               const dayName = shiftDate.toLocaleDateString("en-GB", { weekday: "short" });
               const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "Staff" };
+              const isDraft = shift.status === "draft";
 
               return `
-                <div class="planday-shift-row" style="margin-bottom: 0.75rem;">
+                <div class="planday-shift-row overview-open-shift-card" data-shift-id="${shift.id}" style="margin-bottom: 0.75rem; cursor: ${isAdmin ? "pointer" : "default"};">
                   <div class="planday-date-box" style="background-color: #fee2e2; border-color: #fca5a5;">
                     <span class="planday-date-num" style="color: #b91c1c;">${dayNum}</span>
                     <span class="planday-date-day" style="color: #b91c1c;">${dayName}</span>
                   </div>
                   <div class="planday-shift-content" style="background-color: #fff1f2; border-color: #fecdd3;">
                     <div class="planday-shift-main">
-                      <div class="planday-shift-time" style="color: #b91c1c;">
-                        ${formatShiftRange(shift.startTime, shift.endTime)}
+                      <div class="planday-shift-time" style="color: #b91c1c; display: flex; align-items: center; gap: 6px;">
+                        <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
+                        ${isAdmin ? (isDraft ? `<span class="shift-badge badge-draft" style="font-size:9px;">Draft</span>` : `<span class="shift-badge badge-open-live" style="font-size:9px;">Live</span>`) : ""}
                       </div>
                       <div class="planday-shift-role" style="color: #9f1239;">
-                        ${shift.role || "Staff Member"} · Tudor Local (${dept.name})
+                        🔓 ${shift.role || "Staff Member"} · Tudor Local (${dept.name})
                       </div>
                     </div>
                     ${
-                      myEmpId
-                        ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="font-size: 11px; padding: 4px 8px; white-space: nowrap;">Claim</button>`
+                      myEmpId && !isAdmin
+                        ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="font-size: 11px; padding: 4px 8px; white-space: nowrap; font-weight: 700;">Claim</button>`
                         : `<span class="planday-shift-chevron">›</span>`
                     }
                   </div>
@@ -1314,7 +1345,107 @@
         );
       }
 
-      rowsHtml = filteredEmployees
+      // Dedicated Top Row: Open / Unassigned Shifts
+      const weekDateStrs = weekDates.map(formatDate);
+      const weekOpenShifts = (state.data.shifts || []).filter(
+        s => (!s.employeeId || s.employeeId === null) && weekDateStrs.includes(s.date)
+      );
+
+      let openHoursThisWeek = 0;
+      weekOpenShifts.forEach(s => {
+        openHoursThisWeek += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
+      });
+
+      let openShiftsRowHtml = "";
+      if (isAdmin || weekOpenShifts.length > 0) {
+        const openDaysCells = weekDates
+          .map(d => {
+            const dateStr = formatDate(d);
+            const openShiftsOnDay = (state.data.shifts || []).filter(
+              s => (!s.employeeId || s.employeeId === null) && s.date === dateStr
+            );
+            const visibleOpenShifts = isAdmin
+              ? openShiftsOnDay
+              : openShiftsOnDay.filter(s => s.status === "published" || s.status === "open");
+
+            const shiftCards = visibleOpenShifts
+              .map(shift => {
+                const hours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
+                const isDraft = shift.status === "draft";
+
+                return `
+                  <div class="shift-card open-shift-card ${isDraft ? "status-draft" : "status-published"}" 
+                       style="border-left-color: ${isDraft ? "#d97706" : "#16a34a"};" 
+                       data-shift-id="${shift.id}" 
+                       title="${shift.notes ? `Note: ${shift.notes}` : "Open shift - Click to edit/publish"}">
+                    <div class="shift-time">
+                      <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
+                      ${shift.breakMinutes ? `<span class="shift-break">-${shift.breakMinutes}m</span>` : ""}
+                    </div>
+                    <div class="shift-role-title" style="font-weight:600;color:var(--text-main);">
+                      🔓 ${shift.role || "Open Shift"}
+                    </div>
+                    <div class="shift-footer">
+                      <span>${hours}h net ${isAdmin ? `· ${currency}${(hours * (shift.rate || 10)).toFixed(0)}` : ""}</span>
+                      ${
+                        isDraft
+                          ? `<span class="shift-badge badge-draft">Draft</span>`
+                          : `<span class="shift-badge badge-open-live">Live</span>`
+                      }
+                    </div>
+                    ${
+                      !isAdmin && myEmpId && !isDraft
+                        ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="width: 100%; margin-top: 6px; padding: 3px 6px; font-size: 11px; font-weight:700;">✋ Claim Shift</button>`
+                        : ""
+                    }
+                  </div>
+                `;
+              })
+              .join("");
+
+            return `
+              <td class="shift-cell open-shift-cell" data-is-open="true" data-date="${dateStr}">
+                <div class="shift-cards-wrap">
+                  ${shiftCards}
+                </div>
+                ${
+                  isAdmin
+                    ? `
+                  <button class="add-shift-btn btn-cell-add-open" data-date="${dateStr}" style="border-style:dashed;color:#ea580c;border-color:#fed7aa;">
+                    + Open Shift
+                  </button>
+                `
+                    : ""
+                }
+              </td>
+            `;
+          })
+          .join("");
+
+        openShiftsRowHtml = `
+          <tr class="row-open-shifts">
+            <td class="entity-cell open-shifts-entity-cell">
+              <div class="employee-row-info">
+                <div class="emp-avatar" style="background-color: #ea580c; color: white; font-weight: 700; font-size: 0.95rem;">
+                  🔓
+                </div>
+                <div class="emp-details">
+                  <div class="emp-name" style="color: #c2410c; font-weight: 700;">
+                    Open Shifts
+                  </div>
+                  <div class="emp-role-tag">Unassigned Shifts</div>
+                  <div class="emp-stats-pill">
+                    <span style="font-weight:600; color:#ea580c;">${weekOpenShifts.length} unassigned · ${openHoursThisWeek.toFixed(1)}h</span>
+                  </div>
+                </div>
+              </div>
+            </td>
+            ${openDaysCells}
+          </tr>
+        `;
+      }
+
+      const empRowsHtml = filteredEmployees
         .map(emp => {
           const dept = (state.data.departments || []).find(d => d.id === emp.departmentId) || { name: "", color: "#64748b" };
           const isMe = myEmpId && emp.id === myEmpId;
@@ -1323,7 +1454,7 @@
           const weekDateStrs = weekDates.map(formatDate);
           let empWeeklyHours = 0;
           (state.data.shifts || [])
-            .filter(s => s.employeeId === emp.id && weekDateStrs.includes(s.date))
+            .filter(s => s.employeeId === emp.id && weekDateStrs.includes(s.date) && (isAdmin || s.status !== "draft"))
             .forEach(s => {
               empWeeklyHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
             });
@@ -1334,7 +1465,11 @@
           const daysCells = weekDates
             .map(d => {
               const dateStr = formatDate(d);
-              const shifts = (state.data.shifts || []).filter(s => s.employeeId === emp.id && s.date === dateStr);
+              const shifts = (state.data.shifts || []).filter(s => {
+                if (s.employeeId !== emp.id || s.date !== dateStr) return false;
+                if (!isAdmin && s.status === "draft") return false;
+                return true;
+              });
 
               const shiftCards = shifts
                 .map(shift => {
@@ -1411,6 +1546,8 @@
           `;
         })
         .join("");
+
+      rowsHtml = openShiftsRowHtml + empRowsHtml;
     } else {
       // Grouping by Department
       rowsHtml = (state.data.departments || [])
@@ -1418,24 +1555,35 @@
           const daysCells = weekDates
             .map(d => {
               const dateStr = formatDate(d);
-              const shifts = (state.data.shifts || []).filter(s => s.departmentId === dept.id && s.date === dateStr);
+              const shifts = (state.data.shifts || []).filter(s => {
+                if (s.departmentId !== dept.id || s.date !== dateStr) return false;
+                if (!isAdmin && s.status === "draft") return false;
+                return true;
+              });
 
               const shiftCards = shifts
                 .map(shift => {
                   const emp = (state.data.employees || []).find(e => e.id === shift.employeeId);
                   const hours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
                   const isMe = myEmpId && shift.employeeId === myEmpId;
+                  const isOpen = !shift.employeeId;
+                  const isDraft = shift.status === "draft";
 
                   return `
-                    <div class="shift-card ${shift.status === "draft" ? "status-draft" : "status-published"} ${isMe ? "my-shift" : ""}" 
-                         style="border-left-color: ${dept.color};" 
+                    <div class="shift-card ${isOpen ? "open-shift-card" : ""} ${isDraft ? "status-draft" : "status-published"} ${isMe ? "my-shift" : ""}" 
+                         style="border-left-color: ${isOpen ? (isDraft ? "#d97706" : "#16a34a") : dept.color};" 
                          data-shift-id="${shift.id}">
                       <div class="shift-time">
                         <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
-                        ${shift.status === "draft" ? `<span class="shift-badge badge-draft">Draft</span>` : ""}
+                        ${isDraft ? `<span class="shift-badge badge-draft">Draft</span>` : (isOpen ? `<span class="shift-badge badge-open-live">Live</span>` : "")}
                       </div>
-                      <div class="shift-role-title"><strong>${emp ? emp.name : "Unassigned"}</strong></div>
-                      <div style="font-size:0.7rem;color:#64748b;">${shift.role} · ${hours}h</div>
+                      <div class="shift-role-title"><strong>${emp ? emp.name : "🔓 Open Shift"}</strong></div>
+                      <div style="font-size:0.7rem;color:var(--text-muted);">${shift.role} · ${hours}h</div>
+                      ${
+                        isOpen && !isAdmin && myEmpId && !isDraft
+                          ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="width: 100%; margin-top: 5px; padding: 2px 6px; font-size: 11px; font-weight:700;">✋ Claim</button>`
+                          : ""
+                      }
                     </div>
                   `;
                 })
@@ -2191,11 +2339,10 @@
                 <input type="number" class="form-input" id="shift-rate-input" value="${rate}" step="0.5">
               </div>
               <div class="form-group">
-                <label class="form-label">Status</label>
+                <label class="form-label">Shift Status</label>
                 <select class="form-select" id="shift-status-input">
-                  <option value="draft" ${shift.status === "draft" ? "selected" : ""}>Draft (Private)</option>
-                  <option value="published" ${shift.status === "published" ? "selected" : ""}>Published (Live for staff)</option>
-                  <option value="open" ${shift.status === "open" ? "selected" : ""}>Open Shift (Claimable)</option>
+                  <option value="draft" ${shift.status === "draft" ? "selected" : ""}>Draft (Private / Planning)</option>
+                  <option value="published" ${shift.status === "published" || shift.status === "open" ? "selected" : ""}>Published (Live for staff to view & claim)</option>
                 </select>
               </div>
             </div>
@@ -2206,14 +2353,18 @@
             </div>
           </div>
 
-          <div class="modal-footer">
+          <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
             ${
               !isNew
-                ? `<button class="btn btn-danger-outline" id="btn-delete-shift" style="margin-right:auto;">Delete Shift</button>`
-                : ""
+                ? `<button type="button" class="btn btn-danger-outline" id="btn-delete-shift" style="margin-right:auto;">Delete Shift</button>`
+                : `<div></div>`
             }
-            <button class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
-            <button class="btn btn-primary" id="btn-save-shift">Save Shift</button>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
+              <button type="button" class="btn btn-secondary" id="btn-save-shift-draft" style="font-weight: 600;">Save as Draft</button>
+              <button type="button" class="btn btn-primary" id="btn-publish-shift-modal" style="background: #16a34a; border-color: #16a34a; font-weight: 700;">🚀 Publish Shift</button>
+              ${!isNew && shift.status === "published" ? `<button type="button" class="btn btn-primary" id="btn-save-shift">Save Changes</button>` : ""}
+            </div>
           </div>
         </div>
       </div>
@@ -2999,7 +3150,7 @@
           breakMinutes: 0,
           role: firstEmp ? firstEmp.role : "Staff Member",
           departmentId: state.data.departments[0]?.id || "general",
-          status: firstEmp ? "draft" : "open",
+          status: "draft",
           employeeId: firstEmp ? firstEmp.id : null,
           rate: firstEmp ? firstEmp.hourlyRate : 10.0
         });
@@ -3019,7 +3170,7 @@
           breakMinutes: 0,
           role: firstEmp ? firstEmp.role : "Staff Member",
           departmentId: state.data.departments[0]?.id || "general",
-          status: firstEmp ? "draft" : "open",
+          status: "draft",
           employeeId: firstEmp ? firstEmp.id : null,
           rate: firstEmp ? firstEmp.hourlyRate : 10.0
         });
@@ -3474,13 +3625,13 @@
         const weekDates = getWeekDates().map(formatDate);
         let count = 0;
         (state.data.shifts || []).forEach(s => {
-          if (weekDates.includes(s.date) && s.status === "draft") {
+          if (weekDates.includes(s.date) && (s.status === "draft" || s.status === "open")) {
             s.status = "published";
             count++;
           }
         });
         await saveData();
-        showToast(`Published ${count} shift(s)! Employees have been notified.`, "success");
+        showToast(`Published ${count} shift(s)! Live for employees.`, "success");
       });
     }
 
@@ -3497,7 +3648,7 @@
           breakMinutes: 0,
           role: firstEmp ? firstEmp.role : "Staff Member",
           departmentId: state.data.departments[0]?.id || "general",
-          status: firstEmp ? "draft" : "open",
+          status: "draft",
           employeeId: firstEmp ? firstEmp.id : null,
           rate: firstEmp ? firstEmp.hourlyRate : 10.0
         });
@@ -3521,10 +3672,43 @@
           breakMinutes: 0,
           role: emp ? emp.role : "Staff Member",
           departmentId: deptId,
-          status: empId ? "draft" : "open",
+          status: "draft",
           employeeId: empId,
           rate: emp ? emp.hourlyRate : 10.0
         });
+      });
+    });
+
+    // Add Open Shift Button on Dedicated Open Shifts Row (Admin only)
+    document.querySelectorAll(".btn-cell-add-open").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        const date = btn.dataset.date;
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: "Staff Member",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: "draft",
+          employeeId: null,
+          rate: 10.0
+        });
+      });
+    });
+
+    // Overview Open Shift Card Click (Admin only to edit/publish)
+    document.querySelectorAll(".overview-open-shift-card").forEach(card => {
+      card.addEventListener("click", e => {
+        if (e.target.closest(".btn-request-claim")) return;
+        if (!isAdmin) return;
+        const shiftId = card.dataset.shiftId;
+        const shift = (state.data.shifts || []).find(s => s.id === shiftId);
+        if (shift) {
+          openShiftModal(JSON.parse(JSON.stringify(shift)));
+        }
       });
     });
 
@@ -3565,9 +3749,9 @@
         const shift = (state.data.shifts || []).find(s => s.id === shiftId);
         if (shift) {
           shift.employeeId = myEmpId;
-          shift.status = "draft";
+          shift.status = "published";
           await saveData();
-          showToast("You claimed this shift! Pending manager sign-off.");
+          showToast("You claimed this shift! It is now on your schedule.", "success");
         }
       });
     });
@@ -3626,54 +3810,75 @@
       });
     }
 
-    // Save Shift
+    // Save Shift with exact chosen status (Draft or Published)
+    const saveShiftWithStatus = async (forcedStatus = null) => {
+      const empId = document.getElementById("shift-employee-input").value || null;
+      const deptId = document.getElementById("shift-department-input").value;
+      const role = document.getElementById("shift-role-input").value.trim();
+      const date = document.getElementById("shift-date-input").value;
+      const startTime = document.getElementById("shift-start-input").value;
+      const endTime = document.getElementById("shift-end-input").value;
+      const breakMinutes = Number(document.getElementById("shift-break-input").value || 0);
+      const rate = Number(document.getElementById("shift-rate-input").value || 0);
+      const notes = document.getElementById("shift-notes-input").value.trim();
+      const statusInput = document.getElementById("shift-status-input");
+      const dropdownStatus = statusInput ? statusInput.value : "published";
+
+      if (!date || !startTime || !endTime) {
+        alert("Please fill in Date, Start Time, and End Time.");
+        return;
+      }
+
+      const finalStatus = forcedStatus || dropdownStatus || "published";
+
+      const shiftPayload = {
+        id: state.editingShift.id || "shift_" + Date.now(),
+        employeeId: empId,
+        departmentId: deptId,
+        role: role || (empId ? "Staff Member" : "Open Shift"),
+        date,
+        startTime,
+        endTime,
+        breakMinutes,
+        rate,
+        notes,
+        status: finalStatus
+      };
+
+      if (state.editingShift.isNew) {
+        if (!state.data.shifts) state.data.shifts = [];
+        state.data.shifts.push(shiftPayload);
+      } else {
+        const index = state.data.shifts.findIndex(s => s.id === state.editingShift.id);
+        if (index !== -1) {
+          state.data.shifts[index] = shiftPayload;
+        } else {
+          state.data.shifts.push(shiftPayload);
+        }
+      }
+
+      state.editingShift = null;
+      await saveData();
+      if (finalStatus === "published") {
+        showToast(empId ? "🚀 Shift published and live for staff!" : "🚀 Open shift published! Live for team to claim.", "success");
+      } else {
+        showToast(empId ? "Shift saved as draft." : "Open shift saved as draft.");
+      }
+    };
+
     const saveShiftBtn = document.getElementById("btn-save-shift");
     if (saveShiftBtn) {
-      saveShiftBtn.addEventListener("click", async () => {
-        const empId = document.getElementById("shift-employee-input").value || null;
-        const deptId = document.getElementById("shift-department-input").value;
-        const role = document.getElementById("shift-role-input").value.trim();
-        const date = document.getElementById("shift-date-input").value;
-        const startTime = document.getElementById("shift-start-input").value;
-        const endTime = document.getElementById("shift-end-input").value;
-        const breakMinutes = Number(document.getElementById("shift-break-input").value || 0);
-        const rate = Number(document.getElementById("shift-rate-input").value || 0);
-        const notes = document.getElementById("shift-notes-input").value.trim();
-        const status = document.getElementById("shift-status-input").value;
+      saveShiftBtn.addEventListener("click", () => saveShiftWithStatus());
+    }
 
-        if (!date || !startTime || !endTime) {
-          alert("Please fill in Date, Start Time, and End Time.");
-          return;
-        }
+    const saveShiftDraftBtn = document.getElementById("btn-save-shift-draft");
+    if (saveShiftDraftBtn) {
+      saveShiftDraftBtn.addEventListener("click", () => saveShiftWithStatus("draft"));
+    }
 
-        const shiftPayload = {
-          id: state.editingShift.id || "shift_" + Date.now(),
-          employeeId: empId,
-          departmentId: deptId,
-          role: role || "Staff",
-          date,
-          startTime,
-          endTime,
-          breakMinutes,
-          rate,
-          notes,
-          status: empId === null ? "open" : status
-        };
-
-        if (state.editingShift.isNew) {
-          if (!state.data.shifts) state.data.shifts = [];
-          state.data.shifts.push(shiftPayload);
-        } else {
-          const index = state.data.shifts.findIndex(s => s.id === state.editingShift.id);
-          if (index !== -1) {
-            state.data.shifts[index] = shiftPayload;
-          }
-        }
-
-        state.editingShift = null;
-        await saveData();
-        showToast("Shift saved successfully!");
-      });
+    const publishShiftModalBtn = document.getElementById("btn-publish-shift-modal");
+    if (publishShiftModalBtn) {
+      publishShiftModalBtn.addEventListener("click", () => saveShiftWithStatus("published"));
     }
 
     // Delete Shift

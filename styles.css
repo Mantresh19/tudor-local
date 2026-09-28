@@ -758,6 +758,63 @@ table.rota-table th.col-entity {
   border-color: var(--primary);
 }
 
+/* Open Shifts Dedicated Row & Cards */
+.row-open-shifts {
+  background-color: rgba(254, 243, 199, 0.4);
+  border-bottom: 2px solid rgba(245, 158, 11, 0.35);
+}
+
+.row-open-shifts .entity-cell.open-shifts-entity-cell {
+  background-color: rgba(254, 240, 138, 0.35) !important;
+  border-right: 1px solid var(--border-color);
+}
+
+.row-open-shifts .shift-cell.open-shift-cell {
+  background-color: rgba(254, 252, 232, 0.25);
+}
+
+.row-open-shifts .shift-cell.open-shift-cell:hover {
+  background-color: rgba(254, 240, 138, 0.4);
+}
+
+[data-theme="dark"] .row-open-shifts {
+  background-color: rgba(120, 53, 15, 0.2);
+  border-bottom: 2px solid rgba(217, 119, 6, 0.4);
+}
+
+[data-theme="dark"] .row-open-shifts .entity-cell.open-shifts-entity-cell {
+  background-color: rgba(120, 53, 15, 0.3) !important;
+}
+
+[data-theme="dark"] .row-open-shifts .shift-cell.open-shift-cell {
+  background-color: rgba(24, 24, 27, 0.6);
+}
+
+[data-theme="dark"] .row-open-shifts .shift-cell.open-shift-cell:hover {
+  background-color: rgba(120, 53, 15, 0.3);
+}
+
+.open-shift-card {
+  background-color: var(--shift-bg);
+  border-color: #f59e0b;
+}
+
+.open-shift-card.status-draft {
+  border-style: dashed;
+  border-color: #d97706;
+}
+
+.open-shift-card.status-published {
+  border-style: solid;
+  border-color: #10b981;
+}
+
+.badge-open-live {
+  background-color: var(--success-light);
+  color: var(--success);
+  font-weight: 700;
+}
+
 /* Staff Roster View (Admin Only) */
 .staff-grid {
   display: grid;
