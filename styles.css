@@ -2182,4 +2182,347 @@ table.rota-table th.col-entity {
   color: #f4f4f5 !important;
 }
 
+/* ==========================================================================
+   Planday Mobile 7-Day Team Schedule View (Image 2 Reference)
+   ========================================================================== */
+.planday-mobile-schedule-container {
+  max-width: 100%;
+  margin: 0 auto;
+  background-color: var(--bg-main);
+  min-height: calc(100vh - 120px);
+  padding-bottom: 2.5rem;
+}
+
+/* 1. Top bar with Month, Business Name, Actions */
+.planday-schedule-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 0.75rem;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.planday-month-nav {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.planday-nav-arrow {
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #0284c7;
+  cursor: pointer;
+  padding: 2px 5px;
+  line-height: 1;
+  border-radius: 4px;
+}
+
+.planday-nav-arrow:hover {
+  background-color: rgba(2, 132, 199, 0.1);
+}
+
+.planday-month-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0284c7;
+  white-space: nowrap;
+}
+
+.planday-business-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #0284c7;
+  text-align: center;
+  flex: 1;
+  padding: 0 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.planday-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-planday-today {
+  background: none;
+  border: 1px solid #0284c7;
+  color: #0284c7;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-planday-today:hover {
+  background-color: #0284c7;
+  color: white;
+}
+
+/* 2. 7-Day Header Strip */
+.planday-week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  padding: 0.5rem 0.5rem 0.4rem;
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 48px;
+  z-index: 9;
+}
+
+.planday-day-col-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.1s ease;
+}
+
+.planday-day-col-header:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.planday-day-name {
+  font-size: 0.68rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-transform: capitalize;
+}
+
+.planday-day-number {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-top: 1px;
+}
+
+.planday-day-col-header.is-today .planday-day-name,
+.planday-day-col-header.is-today .planday-day-number {
+  color: #0284c7 !important;
+  font-weight: 800 !important;
+}
+
+.planday-day-dot {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background-color: #0284c7;
+  margin-top: 3px;
+}
+
+.planday-day-dot-empty {
+  width: 4px;
+  height: 4px;
+  margin-top: 3px;
+  visibility: hidden;
+}
+
+/* 3. Schedule Rows Body */
+.planday-schedule-body {
+  background-color: var(--bg-card);
+}
+
+.planday-schedule-row {
+  padding: 0.55rem 0.5rem 0.65rem;
+  border-bottom: 1px solid var(--border-light);
+  transition: background-color 0.1s ease;
+}
+
+.planday-schedule-row:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.planday-open-shifts-section {
+  background-color: var(--bg-main);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.planday-row-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 0.35rem;
+  padding: 0 2px;
+}
+
+.planday-avatar-mini {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  color: white;
+  font-size: 8.5px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+
+.planday-employee-name {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.planday-you-badge {
+  background-color: #2563eb;
+  color: white;
+  font-size: 8px;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+}
+
+.planday-week-hours {
+  font-size: 0.725rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-left: auto;
+}
+
+/* 7 Days Grid per row */
+.planday-row-days-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.planday-cell {
+  min-height: 56px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  position: relative;
+  transition: background-color 0.15s ease;
+}
+
+.planday-cell.can-add:hover {
+  background-color: var(--bg-card-hover);
+  cursor: pointer;
+}
+
+/* Shift Box */
+.planday-shift-box {
+  width: 100%;
+  border-radius: 5px;
+  padding: 4px 2px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  overflow: hidden;
+  min-height: 50px;
+}
+
+.planday-shift-box:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+}
+
+/* EXACT GREEN FROM IMAGE 2 */
+.planday-shift-box.is-paid {
+  background-color: #15803d !important;
+  color: #ffffff !important;
+}
+
+/* EXACT GREY FROM IMAGE 2 */
+.planday-shift-box.is-unpaid {
+  background-color: #e2e8f0 !important;
+  color: #1e293b !important;
+}
+
+[data-theme="dark"] .planday-shift-box.is-unpaid {
+  background-color: #334155 !important;
+  color: #f8fafc !important;
+}
+
+.planday-shift-box.open-shift-box {
+  background-color: #fee2e2 !important;
+  color: #991b1b !important;
+  border: 1px dashed #fca5a5;
+}
+
+[data-theme="dark"] .planday-shift-box.open-shift-box {
+  background-color: #7f1d1d !important;
+  color: #fecaca !important;
+}
+
+.shift-role-text {
+  font-size: clamp(7.5px, 2.1vw, 8.5px);
+  font-weight: 700;
+  width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 0 1px;
+  line-height: 1.15;
+}
+
+.shift-time-text {
+  font-size: clamp(7.5px, 2.1vw, 9.5px);
+  font-weight: 800;
+  letter-spacing: -0.3px;
+  padding: 0 1px;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.shift-break-dot {
+  font-size: 8px;
+  margin-top: 1px;
+  padding: 0 1px;
+  line-height: 1;
+}
+
+.planday-shift-box.is-paid .shift-role-text,
+.planday-shift-box.is-paid .shift-time-text,
+.planday-shift-box.is-paid .shift-break-dot {
+  color: #ffffff !important;
+}
+
+.planday-shift-box.is-unpaid .shift-role-text,
+.planday-shift-box.is-unpaid .shift-time-text {
+  color: #1e293b !important;
+}
+
+[data-theme="dark"] .planday-shift-box.is-unpaid .shift-role-text,
+[data-theme="dark"] .planday-shift-box.is-unpaid .shift-time-text {
+  color: #f8fafc !important;
+}
+
+@media (max-width: 768px) {
+  .planday-mobile-schedule-container {
+    margin: -0.75rem -0.85rem 0 -0.85rem;
+  }
+}
+
+
 

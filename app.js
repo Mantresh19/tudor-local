@@ -123,7 +123,7 @@
     authSuccess: "",
     activeTab: "overview", // Always opens Overview first per user request
     selectedScheduleDate: null, // Selected day YYYY-MM-DD for day roster
-    scheduleViewMode: window.innerWidth <= 768 ? "list" : "grid", // 'list' (mobile day roster) | 'grid' (desktop table)
+    scheduleViewMode: window.innerWidth <= 768 ? "planday_mobile" : "grid", // 'planday_mobile' (Planday 7-day grid matching Image 2) | 'grid' (desktop table)
     showAllUpcomingShifts: false, // false (shows 3 closest) | true (shows all upcoming shifts)
     showNotifications: false, // Toggle notification bell dropdown
     currentMonday: getMonday(new Date()),
@@ -1153,8 +1153,211 @@
     `;
   }
 
-  // Render Team Schedule View (Day Roster or Week Grid)
+  // Render Planday Mobile Schedule (Image 2 Exact Layout)
+  function renderPlandayMobileSchedule() {
+    const weekDates = getWeekDates();
+    const weekDateStrs = weekDates.map(formatDate);
+    const todayStr = formatDate(new Date());
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    const businessName = state.data.settings?.businessName || "Tudor Local";
+    const monthYearStr = state.currentMonday.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+
+    let myEmpId = state.currentUser ? state.currentUser.employeeId : null;
+    if (!myEmpId && state.currentUser) {
+      const match = (state.data.employees || []).find(
+        e => e.name.toLowerCase() === (state.currentUser.name || state.currentUser.username || "").toLowerCase()
+      );
+      if (match) myEmpId = match.id;
+    }
+
+    const draftShiftsThisWeek = (state.data.shifts || []).filter(
+      s => weekDateStrs.includes(s.date) && s.status === "draft"
+    );
+
+    const openShiftsThisWeek = (state.data.shifts || []).filter(s => {
+      const isOpen = !s.employeeId || s.status === "open";
+      if (!isOpen) return false;
+      if (!weekDateStrs.includes(s.date)) return false;
+      if (isAdmin) return true;
+      return s.status === "published" || s.status === "open";
+    });
+
+    const employees = [...(state.data.employees || [])].sort((a, b) => {
+      if (a.id === myEmpId) return -1;
+      if (b.id === myEmpId) return 1;
+      return a.name.localeCompare(b.name);
+    });
+
+    return `
+      <div class="planday-mobile-schedule-container">
+        <!-- 1. Top Month Navigation & Business Name -->
+        <div class="planday-schedule-topbar">
+          <div class="planday-month-nav">
+            <button type="button" class="planday-nav-arrow" id="btn-planday-prev-week" title="Previous Week">‹</button>
+            <span class="planday-month-title">${monthYearStr}</span>
+            <button type="button" class="planday-nav-arrow" id="btn-planday-next-week" title="Next Week">›</button>
+          </div>
+
+          <div class="planday-business-name">${businessName}</div>
+
+          <div class="planday-top-actions">
+            <button type="button" class="btn-planday-today" id="btn-planday-today">Today</button>
+            <button type="button" class="btn-planday-today" id="btn-planday-switch-day" title="Switch to single day view" style="border-color: var(--border-color); color: var(--text-muted); font-size: 11px; padding: 2px 6px;">📋 Day</button>
+            ${
+              isAdmin && draftShiftsThisWeek.length > 0
+                ? `<button type="button" class="btn btn-success btn-xs" id="btn-publish-rota-planday" style="font-size: 11px; padding: 3px 7px; border-radius: 6px;">🚀 Publish (${draftShiftsThisWeek.length})</button>`
+                : ""
+            }
+          </div>
+        </div>
+
+        <!-- 2. 7-Day Week Strip Header -->
+        <div class="planday-week-strip">
+          ${weekDates.map(d => {
+            const dateStr = formatDate(d);
+            const dayShort = d.toLocaleDateString("en-GB", { weekday: "short" });
+            const dayNum = d.toLocaleDateString("en-GB", { day: "numeric" });
+            const isToday = dateStr === todayStr;
+            const hasShifts = (state.data.shifts || []).some(
+              s => s.date === dateStr && (isAdmin || s.status === "published")
+            );
+
+            return `
+              <div class="planday-day-col-header ${isToday ? "is-today" : ""}" data-date="${dateStr}">
+                <span class="planday-day-name">${dayShort}</span>
+                <span class="planday-day-number">${dayNum}</span>
+                ${hasShifts ? '<span class="planday-day-dot"></span>' : '<span class="planday-day-dot-empty"></span>'}
+              </div>
+            `;
+          }).join("")}
+        </div>
+
+        <!-- 3. Schedule Rows Body -->
+        <div class="planday-schedule-body">
+          <!-- Open Shifts Section (if admin or open shifts exist) -->
+          ${
+            isAdmin || openShiftsThisWeek.length > 0
+              ? `
+            <div class="planday-schedule-row planday-open-shifts-section">
+              <div class="planday-row-title">
+                <span style="font-size: 13px; line-height: 1;">🔓</span>
+                <span class="planday-employee-name" style="color: #b91c1c;">Open shift</span>
+                ${
+                  openShiftsThisWeek.length > 0
+                    ? `<span style="font-size: 10px; background: #fee2e2; color: #b91c1c; padding: 1px 6px; border-radius: 9999px; font-weight: 700;">${openShiftsThisWeek.length}</span>`
+                    : ""
+                }
+              </div>
+              <div class="planday-row-days-grid">
+                ${weekDates.map(d => {
+                  const dateStr = formatDate(d);
+                  const dayOpenShifts = openShiftsThisWeek.filter(s => s.date === dateStr);
+
+                  if (dayOpenShifts.length > 0) {
+                    return `
+                      <div class="planday-cell">
+                        ${dayOpenShifts.map(s => `
+                          <div class="planday-shift-box open-shift-box" data-shift-id="${s.id}" title="Open Shift: ${s.startTime}-${s.endTime}">
+                            <div class="shift-role-text">${s.role || "Open"}</div>
+                            <div class="shift-time-text">${s.startTime}-${s.endTime}</div>
+                            ${s.breakMinutes ? '<div class="shift-break-dot">●</div>' : ""}
+                          </div>
+                        `).join("")}
+                      </div>
+                    `;
+                  }
+
+                  return `<div class="planday-cell ${isAdmin ? "can-add-open" : ""}" data-date="${dateStr}"></div>`;
+                }).join("")}
+              </div>
+            </div>
+          `
+              : ""
+          }
+
+          <!-- Employee Rows -->
+          ${
+            employees.length === 0
+              ? `
+            <div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted);">
+              <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+              <p>No employees found. Add staff in the Staff tab to begin scheduling.</p>
+            </div>
+          `
+              : employees.map(emp => {
+                  const isMe = emp.id === myEmpId;
+                  const empShiftsThisWeek = (state.data.shifts || []).filter(
+                    s => s.employeeId === emp.id && weekDateStrs.includes(s.date) && (isAdmin || s.status === "published")
+                  );
+                  let empWeekHours = 0;
+                  empShiftsThisWeek.forEach(s => {
+                    empWeekHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
+                  });
+
+                  return `
+                    <div class="planday-schedule-row">
+                      <div class="planday-row-title">
+                        <div class="planday-avatar-mini" style="background-color: ${emp.avatarColor || '#0ea5e9'};">
+                          ${(emp.name[0] || "E").toUpperCase()}
+                        </div>
+                        <span class="planday-employee-name">${emp.name}</span>
+                        ${isMe ? '<span class="planday-you-badge">YOU</span>' : ''}
+                        <span class="planday-week-hours">${empWeekHours > 0 ? empWeekHours.toFixed(1) + "h" : ""}</span>
+                      </div>
+
+                      <div class="planday-row-days-grid">
+                        ${weekDates.map(d => {
+                          const dateStr = formatDate(d);
+                          const dayShifts = empShiftsThisWeek.filter(s => s.date === dateStr);
+
+                          if (dayShifts.length > 0) {
+                            return `
+                              <div class="planday-cell">
+                                ${dayShifts.map(shift => {
+                                  const isPaid = Boolean(shift.isPaid);
+                                  const role = shift.role || emp.role || "Staff";
+                                  const timeText = `${shift.startTime}-${shift.endTime}`;
+
+                                  return `
+                                    <div class="planday-shift-box ${isPaid ? "is-paid" : "is-unpaid"}" 
+                                         data-shift-id="${shift.id}" 
+                                         title="${emp.name}: ${timeText}${isPaid ? " (PAID)" : " (UNPAID)"}">
+                                      <div class="shift-role-text" title="${role}">${role}</div>
+                                      <div class="shift-time-text">${timeText}</div>
+                                      ${shift.breakMinutes ? '<div class="shift-break-dot">●</div>' : ""}
+                                    </div>
+                                  `;
+                                }).join("")}
+                              </div>
+                            `;
+                          }
+
+                          return `
+                            <div class="planday-cell ${isAdmin ? "can-add" : ""}" data-date="${dateStr}" data-emp-id="${emp.id}"></div>
+                          `;
+                        }).join("")}
+                      </div>
+                    </div>
+                  `;
+                }).join("")
+          }
+        </div>
+      </div>
+    `;
+  }
+
+  // Render Team Schedule View (Day Roster, Week Grid, or Planday Mobile Schedule)
   function renderScheduleView() {
+    const isMobile = window.innerWidth <= 768;
+    const isPlandayMobile = state.scheduleViewMode === "planday_mobile" || (isMobile && state.scheduleViewMode !== "list");
+
+    if (isPlandayMobile) {
+      return `
+        ${renderAdminResetBanner()}
+        ${renderPlandayMobileSchedule()}
+      `;
+    }
+
     const selectedDate = getSelectedDateStr();
 
     return `
@@ -3416,7 +3619,7 @@
     if (seeAllBtn) {
       seeAllBtn.addEventListener("click", () => {
         state.activeTab = "schedule";
-        state.scheduleViewMode = "grid"; // Prompt to week grid page per user request
+        state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
       });
     }
@@ -3425,7 +3628,7 @@
     if (openShiftsSeeAll) {
       openShiftsSeeAll.addEventListener("click", () => {
         state.activeTab = "schedule";
-        state.scheduleViewMode = "grid"; // Prompt to week grid page
+        state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
       });
     }
@@ -3434,7 +3637,7 @@
     if (jumpScheduleBtn) {
       jumpScheduleBtn.addEventListener("click", () => {
         state.activeTab = "schedule";
-        state.scheduleViewMode = "grid"; // Prompt to week grid page
+        state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
       });
     }
@@ -3455,8 +3658,138 @@
             return;
           }
         }
-        state.scheduleViewMode = "grid"; // Prompt to week grid page
+        state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
+      });
+    });
+
+    // Planday Mobile Schedule Controls & Events
+    const btnPlandayPrevWeek = document.getElementById("btn-planday-prev-week");
+    if (btnPlandayPrevWeek) {
+      btnPlandayPrevWeek.addEventListener("click", () => {
+        const d = new Date(state.currentMonday);
+        d.setDate(d.getDate() - 7);
+        state.currentMonday = d;
+        renderApp();
+      });
+    }
+
+    const btnPlandayNextWeek = document.getElementById("btn-planday-next-week");
+    if (btnPlandayNextWeek) {
+      btnPlandayNextWeek.addEventListener("click", () => {
+        const d = new Date(state.currentMonday);
+        d.setDate(d.getDate() + 7);
+        state.currentMonday = d;
+        renderApp();
+      });
+    }
+
+    const btnPlandayToday = document.getElementById("btn-planday-today");
+    if (btnPlandayToday) {
+      btnPlandayToday.addEventListener("click", () => {
+        state.currentMonday = getMonday(new Date());
+        renderApp();
+      });
+    }
+
+    const btnPlandaySwitchDay = document.getElementById("btn-planday-switch-day");
+    if (btnPlandaySwitchDay) {
+      btnPlandaySwitchDay.addEventListener("click", () => {
+        state.scheduleViewMode = "list";
+        renderApp();
+      });
+    }
+
+    const btnPublishRotaPlanday = document.getElementById("btn-publish-rota-planday");
+    if (btnPublishRotaPlanday) {
+      btnPublishRotaPlanday.addEventListener("click", async () => {
+        if (!isAdmin) return;
+        const weekDates = getWeekDates().map(formatDate);
+        let count = 0;
+        state.data.shifts.forEach(s => {
+          if (weekDates.includes(s.date) && s.status === "draft") {
+            s.status = "published";
+            count++;
+          }
+        });
+        if (count > 0) {
+          await saveServerData();
+          renderApp();
+        }
+      });
+    }
+
+    document.querySelectorAll(".planday-day-col-header").forEach(header => {
+      header.addEventListener("click", () => {
+        state.selectedScheduleDate = header.dataset.date;
+        renderApp();
+      });
+    });
+
+    document.querySelectorAll(".planday-shift-box").forEach(box => {
+      box.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const shiftId = box.dataset.shiftId;
+        if (!shiftId) return;
+        const shift = (state.data.shifts || []).find(s => s.id === shiftId);
+        if (!shift) return;
+
+        if (isAdmin) {
+          openShiftModal(JSON.parse(JSON.stringify(shift)));
+        } else {
+          const isOpen = !shift.employeeId || shift.status === "open";
+          if (isOpen && state.currentUser && state.currentUser.employeeId) {
+            if (confirm(`Would you like to claim this open shift on ${shift.date} (${shift.startTime} - ${shift.endTime})?`)) {
+              handleClaimShift(shift.id);
+            }
+          } else {
+            const emp = (state.data.employees || []).find(em => em.id === shift.employeeId);
+            const dept = (state.data.departments || []).find(d => d.id === shift.departmentId);
+            alert(`Shift Details:\n• Staff: ${emp ? emp.name : "Unassigned"}\n• Date: ${shift.date}\n• Time: ${shift.startTime} - ${shift.endTime}\n• Role: ${shift.role || "Staff"}\n• Dept: ${dept ? dept.name : "General"}\n• Status: ${shift.isPaid ? "PAID" : "UNPAID"}${shift.breakMinutes ? `\n• Break: ${shift.breakMinutes} mins` : ""}${shift.notes ? `\n• Notes: ${shift.notes}` : ""}`);
+          }
+        }
+      });
+    });
+
+    document.querySelectorAll(".planday-cell.can-add").forEach(cell => {
+      cell.addEventListener("click", () => {
+        if (!isAdmin) return;
+        const date = cell.dataset.date;
+        const empId = cell.dataset.empId;
+        const emp = (state.data.employees || []).find(e => e.id === empId);
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: emp ? emp.role : "Staff Member",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: "draft",
+          employeeId: empId || null,
+          rate: emp ? emp.hourlyRate : 10.0,
+          isPaid: false
+        });
+      });
+    });
+
+    document.querySelectorAll(".planday-cell.can-add-open").forEach(cell => {
+      cell.addEventListener("click", () => {
+        if (!isAdmin) return;
+        const date = cell.dataset.date;
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: "Open Shift",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: "published",
+          employeeId: null,
+          rate: 10.0,
+          isPaid: false
+        });
       });
     });
 
@@ -3480,7 +3813,7 @@
     const btnModeGrid = document.getElementById("btn-view-mode-grid");
     if (btnModeGrid) {
       btnModeGrid.addEventListener("click", () => {
-        state.scheduleViewMode = "grid";
+        state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
       });
     }
