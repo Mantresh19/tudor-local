@@ -141,7 +141,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false
     },
     {
       "id": "shift_1790268236379",

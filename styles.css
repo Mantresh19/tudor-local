@@ -685,6 +685,78 @@ table.rota-table th.col-entity {
   background-color: var(--primary-light);
 }
 
+/* Paid Shift Card Styling */
+.shift-card.shift-paid {
+  background-color: #ecfdf5 !important;
+  border-color: #10b981 !important;
+  border-left-color: #059669 !important;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.15);
+}
+
+.shift-card.shift-paid:hover {
+  border-color: #059669 !important;
+  box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);
+}
+
+.shift-card.shift-paid .shift-time {
+  color: #065f46;
+}
+
+.shift-card.shift-paid .shift-role-title {
+  color: #047857;
+}
+
+.shift-card.shift-paid .shift-footer {
+  color: #065f46;
+  border-top-color: rgba(16, 185, 129, 0.25);
+}
+
+/* Paid Shift Card in Dark Theme */
+[data-theme="dark"] .shift-card.shift-paid {
+  background-color: #064e3b !important;
+  border-color: #10b981 !important;
+  border-left-color: #34d399 !important;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="dark"] .shift-card.shift-paid:hover {
+  border-color: #34d399 !important;
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.45);
+}
+
+[data-theme="dark"] .shift-card.shift-paid .shift-time {
+  color: #f0fdf4;
+}
+
+[data-theme="dark"] .shift-card.shift-paid .shift-role-title {
+  color: #a7f3d0;
+}
+
+[data-theme="dark"] .shift-card.shift-paid .shift-footer {
+  color: #6ee7b7;
+  border-top-color: rgba(52, 211, 153, 0.25);
+}
+
+.badge-paid {
+  background-color: #10b981 !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px;
+}
+
+/* Day Roster Card - Paid */
+.day-roster-card.roster-paid {
+  background-color: #f0fdf4 !important;
+  border-color: #86efac !important;
+  border-left-color: #10b981 !important;
+}
+
+[data-theme="dark"] .day-roster-card.roster-paid {
+  background-color: #064e3b !important;
+  border-color: #047857 !important;
+  border-left-color: #34d399 !important;
+}
+
 .shift-time {
   font-weight: 600;
   color: var(--text-main);

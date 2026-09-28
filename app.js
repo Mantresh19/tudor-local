@@ -1011,9 +1011,10 @@
         const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
         const isDraft = shift.status === "draft";
         const isOvertime = isShiftOvertime(shift);
+        const isPaidShift = Boolean(shift.isPaid);
 
         return `
-          <div class="day-roster-card ${isMyShift ? "my-shift" : ""}" data-shift-id="${shift.id}" style="border-left-color: ${isOvertime ? "#ef4444" : (isOpenShift ? (isDraft ? "#d97706" : "#16a34a") : (dept.color || "#0ea5e9"))}; cursor: ${isAdmin ? "pointer" : "default"};">
+          <div class="day-roster-card ${isMyShift ? "my-shift" : ""} ${isPaidShift ? "roster-paid" : ""}" data-shift-id="${shift.id}" style="${isPaidShift ? "" : `border-left-color: ${isOvertime ? "#ef4444" : (isOpenShift ? (isDraft ? "#d97706" : "#16a34a") : (dept.color || "#0ea5e9"))};`} cursor: ${isAdmin ? "pointer" : "default"};">
             <div class="day-roster-avatar" style="background-color: ${avatarBg}; color: white;">
               ${empInitial}
             </div>
@@ -1021,6 +1022,7 @@
               <div class="day-roster-name">
                 <span>${empName}</span>
                 ${isMyShift ? `<span style="background:var(--primary);color:white;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700;">YOU</span>` : ""}
+                ${isPaidShift ? `<span class="shift-badge badge-paid" style="background:#10b981;color:white;font-size:10px;font-weight:700;">✓ PAID</span>` : ""}
                 ${isOvertime ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:10px;font-weight:700;">⚡ Overtime</span>` : ""}
                 ${isDraft && isAdmin ? `<span class="badge badge-draft" style="font-size:10px;">Draft</span>` : ""}
                 ${isOpenShift && !isDraft ? `<span class="shift-badge badge-open-live" style="font-size:10px;">Open</span>` : ""}
@@ -1241,6 +1243,7 @@
                     <div class="planday-shift-main">
                       <div class="planday-shift-time" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                         <span>⏰ ${formatShiftRange(shift.startTime, shift.endTime)}</span>
+                        ${shift.isPaid ? `<span class="shift-badge badge-paid" style="background:#10b981;color:white;font-size:9px;font-weight:700;">✓ PAID</span>` : ""}
                         ${isOvertime ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">⚡ Overtime</span>` : ""}
                         ${shift.status === "draft" && isAdmin ? `<span class="shift-badge badge-draft" style="font-size:9px;">Draft</span>` : ""}
                       </div>
@@ -1297,8 +1300,9 @@
                   </div>
                   <div class="planday-shift-content" style="background: transparent; border: none;">
                     <div class="planday-shift-main">
-                      <div class="planday-shift-time" style="color: #b91c1c; font-weight: 700;">
-                        ⏰ ${formatShiftRange(shift.startTime, shift.endTime)} · ${h}h
+                      <div class="planday-shift-time" style="color: #b91c1c; font-weight: 700; display: flex; align-items: center; gap: 6px;">
+                        <span>⏰ ${formatShiftRange(shift.startTime, shift.endTime)} · ${h}h</span>
+                        ${shift.isPaid ? `<span class="shift-badge badge-paid" style="background:#10b981;color:white;font-size:9px;font-weight:700;">✓ PAID</span>` : ""}
                       </div>
                       <div class="planday-shift-role" style="color: #7f1d1d; font-weight: 600;">
                         <strong>${emp ? emp.name : "Staff"}</strong> · ${shift.role || "Staff Member"} <span style="font-weight:700;color:#dc2626;">(⚡ Overtime)</span>
@@ -1646,12 +1650,13 @@
                   const isDraft = shift.status === "draft";
                   const isMyShift = isMe;
                   const isOvertimeShift = isShiftOvertime(shift);
+                  const isPaidShift = Boolean(shift.isPaid);
 
                   return `
-                    <div class="shift-card ${isDraft ? "status-draft" : "status-published"} ${isMyShift ? "my-shift" : ""} ${isOvertimeShift ? "shift-card-overtime" : ""}" 
-                         style="border-left-color: ${isOvertimeShift ? "#ef4444" : sDept.color};" 
+                    <div class="shift-card ${isDraft ? "status-draft" : "status-published"} ${isMyShift ? "my-shift" : ""} ${isOvertimeShift ? "shift-card-overtime" : ""} ${isPaidShift ? "shift-paid" : ""}" 
+                         style="${isPaidShift ? "" : `border-left-color: ${isOvertimeShift ? "#ef4444" : sDept.color};`}" 
                          data-shift-id="${shift.id}" 
-                         title="${shift.notes ? `Note: ${shift.notes}` : "Shift details"}">
+                         title="${shift.notes ? `Note: ${shift.notes}` : "Shift details"}${isPaidShift ? " · [PAID]" : ""}">
                       <div class="shift-time">
                         <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         ${shift.breakMinutes ? `<span class="shift-break">-${shift.breakMinutes}m</span>` : ""}
@@ -1662,11 +1667,19 @@
                       </div>
                       <div class="shift-footer">
                         <span>${hours}h net ${isAdmin ? `· ${currency}${(hours * (shift.rate || emp.hourlyRate || 0)).toFixed(0)}` : ""}</span>
-                        ${
-                          isDraft
-                            ? `<span class="shift-badge badge-draft">Draft</span>`
-                            : `<span class="shift-badge badge-published">Live</span>`
-                        }
+                        <div style="display: flex; gap: 4px; align-items: center;">
+                          ${isPaidShift ? `<span class="shift-badge badge-paid">PAID</span>` : ""}
+                          ${
+                            isDraft
+                              ? `<span class="shift-badge badge-draft">Draft</span>`
+                              : `<span class="shift-badge badge-published">Live</span>`
+                          }
+                          ${
+                            isAdmin
+                              ? `<button type="button" class="btn-quick-shift-paid" data-shift-id="${shift.id}" title="${isPaidShift ? "Mark as Unpaid" : "Mark as Paid"}" style="background: none; border: none; cursor: pointer; padding: 0 0 0 2px; font-size: 11px; line-height: 1;">${isPaidShift ? "✅" : "💵"}</button>`
+                              : ""
+                          }
+                        </div>
                       </div>
                     </div>
                   `;
@@ -1739,15 +1752,25 @@
                   const isOpen = !shift.employeeId;
                   const isDraft = shift.status === "draft";
                   const isOvertimeShift = isShiftOvertime(shift);
+                  const isPaidShift = Boolean(shift.isPaid);
 
                   return `
-                    <div class="shift-card ${isOpen ? "open-shift-card" : ""} ${isDraft ? "status-draft" : "status-published"} ${isMe ? "my-shift" : ""} ${isOvertimeShift ? "shift-card-overtime" : ""}" 
-                         style="border-left-color: ${isOpen ? (isDraft ? "#d97706" : "#16a34a") : (isOvertimeShift ? "#ef4444" : dept.color)};" 
-                         data-shift-id="${shift.id}">
+                    <div class="shift-card ${isOpen ? "open-shift-card" : ""} ${isDraft ? "status-draft" : "status-published"} ${isMe ? "my-shift" : ""} ${isOvertimeShift ? "shift-card-overtime" : ""} ${isPaidShift ? "shift-paid" : ""}" 
+                         style="${isPaidShift ? "" : `border-left-color: ${isOpen ? (isDraft ? "#d97706" : "#16a34a") : (isOvertimeShift ? "#ef4444" : dept.color)};`}" 
+                         data-shift-id="${shift.id}"
+                         title="${shift.notes ? `Note: ${shift.notes}` : "Shift details"}${isPaidShift ? " · [PAID]" : ""}">
                       <div class="shift-time">
                         <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
-                        ${isOvertimeShift ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">⚡ OT</span>` : ""}
-                        ${isDraft ? `<span class="shift-badge badge-draft">Draft</span>` : (isOpen ? `<span class="shift-badge badge-open-live">Live</span>` : "")}
+                        <div style="display: flex; gap: 3px; align-items: center;">
+                          ${isPaidShift ? `<span class="shift-badge badge-paid">PAID</span>` : ""}
+                          ${isOvertimeShift ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">⚡ OT</span>` : ""}
+                          ${isDraft ? `<span class="shift-badge badge-draft">Draft</span>` : (isOpen ? `<span class="shift-badge badge-open-live">Live</span>` : "")}
+                          ${
+                            isAdmin
+                              ? `<button type="button" class="btn-quick-shift-paid" data-shift-id="${shift.id}" title="${isPaidShift ? "Mark as Unpaid" : "Mark as Paid"}" style="background: none; border: none; cursor: pointer; padding: 0 0 0 2px; font-size: 11px; line-height: 1;">${isPaidShift ? "✅" : "💵"}</button>`
+                              : ""
+                          }
+                        </div>
                       </div>
                       <div class="shift-role-title"><strong>${emp ? emp.name : "🔓 Open Shift"}</strong></div>
                       <div style="font-size:0.7rem;color:var(--text-muted);">${shift.role} · ${hours}h</div>
@@ -2462,6 +2485,8 @@
     const netHours = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
     const rate = shift.rate || (shift.employeeId ? ((state.data.employees || []).find(e => e.id === shift.employeeId) || {}).hourlyRate : 10) || 10;
     const estCost = (netHours * rate).toFixed(2);
+    const isAdmin = state.currentUser && state.currentUser.role === "admin";
+    const isPaid = Boolean(shift.isPaid);
 
     return `
       <div class="modal-overlay" id="shift-modal-overlay">
@@ -2555,6 +2580,35 @@
               </div>
             </div>
 
+            ${
+              isAdmin
+                ? `
+              <div class="form-group" style="background: var(--bg-main); border: 1px solid ${isPaid ? '#10b981' : 'var(--border-color)'}; border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1rem; transition: border-color 0.2s ease;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                  <label class="form-label" style="margin: 0; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                    <span>💵 Shift Payment Status</span>
+                    <span id="shift-paid-badge" class="shift-badge ${isPaid ? 'badge-paid' : ''}" style="${isPaid ? 'background:#10b981;color:white;' : 'background:var(--border-light);color:var(--text-muted);'} font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">
+                      ${isPaid ? '✓ PAID' : 'UNPAID'}
+                    </span>
+                  </label>
+                  <span style="font-size: 11px; color: ${isPaid ? '#10b981' : 'var(--text-muted)'}; font-weight: 600;" id="shift-paid-status-text">
+                    ${isPaid ? 'Box turns GREEN in rota' : 'Standard color (Unchanged)'}
+                  </span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <select class="form-select" id="shift-is-paid-input" style="flex: 1; font-weight: 600; ${isPaid ? 'border-color:#10b981; color:#10b981;' : ''}">
+                    <option value="false" ${!isPaid ? 'selected' : ''}>⏳ Unpaid (Keep box unchanged)</option>
+                    <option value="true" ${isPaid ? 'selected' : ''}>✅ Paid (Turn small box green)</option>
+                  </select>
+                  <button type="button" class="btn btn-sm" id="btn-quick-toggle-paid" style="white-space: nowrap; font-weight: 700; background: ${isPaid ? '#f1f5f9' : '#10b981'}; color: ${isPaid ? '#475569' : 'white'}; border: 1px solid ${isPaid ? '#cbd5e1' : '#10b981'};">
+                    ${isPaid ? 'Set as Unpaid' : '✓ Mark as Paid'}
+                  </button>
+                </div>
+              </div>
+            `
+                : ""
+            }
+
             <div class="form-group">
               <label class="form-label">Shift Notes & Instructions</label>
               <textarea class="form-textarea" id="shift-notes-input" rows="2" placeholder="e.g. Opening register, floor lead...">${shift.notes || ""}</textarea>
@@ -2568,6 +2622,7 @@
                 : `<div></div>`
             }
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              ${isAdmin && !isNew ? `<button type="button" class="btn btn-sm" id="btn-modal-direct-paid-toggle" style="background:${isPaid ? '#f8fafc' : '#10b981'};color:${isPaid ? '#64748b' : 'white'};border:1px solid ${isPaid ? '#cbd5e1' : '#059669'};font-weight:700;">${isPaid ? '↺ Mark Unpaid' : '💵 Mark Paid & Save'}</button>` : ''}
               <button type="button" class="btn btn-secondary" id="btn-cancel-modal">Cancel</button>
               <button type="button" class="btn btn-secondary" id="btn-save-shift-draft" style="font-weight: 600;">Save as Draft</button>
               <button type="button" class="btn btn-primary" id="btn-publish-shift-modal" style="background: #16a34a; border-color: #16a34a; font-weight: 700;">🚀 Publish Shift</button>
@@ -4008,10 +4063,25 @@
       });
     });
 
+    // Quick Paid Toggle on Shift Card (Admin only)
+    document.querySelectorAll(".btn-quick-shift-paid").forEach(btn => {
+      btn.addEventListener("click", async e => {
+        e.stopPropagation();
+        if (!isAdmin) return;
+        const shiftId = btn.dataset.shiftId;
+        const shift = (state.data.shifts || []).find(s => s.id === shiftId);
+        if (shift) {
+          shift.isPaid = !shift.isPaid;
+          await saveData();
+          showToast(shift.isPaid ? "✅ Shift marked as PAID (box turned green)!" : "Shift marked as UNPAID (standard box).", "success");
+        }
+      });
+    });
+
     // Edit Shift on card click
     document.querySelectorAll(".shift-card").forEach(card => {
       card.addEventListener("click", e => {
-        if (e.target.closest(".btn-claim-shift") || e.target.closest(".btn-request-claim")) return;
+        if (e.target.closest(".btn-claim-shift") || e.target.closest(".btn-request-claim") || e.target.closest(".btn-quick-shift-paid")) return;
         const shiftId = card.dataset.shiftId;
         const shift = (state.data.shifts || []).find(s => s.id === shiftId);
         if (shift && isAdmin) {
@@ -4119,6 +4189,8 @@
       const notes = document.getElementById("shift-notes-input").value.trim();
       const statusInput = document.getElementById("shift-status-input");
       const dropdownStatus = statusInput ? statusInput.value : "published";
+      const isPaidInput = document.getElementById("shift-is-paid-input");
+      const isPaid = isPaidInput ? (isPaidInput.value === "true") : (state.editingShift ? Boolean(state.editingShift.isPaid) : false);
 
       if (!date || !startTime || !endTime) {
         alert("Please fill in Date, Start Time, and End Time.");
@@ -4138,7 +4210,8 @@
         breakMinutes,
         rate,
         notes,
-        status: finalStatus
+        status: finalStatus,
+        isPaid: Boolean(isPaid)
       };
 
       if (state.editingShift.isNew) {
@@ -4163,6 +4236,59 @@
         showToast(empId ? "Shift saved as draft." : "Open shift saved as draft.");
       }
     };
+
+    // Payment Status UI inside Shift Modal
+    const paidSelect = document.getElementById("shift-is-paid-input");
+    const paidBadge = document.getElementById("shift-paid-badge");
+    const paidStatusText = document.getElementById("shift-paid-status-text");
+    const btnQuickTogglePaid = document.getElementById("btn-quick-toggle-paid");
+
+    const updatePaidUI = (paid) => {
+      if (paidBadge) {
+        paidBadge.textContent = paid ? "✓ PAID" : "UNPAID";
+        paidBadge.style.background = paid ? "#10b981" : "var(--border-light)";
+        paidBadge.style.color = paid ? "white" : "var(--text-muted)";
+      }
+      if (paidStatusText) {
+        paidStatusText.textContent = paid ? "Box turns GREEN in rota" : "Standard color (Unchanged)";
+        paidStatusText.style.color = paid ? "#10b981" : "var(--text-muted)";
+      }
+      if (btnQuickTogglePaid) {
+        btnQuickTogglePaid.textContent = paid ? "Set as Unpaid" : "✓ Mark as Paid";
+        btnQuickTogglePaid.style.background = paid ? "#f1f5f9" : "#10b981";
+        btnQuickTogglePaid.style.color = paid ? "#475569" : "white";
+        btnQuickTogglePaid.style.borderColor = paid ? "#cbd5e1" : "#10b981";
+      }
+      if (paidSelect) {
+        paidSelect.style.borderColor = paid ? "#10b981" : "";
+        paidSelect.style.color = paid ? "#10b981" : "";
+      }
+    };
+
+    if (paidSelect) {
+      paidSelect.addEventListener("change", () => {
+        updatePaidUI(paidSelect.value === "true");
+      });
+    }
+
+    if (btnQuickTogglePaid && paidSelect) {
+      btnQuickTogglePaid.addEventListener("click", () => {
+        const next = paidSelect.value !== "true";
+        paidSelect.value = next ? "true" : "false";
+        updatePaidUI(next);
+      });
+    }
+
+    const btnDirectPaidToggle = document.getElementById("btn-modal-direct-paid-toggle");
+    if (btnDirectPaidToggle && state.editingShift) {
+      btnDirectPaidToggle.addEventListener("click", async () => {
+        const currentPaid = Boolean(state.editingShift.isPaid);
+        if (paidSelect) paidSelect.value = currentPaid ? "false" : "true";
+        state.editingShift.isPaid = !currentPaid;
+        await saveShiftWithStatus();
+        showToast(!currentPaid ? "✅ Shift marked as PAID (box is now green)!" : "Shift marked as UNPAID (standard box).", "success");
+      });
+    }
 
     const saveShiftBtn = document.getElementById("btn-save-shift");
     if (saveShiftBtn) {
@@ -4776,6 +4902,9 @@
 
   // Open Shift Modal helper
   function openShiftModal(shift) {
+    if (shift && shift.isPaid === undefined) {
+      shift.isPaid = false;
+    }
     state.editingShift = shift;
     renderApp();
   }
