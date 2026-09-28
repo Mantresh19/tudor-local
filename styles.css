@@ -2189,9 +2189,8 @@ table.rota-table th.col-entity {
   width: 100%;
   max-width: 100vw;
   margin: 0;
-  padding: 0 0 5rem 0;
+  padding: 0;
   background-color: var(--bg-main);
-  min-height: 100vh;
   box-sizing: border-box;
   overflow-x: hidden;
 }
@@ -2604,6 +2603,10 @@ table.rota-table th.col-entity {
 
 /* Full-bleed Edge-to-Edge Mobile Layout without Margins Clipping */
 @media (max-width: 768px) {
+  body.planday-schedule-active {
+    padding-bottom: calc(52px + env(safe-area-inset-bottom, 8px)) !important;
+  }
+
   body.planday-schedule-active header.app-header {
     display: none !important;
   }
