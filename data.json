@@ -742,17 +742,6 @@
       "status": "published"
     }
   ],
-  "requests": [],
-  "punches": [
-    {
-      "id": "punch_1790269791139",
-      "employeeId": "emp_1790267945703",
-      "clockIn": "2026-09-24T17:09:51.139Z",
-      "clockOut": "2026-09-24T17:09:55.687Z",
-      "breaks": [],
-      "status": "completed"
-    }
-  ],
   "users": [
     {
       "id": "user_admin",

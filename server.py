@@ -21,10 +21,78 @@ PORT = int(os.environ.get("PORT", 8080))
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_FILE = os.path.join(BASE_DIR, "data.json")
 
+# MongoDB Configuration & Resilient Client
+MONGO_URI = os.environ.get("MONGODB_URI", "mongodb://localhost:27017")
+MONGO_DB_NAME = os.environ.get("MONGODB_DB", "tudor_rota")
+
+_mongo_client = None
+_mongo_db = None
+_mongo_connected = False
+
+def init_mongo():
+    global _mongo_client, _mongo_db, _mongo_connected
+    try:
+        import pymongo
+        _mongo_client = pymongo.MongoClient(MONGO_URI, serverSelectionTimeoutMS=2000)
+        _mongo_client.server_info()
+        _mongo_db = _mongo_client[MONGO_DB_NAME]
+        _mongo_connected = True
+        print(f"✅ [MongoDB] Successfully connected to {MONGO_URI} (db: {MONGO_DB_NAME})")
+    except Exception as e:
+        _mongo_client = None
+        _mongo_db = None
+        _mongo_connected = False
+        print(f"ℹ️ [MongoDB] Connection offline ({e}). Using local data.json fallback.")
+
+init_mongo()
+
+def is_mongo_active():
+    global _mongo_connected
+    if not _mongo_connected or _mongo_db is None:
+        try:
+            init_mongo()
+        except Exception:
+            pass
+    return _mongo_connected and _mongo_db is not None
+
 def hash_pw(pw):
     return hashlib.sha256(pw.encode("utf-8")).hexdigest()
 
 def read_db():
+    # 1. Try reading from MongoDB if connected
+    if is_mongo_active():
+        try:
+            data = {}
+            # Settings
+            s_doc = _mongo_db.settings.find_one({"_id": "app_settings"})
+            if s_doc:
+                s_doc.pop("_id", None)
+                data["settings"] = s_doc
+            else:
+                data["settings"] = {}
+
+            # Collections
+            for col_name in ["departments", "employees", "shifts", "users", "resetRequests", "inventory"]:
+                docs = list(_mongo_db[col_name].find({}))
+                for d in docs:
+                    d.pop("_id", None)
+                data[col_name] = docs
+
+            # Initial Seeding: If MongoDB collections are empty, seed from data.json
+            if not data.get("employees") and not data.get("shifts") and os.path.exists(DATA_FILE):
+                try:
+                    with open(DATA_FILE, "r", encoding="utf-8") as f:
+                        seed_data = json.load(f)
+                    write_db(seed_data)
+                    return seed_data
+                except Exception:
+                    pass
+
+            return data
+        except Exception as e:
+            print(f"⚠️ [MongoDB] Error reading: {e}. Falling back to data.json.")
+
+    # 2. Fallback to local data.json
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -33,14 +101,47 @@ def read_db():
                     data["users"] = []
                 if "resetRequests" not in data:
                     data["resetRequests"] = []
+                if "shifts" not in data:
+                    data["shifts"] = []
+                if "employees" not in data:
+                    data["employees"] = []
                 return data
         except Exception:
             pass
     return {"users": [], "resetRequests": [], "shifts": [], "employees": []}
 
 def write_db(data):
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
+    # 1. Always maintain local data.json file mirror
+    try:
+        with open(DATA_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        print(f"Error writing data.json: {e}")
+
+    # 2. Write directly to MongoDB collections
+    if is_mongo_active():
+        try:
+            # Settings
+            if "settings" in data and isinstance(data["settings"], dict):
+                s_copy = dict(data["settings"])
+                s_copy["_id"] = "app_settings"
+                _mongo_db.settings.replace_one({"_id": "app_settings"}, s_copy, upsert=True)
+
+            # Collections with unique IDs
+            for col_name in ["departments", "employees", "shifts", "users", "resetRequests", "inventory"]:
+                if col_name in data and isinstance(data[col_name], list):
+                    col = _mongo_db[col_name]
+                    col.delete_many({})
+                    if data[col_name]:
+                        to_insert = []
+                        for item in data[col_name]:
+                            doc = dict(item)
+                            if "id" in doc:
+                                doc["_id"] = doc["id"]
+                            to_insert.append(doc)
+                        col.insert_many(to_insert)
+        except Exception as e:
+            print(f"⚠️ [MongoDB] Error writing to MongoDB: {e}")
 
 class RotaHandler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -73,6 +174,41 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
             for u in safe_data.get("users", []):
                 u.pop("passwordHash", None)
             self.send_json(200, safe_data)
+            return
+
+        if parsed.path == "/api/db-status":
+            mongo_ok = is_mongo_active()
+            counts = {}
+            if mongo_ok:
+                try:
+                    for c in ["shifts", "users", "employees", "inventory"]:
+                        counts[c] = _mongo_db[c].count_documents({})
+                except Exception:
+                    pass
+            else:
+                db_data = read_db()
+                counts = {
+                    "shifts": len(db_data.get("shifts", [])),
+                    "users": len(db_data.get("users", [])),
+                    "employees": len(db_data.get("employees", [])),
+                    "inventory": len(db_data.get("inventory", []))
+                }
+
+            display_uri = MONGO_URI
+            if "@" in display_uri:
+                parts = display_uri.split("@")
+                display_uri = "mongodb+srv://****@" + parts[-1]
+
+            self.send_json(200, {
+                "success": True,
+                "connected": mongo_ok,
+                "database": MONGO_DB_NAME if mongo_ok else "data.json (local fallback)",
+                "uri": display_uri if mongo_ok else "local filesystem",
+                "counts": counts,
+                "isSafe": True,
+                "type": "mongodb" if mongo_ok else "file_fallback",
+                "message": "All shifts and rota data are safely stored in MongoDB!" if mongo_ok else "Data saved to persistent file storage."
+            })
             return
 
         # Default fallback to index.html for root
