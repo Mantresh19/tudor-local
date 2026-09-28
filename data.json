@@ -762,6 +762,7 @@
       "name": "Manager (Admin)",
       "employeeId": null,
       "hasRotaAccess": true,
+      "hasInventoryAccess": true,
       "isActive": true,
       "mustChangePassword": false
     },
@@ -773,6 +774,55 @@
       "name": "Mantresh",
       "employeeId": "emp_1790267945703",
       "hasRotaAccess": true,
+      "hasInventoryAccess": true,
+      "isActive": true,
+      "mustChangePassword": false
+    },
+    {
+      "id": "user_shon",
+      "username": "shon",
+      "passwordHash": "f81cdc6ee622bcddb6053a13b53ee8093c6639f2aa323f06a01e7e1f94f4d80c",
+      "role": "staff",
+      "name": "Shon",
+      "employeeId": "emp_1790267994714",
+      "hasRotaAccess": true,
+      "hasInventoryAccess": false,
+      "isActive": true,
+      "mustChangePassword": false
+    },
+    {
+      "id": "user_isuru",
+      "username": "isuru",
+      "passwordHash": "63fbc5f344fdcae2dc896921cea91ebd5c870164c4b16f2c2a81f89c4dbbe5cd",
+      "role": "staff",
+      "name": "Isuru",
+      "employeeId": "emp_1790268011960",
+      "hasRotaAccess": true,
+      "hasInventoryAccess": true,
+      "isActive": true,
+      "mustChangePassword": false
+    },
+    {
+      "id": "user_riya",
+      "username": "riya",
+      "passwordHash": "6adeddb447d1230f9863266e14ebdb9d7f86c4a71e453dffb442c9db126702c2",
+      "role": "staff",
+      "name": "Riya",
+      "employeeId": "emp_1790268027518",
+      "hasRotaAccess": true,
+      "hasInventoryAccess": false,
+      "isActive": true,
+      "mustChangePassword": false
+    },
+    {
+      "id": "user_swastik",
+      "username": "swastik",
+      "passwordHash": "3a7ab0ca92bdd297a935d489b34395c5dfea89239230373d3bdb26478730717f",
+      "role": "staff",
+      "name": "Swastik",
+      "employeeId": "emp_1790368388939",
+      "hasRotaAccess": true,
+      "hasInventoryAccess": false,
       "isActive": true,
       "mustChangePassword": false
     }

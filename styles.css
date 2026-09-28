@@ -477,28 +477,53 @@ main.app-main {
 
 table.rota-table {
   width: 100%;
-  border-collapse: collapse;
-  min-width: 950px;
-  table-layout: fixed;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 1250px;
 }
 
 table.rota-table th, table.rota-table td {
-  border: 1px solid var(--border-color);
-  padding: 0.5rem;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  padding: 0.55rem;
   vertical-align: top;
 }
 
 /* Column Dimensions */
-.col-employee { width: 190px; }
-.col-day { width: 13.5%; }
+.col-entity,
+.col-employee,
+.entity-cell {
+  width: 220px !important;
+  min-width: 220px !important;
+  max-width: 230px !important;
+  box-sizing: border-box;
+}
+
+.col-day {
+  width: 145px !important;
+  min-width: 140px !important;
+  box-sizing: border-box;
+}
 
 /* Table Headers */
 table.rota-table th {
   background-color: var(--table-header-bg);
   position: sticky;
   top: 0;
-  z-index: 10;
+  z-index: 15;
   padding: 0.65rem 0.5rem;
+  border-top: 1px solid var(--border-color);
+}
+
+table.rota-table th.col-entity {
+  position: sticky;
+  left: 0;
+  top: 0;
+  z-index: 30;
+  background-color: var(--table-header-bg);
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.08);
+  border-left: 1px solid var(--border-color);
+  border-right: 2px solid var(--border-color);
 }
 
 .day-header {
@@ -540,9 +565,15 @@ table.rota-table th {
   box-shadow: var(--shadow-sm);
 }
 
-/* Entity Cell (Staff info row) */
+/* Entity Cell (Staff info sidebar column) */
 .entity-cell {
   background-color: var(--bg-card);
+  position: sticky;
+  left: 0;
+  z-index: 10;
+  box-shadow: 2px 0 6px rgba(0, 0, 0, 0.06);
+  border-left: 1px solid var(--border-color);
+  border-right: 2px solid var(--border-color);
 }
 
 .employee-row-info {
@@ -550,15 +581,17 @@ table.rota-table th {
   align-items: center;
   gap: 0.65rem;
   padding: 0.25rem 0;
+  width: 100%;
+  min-width: 0;
 }
 
 .emp-avatar {
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   color: white;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -569,10 +602,11 @@ table.rota-table th {
 .emp-details {
   overflow: hidden;
   flex: 1;
+  min-width: 0;
 }
 
 .emp-name {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 700;
   color: var(--text-main);
   white-space: nowrap;

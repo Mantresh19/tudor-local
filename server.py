@@ -95,15 +95,27 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
         if parsed.path == "/api/data":
             try:
                 db = read_db()
+                db_users = {u["id"]: u for u in db.get("users", [])}
+
                 # Preserve users and resetRequests if not sent in full payload
                 if "users" not in req_data:
-                    req_data["users"] = db.get("users", [])
+                    req_data["users"] = list(db_users.values())
                 else:
-                    # Restore password hashes from db if client sent stripped users
-                    existing_hashes = {u["id"]: u.get("passwordHash") for u in db.get("users", [])}
-                    for u in req_data["users"]:
-                        if not u.get("passwordHash") and u.get("id") in existing_hashes:
-                            u["passwordHash"] = existing_hashes[u["id"]]
+                    client_users = req_data.get("users", [])
+                    client_ids = {u.get("id") for u in client_users}
+
+                    for u in client_users:
+                        uid = u.get("id")
+                        if uid and uid in db_users:
+                            if not u.get("passwordHash"):
+                                u["passwordHash"] = db_users[uid].get("passwordHash")
+
+                    # Keep any db users that were not in client payload
+                    for db_uid, db_user in db_users.items():
+                        if db_uid not in client_ids:
+                            client_users.append(db_user)
+
+                    req_data["users"] = client_users
 
                 if "resetRequests" not in req_data:
                     req_data["resetRequests"] = db.get("resetRequests", [])

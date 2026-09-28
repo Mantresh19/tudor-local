@@ -30,6 +30,7 @@
         name: "Manager (Admin)",
         employeeId: null,
         hasRotaAccess: true,
+        hasInventoryAccess: true,
         isActive: true,
         mustChangePassword: false
       },
@@ -41,6 +42,55 @@
         name: "Mantresh",
         employeeId: "emp_1790267945703",
         hasRotaAccess: true,
+        hasInventoryAccess: true,
+        isActive: true,
+        mustChangePassword: false
+      },
+      {
+        id: "user_shon",
+        username: "shon",
+        passwordHash: "f81cdc6ee622bcddb6053a13b53ee8093c6639f2aa323f06a01e7e1f94f4d80c",
+        role: "staff",
+        name: "Shon",
+        employeeId: "emp_1790267994714",
+        hasRotaAccess: true,
+        hasInventoryAccess: false,
+        isActive: true,
+        mustChangePassword: false
+      },
+      {
+        id: "user_isuru",
+        username: "isuru",
+        passwordHash: "63fbc5f344fdcae2dc896921cea91ebd5c870164c4b16f2c2a81f89c4dbbe5cd",
+        role: "staff",
+        name: "Isuru",
+        employeeId: "emp_1790268011960",
+        hasRotaAccess: true,
+        hasInventoryAccess: true,
+        isActive: true,
+        mustChangePassword: false
+      },
+      {
+        id: "user_riya",
+        username: "riya",
+        passwordHash: "6adeddb447d1230f9863266e14ebdb9d7f86c4a71e453dffb442c9db126702c2",
+        role: "staff",
+        name: "Riya",
+        employeeId: "emp_1790268027518",
+        hasRotaAccess: true,
+        hasInventoryAccess: false,
+        isActive: true,
+        mustChangePassword: false
+      },
+      {
+        id: "user_swastik",
+        username: "swastik",
+        passwordHash: "3a7ab0ca92bdd297a935d489b34395c5dfea89239230373d3bdb26478730717f",
+        role: "staff",
+        name: "Swastik",
+        employeeId: "emp_1790368388939",
+        hasRotaAccess: true,
+        hasInventoryAccess: false,
         isActive: true,
         mustChangePassword: false
       }
@@ -226,49 +276,89 @@
     renderApp();
   }
 
-  // Load Data
+  // Load Data with Robust Persistence & User Access Preservation
   async function loadData() {
+    let loadedFromApi = false;
     try {
       const res = await fetch("/api/data");
       if (res.ok) {
         state.data = await res.json();
-        if (!state.data.employees) state.data.employees = [];
-        if (!state.data.shifts) state.data.shifts = [];
-        if (!state.data.users) state.data.users = CLEAN_DATA.users;
-        if (!state.data.resetRequests) state.data.resetRequests = [];
-        if (!state.data.settings) state.data.settings = CLEAN_DATA.settings;
-        if (!state.data.departments) state.data.departments = CLEAN_DATA.departments;
-        renderApp();
-        return;
+        loadedFromApi = true;
       }
     } catch (e) {
       console.log("Loading from localStorage fallback...");
     }
 
-    const local = localStorage.getItem("planday_rota_data");
-    if (local) {
-      try {
-        state.data = JSON.parse(local);
-        if (!state.data.users) state.data.users = CLEAN_DATA.users;
-        if (!state.data.resetRequests) state.data.resetRequests = [];
-        renderApp();
-        return;
-      } catch (e) {}
+    if (!loadedFromApi) {
+      const local = localStorage.getItem("planday_rota_data");
+      if (local) {
+        try {
+          state.data = JSON.parse(local);
+        } catch (e) {}
+      } else {
+        try {
+          const res = await fetch("./data.json");
+          if (res.ok) state.data = await res.json();
+        } catch (e) {}
+      }
     }
 
-    // Direct data.json fetch
-    try {
-      const res = await fetch("./data.json");
-      if (res.ok) {
-        state.data = await res.json();
-        if (!state.data.users) state.data.users = CLEAN_DATA.users;
-        if (!state.data.resetRequests) state.data.resetRequests = [];
-        renderApp();
-        return;
-      }
-    } catch (e) {}
+    if (!state.data) state.data = JSON.parse(JSON.stringify(CLEAN_DATA));
+    if (!state.data.employees) state.data.employees = [];
+    if (!state.data.shifts) state.data.shifts = [];
+    if (!state.data.users || state.data.users.length === 0) state.data.users = JSON.parse(JSON.stringify(CLEAN_DATA.users));
+    if (!state.data.resetRequests) state.data.resetRequests = [];
+    if (!state.data.settings) state.data.settings = CLEAN_DATA.settings;
+    if (!state.data.departments) state.data.departments = CLEAN_DATA.departments;
 
-    state.data = JSON.parse(JSON.stringify(CLEAN_DATA));
+    // UNBREAKABLE ACCESS PRESERVATION:
+    // Merge users from CLEAN_DATA and localStorage so granted access never disappears on server restart or page load
+    let needsServerSync = false;
+    try {
+      const localStr = localStorage.getItem("planday_rota_data");
+      const localUsers = localStr ? (JSON.parse(localStr).users || []) : [];
+      const knownUsers = [...CLEAN_DATA.users, ...localUsers];
+
+      for (const refU of knownUsers) {
+        const existing = state.data.users.find(u =>
+          (refU.id && u.id === refU.id) ||
+          (refU.employeeId && u.employeeId && u.employeeId === refU.employeeId) ||
+          (refU.username && u.username && u.username.toLowerCase() === refU.username.toLowerCase())
+        );
+
+        if (!existing) {
+          state.data.users.push(JSON.parse(JSON.stringify(refU)));
+          needsServerSync = true;
+        } else {
+          if (refU.hasRotaAccess && !existing.hasRotaAccess) {
+            existing.hasRotaAccess = true;
+            existing.isActive = true;
+            needsServerSync = true;
+          }
+          if (refU.hasInventoryAccess && !existing.hasInventoryAccess) {
+            existing.hasInventoryAccess = true;
+          }
+          if (!existing.employeeId && refU.employeeId) {
+            existing.employeeId = refU.employeeId;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("User merge warning:", err);
+    }
+
+    // Always update localStorage with the complete merged data
+    localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+
+    // If server was missing any users (e.g. after a Render container restart), sync back silently
+    if (needsServerSync && loadedFromApi) {
+      fetch("/api/data", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(state.data)
+      }).catch(() => {});
+    }
+
     renderApp();
   }
 
@@ -3138,6 +3228,16 @@
           const data = await res.json();
           if (data.success) {
             state.showGrantAccessModal = null;
+            if (data.user) {
+              const uIdx = (state.data.users || []).findIndex(u => u.employeeId === emp.id || u.id === data.user.id);
+              if (uIdx !== -1) {
+                state.data.users[uIdx] = { ...state.data.users[uIdx], ...data.user, hasRotaAccess: true, isActive: true };
+              } else {
+                if (!state.data.users) state.data.users = [];
+                state.data.users.push({ ...data.user, hasRotaAccess: true, isActive: true });
+              }
+              localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+            }
             await loadData();
             showToast(data.message);
           } else {
