@@ -72,7 +72,7 @@ def read_db():
                 data["settings"] = {}
 
             # Collections
-            for col_name in ["departments", "employees", "shifts", "users", "resetRequests", "inventory"]:
+            for col_name in ["departments", "employees", "shifts", "users", "resetRequests", "inventory", "notifications"]:
                 docs = list(_mongo_db[col_name].find({}))
                 for d in docs:
                     d.pop("_id", None)
@@ -105,10 +105,12 @@ def read_db():
                     data["shifts"] = []
                 if "employees" not in data:
                     data["employees"] = []
+                if "notifications" not in data:
+                    data["notifications"] = []
                 return data
         except Exception:
             pass
-    return {"users": [], "resetRequests": [], "shifts": [], "employees": []}
+    return {"users": [], "resetRequests": [], "shifts": [], "employees": [], "notifications": []}
 
 def write_db(data):
     # 1. Always maintain local data.json file mirror
@@ -128,7 +130,7 @@ def write_db(data):
                 _mongo_db.settings.replace_one({"_id": "app_settings"}, s_copy, upsert=True)
 
             # Collections with unique IDs
-            for col_name in ["departments", "employees", "shifts", "users", "resetRequests", "inventory"]:
+            for col_name in ["departments", "employees", "shifts", "users", "resetRequests", "inventory", "notifications"]:
                 if col_name in data and isinstance(data[col_name], list):
                     col = _mongo_db[col_name]
                     col.delete_many({})

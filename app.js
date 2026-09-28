@@ -96,7 +96,8 @@
       }
     ],
     resetRequests: [],
-    inventory: []
+    inventory: [],
+    notifications: []
   };
 
   // Inventory Categories List
@@ -120,11 +121,11 @@
     authView: "login", // 'login' | 'forgot' | 'reset_otp'
     authError: "",
     authSuccess: "",
-    activeTab: window.innerWidth <= 768 ? "overview" : "schedule", // Mobile defaults to Planday Overview, desktop to Schedule
+    activeTab: "overview", // Always opens Overview first per user request
     selectedScheduleDate: null, // Selected day YYYY-MM-DD for day roster
     scheduleViewMode: window.innerWidth <= 768 ? "list" : "grid", // 'list' (mobile day roster) | 'grid' (desktop table)
-    mobileShiftView: "all", // 'all' (all staff shifts) | 'mine' (only current user's shifts)
     showAllUpcomingShifts: false, // false (shows 3 closest) | true (shows all upcoming shifts)
+    showNotifications: false, // Toggle notification bell dropdown
     currentMonday: getMonday(new Date()),
     groupingMode: "employee", // 'employee' or 'department'
     selectedDepartment: "all",
@@ -312,6 +313,7 @@
     if (!state.data.resetRequests) state.data.resetRequests = [];
     if (!state.data.settings) state.data.settings = CLEAN_DATA.settings;
     if (!state.data.departments) state.data.departments = CLEAN_DATA.departments;
+    if (!state.data.notifications) state.data.notifications = [];
 
     // UNBREAKABLE ACCESS PRESERVATION:
     // Merge users from CLEAN_DATA and localStorage so granted access never disappears on server restart or page load
@@ -432,6 +434,39 @@
       laborPercentage,
       currency: state.data.settings.currency || "£"
     };
+  }
+
+  // Notification Helpers
+  function addNotification({ recipientEmployeeId = null, forAdmin = false, title, message, type = "info", date = null }) {
+    if (!state.data.notifications) state.data.notifications = [];
+    const notif = {
+      id: "notif_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
+      recipientEmployeeId,
+      forAdmin: Boolean(forAdmin),
+      title,
+      message,
+      type,
+      date,
+      timestamp: Date.now(),
+      readBy: []
+    };
+    state.data.notifications.unshift(notif);
+    if (state.data.notifications.length > 100) {
+      state.data.notifications = state.data.notifications.slice(0, 100);
+    }
+    saveData();
+  }
+
+  function getUserNotifications(user) {
+    if (!user) return [];
+    const notifs = state.data.notifications || [];
+    const isAdmin = user.role === "admin";
+    const myEmpId = user.employeeId;
+    return notifs.filter(n => {
+      if (isAdmin && n.forAdmin) return true;
+      if (myEmpId && n.recipientEmployeeId === myEmpId) return true;
+      return false;
+    }).sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
   }
 
   // Overtime Detection Engine
@@ -762,6 +797,8 @@
     const canInv = hasInventoryAccess(user);
     const pendingResets = (state.data.resetRequests || []).filter(r => r.status === "pending").length;
     const userInitial = ((user ? user.name || user.username : "U")[0] || "U").toUpperCase();
+    const userNotifs = getUserNotifications(user);
+    const unreadCount = userNotifs.filter(n => !(n.readBy || []).includes(user ? user.id : "")).length;
 
     return `
       <header class="app-header">
@@ -810,6 +847,42 @@
           `
               : ""
           }
+
+          <!-- Notifications Bell -->
+          <div class="notifications-container">
+            <button type="button" class="notif-bell-btn" id="btn-notifications-toggle" title="Notifications">
+              🔔
+              ${unreadCount > 0 ? `<span class="notif-count-badge">${unreadCount}</span>` : ""}
+            </button>
+
+            <div class="notifications-dropdown-menu ${state.showNotifications ? "" : "hidden"}" id="notifications-dropdown">
+              <div class="notif-dropdown-header">
+                <span class="notif-dropdown-title">🔔 Notifications ${unreadCount > 0 ? `(${unreadCount} new)` : ""}</span>
+                ${userNotifs.length > 0 ? `<button type="button" class="btn btn-sm btn-secondary" id="btn-mark-all-notifs-read" style="font-size: 11px; padding: 2px 7px;">Mark all read</button>` : ""}
+              </div>
+              <div class="notif-list">
+                ${
+                  userNotifs.length === 0
+                    ? `<div class="notif-empty">✨ No notifications right now</div>`
+                    : userNotifs.map(n => {
+                        const isUnread = !(n.readBy || []).includes(user ? user.id : "");
+                        const icon = n.type === "claim" ? "✋" : (n.type === "overtime" ? "⚡" : "📅");
+                        const dateFormatted = n.timestamp ? new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : "";
+                        return `
+                          <div class="notif-item ${isUnread ? "unread" : ""}">
+                            <div class="notif-icon">${icon}</div>
+                            <div class="notif-body">
+                              <div class="notif-title">${n.title}</div>
+                              <div class="notif-msg">${n.message}</div>
+                              <div class="notif-time">${dateFormatted}</div>
+                            </div>
+                          </div>
+                        `;
+                      }).join("")
+                }
+              </div>
+            </div>
+          </div>
 
           <!-- Profile Circle Avatar with Dropdown -->
           <div class="profile-menu-container">
@@ -1099,9 +1172,15 @@
   function renderMobileOverview() {
     const user = state.currentUser;
     const isAdmin = user && user.role === "admin";
-    const myEmpId = user ? user.employeeId : null;
+    let myEmpId = user ? user.employeeId : null;
+    if (!myEmpId && user) {
+      const match = (state.data.employees || []).find(
+        e => e.name.toLowerCase() === (user.name || user.username || "").toLowerCase()
+      );
+      if (match) myEmpId = match.id;
+    }
     const myEmp = myEmpId ? (state.data.employees || []).find(e => e.id === myEmpId) : null;
-    const displayName = myEmp ? myEmp.name : (user.name || user.username);
+    const displayName = myEmp ? myEmp.name : (user ? (user.name || user.username) : "");
 
     // 1. Calculate this week's hours for current user
     const weekDateStrs = getWeekDates().map(formatDate);
@@ -1112,17 +1191,13 @@
         myWeekHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
       });
 
-    // 2. Candidate shifts calculation (Admin can toggle between Team Shifts and My Shifts)
+    // 2. Candidate shifts calculation: EVERY user (admin & staff) sees their own shifts only
     const todayStr = formatDate(new Date());
     let candidateShifts = [];
-    if (isAdmin) {
-      if (state.mobileShiftView === "mine" && myEmpId) {
-        candidateShifts = (state.data.shifts || []).filter(s => s.employeeId === myEmpId);
-      } else {
-        candidateShifts = (state.data.shifts || []).filter(s => s.employeeId !== null);
-      }
-    } else if (myEmpId) {
-      candidateShifts = (state.data.shifts || []).filter(s => s.employeeId === myEmpId && s.status === "published");
+    if (myEmpId) {
+      candidateShifts = (state.data.shifts || []).filter(
+        s => s.employeeId === myEmpId && (isAdmin || s.status === "published")
+      );
     }
 
     // Sort chronologically by date and start time
@@ -1150,9 +1225,9 @@
       shiftsByMonth[mKey].push(shift);
     });
 
-    // 3. Find Overtime Shifts This Week
+    // 3. Find Overtime Shifts This Week for current user only
     const overtimeShiftsThisWeek = (state.data.shifts || []).filter(
-      s => weekDateStrs.includes(s.date) && isShiftOvertime(s) && (isAdmin || s.employeeId === myEmpId)
+      s => weekDateStrs.includes(s.date) && isShiftOvertime(s) && (myEmpId ? s.employeeId === myEmpId : false)
     );
 
     // 4. Find Open Shifts (Admin sees all draft & published; staff only see published)
@@ -1186,27 +1261,12 @@
           <div class="planday-card-header">
             <div class="planday-card-title">
               <div class="planday-icon-badge blue">👤</div>
-              <span>${isAdmin && state.mobileShiftView !== "mine" ? "Team schedule" : "Your schedule"}</span>
+              <span>Your schedule</span>
             </div>
             <button class="planday-see-all-link" id="btn-overview-see-all">
               See all ›
             </button>
           </div>
-
-          ${
-            isAdmin
-              ? `
-            <div style="display: flex; gap: 6px; padding: 0.25rem 0 0.5rem;">
-              <button type="button" class="btn btn-sm ${state.mobileShiftView !== "mine" ? "btn-primary" : "btn-secondary"}" id="btn-toggle-mobile-all" style="flex: 1; font-size: 11px; font-weight: 700; padding: 5px 8px;">
-                👥 All Staff Shifts
-              </button>
-              <button type="button" class="btn btn-sm ${state.mobileShiftView === "mine" ? "btn-primary" : "btn-secondary"}" id="btn-toggle-mobile-mine" style="flex: 1; font-size: 11px; font-weight: 700; padding: 5px 8px;">
-                👤 My Shifts Only
-              </button>
-            </div>
-          `
-              : ""
-          }
 
           ${
             myShifts.length === 0
@@ -1225,13 +1285,8 @@
               const shiftDate = parseDate(shift.date);
               const dayNum = String(shiftDate.getDate()).padStart(2, "0");
               const dayName = shiftDate.toLocaleDateString("en-GB", { weekday: "short" });
-              const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "Front of House" };
-              const emp = (state.data.employees || []).find(e => e.id === shift.employeeId);
               const isOvertime = isShiftOvertime(shift);
-              const empLabel = emp ? emp.name : "Staff Member";
-              const isMine = myEmpId && shift.employeeId === myEmpId;
               const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
-              const businessName = state.data.settings.businessName || "Tudor Local";
 
               return `
                 <div class="planday-shift-row overview-shift-item" data-date="${shift.date}" data-shift-id="${shift.id}" style="cursor: pointer;">
@@ -1247,10 +1302,7 @@
                         ${isOvertime ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">⚡ Overtime</span>` : ""}
                         ${shift.status === "draft" && isAdmin ? `<span class="shift-badge badge-draft" style="font-size:9px;">Draft</span>` : ""}
                       </div>
-                      <div class="planday-shift-role">
-                        <strong>${empLabel}</strong> · ${shift.role || "Staff"} ${isMine ? `<span style="color:#2563eb;font-weight:700;">(You)</span>` : ""}
-                      </div>
-                      <div class="planday-shift-meta">
+                      <div class="planday-shift-meta" style="margin-top: 4px; font-size: 0.85rem; color: var(--text-muted);">
                         ${netH} hrs ${shift.breakMinutes ? `· ${shift.breakMinutes}m break` : ""}
                       </div>
                     </div>
@@ -1290,7 +1342,6 @@
               const sDate = parseDate(shift.date);
               const dNum = String(sDate.getDate()).padStart(2, "0");
               const dName = sDate.toLocaleDateString("en-GB", { weekday: "short" });
-              const emp = (state.data.employees || []).find(e => e.id === shift.employeeId);
               const h = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
               return `
                 <div class="planday-shift-row overview-shift-item" data-date="${shift.date}" data-shift-id="${shift.id}" style="cursor: pointer; margin-bottom: 0.5rem; background: #fff5f5; border: 1px solid #fecaca; border-radius: 8px;">
@@ -1304,8 +1355,8 @@
                         <span>⏰ ${formatShiftRange(shift.startTime, shift.endTime)} · ${h}h</span>
                         ${shift.isPaid ? `<span class="shift-badge badge-paid" style="background:#10b981;color:white;font-size:9px;font-weight:700;">✓ PAID</span>` : ""}
                       </div>
-                      <div class="planday-shift-role" style="color: #7f1d1d; font-weight: 600;">
-                        <strong>${emp ? emp.name : "Staff"}</strong> · ${shift.role || "Staff Member"} <span style="font-weight:700;color:#dc2626;">(⚡ Overtime)</span>
+                      <div class="planday-shift-meta" style="margin-top: 4px; font-size: 0.825rem; color: #b91c1c; font-weight: 600;">
+                        ${shift.breakMinutes ? `${shift.breakMinutes}m break` : "No break"}
                       </div>
                     </div>
                     <div class="planday-shift-chevron" style="color: #b91c1c;">›</div>
@@ -1337,8 +1388,8 @@
               const shiftDate = parseDate(shift.date);
               const dayNum = String(shiftDate.getDate()).padStart(2, "0");
               const dayName = shiftDate.toLocaleDateString("en-GB", { weekday: "short" });
-              const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "Staff" };
               const isDraft = shift.status === "draft";
+              const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
 
               return `
                 <div class="planday-shift-row overview-open-shift-card" data-shift-id="${shift.id}" style="margin-bottom: 0.75rem; cursor: ${isAdmin ? "pointer" : "default"};">
@@ -1349,11 +1400,11 @@
                   <div class="planday-shift-content" style="background-color: #fff1f2; border-color: #fecdd3;">
                     <div class="planday-shift-main">
                       <div class="planday-shift-time" style="color: #b91c1c; display: flex; align-items: center; gap: 6px;">
-                        <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
+                        <span>⏰ ${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         ${isAdmin ? (isDraft ? `<span class="shift-badge badge-draft" style="font-size:9px;">Draft</span>` : `<span class="shift-badge badge-open-live" style="font-size:9px;">Live</span>`) : ""}
                       </div>
-                      <div class="planday-shift-role" style="color: #9f1239;">
-                        🔓 ${shift.role || "Staff Member"} · Tudor Local (${dept.name})
+                      <div class="planday-shift-meta" style="color: #9f1239; font-size: 0.85rem; font-weight: 600; margin-top: 3px;">
+                        ${netH} hrs ${shift.breakMinutes ? `· ${shift.breakMinutes}m break` : ""}
                       </div>
                     </div>
                     ${
@@ -2051,8 +2102,8 @@
                 ${(emp.name || "E").split(" ").map(n => n[0]).join("")}
               </div>
               <div style="overflow:hidden;flex:1;">
-                <h4 style="font-size:0.95rem;font-weight:700;color:#0f172a;">${emp.name}</h4>
-                <div style="font-size:0.75rem;color:#64748b;">${emp.role}</div>
+                <h4 class="staff-card-name" style="font-size:1.05rem;font-weight:800;color:var(--text-main);margin:0;">${emp.name}</h4>
+                <div style="font-size:0.75rem;color:var(--text-muted);margin-top:2px;">${emp.role}</div>
               </div>
               <div>
                 ${
@@ -2079,17 +2130,17 @@
             </div>
 
             <!-- Login & Access Section -->
-            <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:6px;padding:8px 10px;margin-top:4px;">
+            <div style="background:var(--bg-main);border:1px solid var(--border-color);border-radius:6px;padding:8px 10px;margin-top:4px;">
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;">
-                <span style="font-weight:600;color:#475569;">Rota Login Access:</span>
-                <strong>${user ? user.username : "Not Set"}</strong>
+                <span style="font-weight:600;color:var(--text-muted);">Rota Login Access:</span>
+                <strong style="color:var(--text-main);">${user ? user.username : "Not Set"}</strong>
               </div>
               ${
                 user
                   ? `
-                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-top:4px;padding-top:4px;border-top:1px dashed #cbd5e1;">
-                  <span style="font-weight:600;color:#475569;">📦 Store Inventory:</span>
-                  <strong style="color:${hasInventoryAccess(user) ? '#16a34a' : '#64748b'};">${hasInventoryAccess(user) ? '✓ Allowed' : '✕ Hidden'}</strong>
+                <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;margin-top:4px;padding-top:4px;border-top:1px dashed var(--border-color);">
+                  <span style="font-weight:600;color:var(--text-muted);">📦 Store Inventory:</span>
+                  <strong style="color:${hasInventoryAccess(user) ? '#16a34a' : 'var(--text-muted)'};">${hasInventoryAccess(user) ? '✓ Allowed' : '✕ Hidden'}</strong>
                 </div>
               `
                   : ""
@@ -2522,19 +2573,6 @@
 
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Department</label>
-                <select class="form-select" id="shift-department-input">
-                  ${deptOptions}
-                </select>
-              </div>
-              <div class="form-group">
-                <label class="form-label">Role / Position</label>
-                <input type="text" class="form-input" id="shift-role-input" value="${shift.role || "Staff Member"}">
-              </div>
-            </div>
-
-            <div class="form-row">
-              <div class="form-group">
                 <label class="form-label">Date</label>
                 <input type="date" class="form-input" id="shift-date-input" value="${shift.date}">
               </div>
@@ -2566,44 +2604,20 @@
               </div>
             </div>
 
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label">Hourly Rate (${currency})</label>
-                <input type="number" class="form-input" id="shift-rate-input" value="${rate}" step="0.5">
-              </div>
-              <div class="form-group">
-                <label class="form-label">Shift Status</label>
-                <select class="form-select" id="shift-status-input">
-                  <option value="draft" ${shift.status === "draft" ? "selected" : ""}>Draft (Private / Planning)</option>
-                  <option value="published" ${shift.status === "published" || shift.status === "open" ? "selected" : ""}>Published (Live for staff to view & claim)</option>
-                </select>
-              </div>
+            <div class="form-group">
+              <label class="form-label">Hourly Rate (${currency})</label>
+              <input type="number" class="form-input" id="shift-rate-input" value="${rate}" step="0.5">
             </div>
 
             ${
               isAdmin
                 ? `
-              <div class="form-group" style="background: var(--bg-main); border: 1px solid ${isPaid ? '#10b981' : 'var(--border-color)'}; border-radius: var(--radius-md); padding: 0.85rem 1rem; margin-bottom: 1rem; transition: border-color 0.2s ease;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                  <label class="form-label" style="margin: 0; font-weight: 700; display: flex; align-items: center; gap: 8px;">
-                    <span>💵 Shift Payment Status</span>
-                    <span id="shift-paid-badge" class="shift-badge ${isPaid ? 'badge-paid' : ''}" style="${isPaid ? 'background:#10b981;color:white;' : 'background:var(--border-light);color:var(--text-muted);'} font-size:10px; font-weight:700; padding:2px 6px; border-radius:4px;">
-                      ${isPaid ? '✓ PAID' : 'UNPAID'}
-                    </span>
-                  </label>
-                  <span style="font-size: 11px; color: ${isPaid ? '#10b981' : 'var(--text-muted)'}; font-weight: 600;" id="shift-paid-status-text">
-                    ${isPaid ? 'Box turns GREEN in rota' : 'Standard color (Unchanged)'}
-                  </span>
-                </div>
-                <div style="display: flex; gap: 8px;">
-                  <select class="form-select" id="shift-is-paid-input" style="flex: 1; font-weight: 600; ${isPaid ? 'border-color:#10b981; color:#10b981;' : ''}">
-                    <option value="false" ${!isPaid ? 'selected' : ''}>⏳ Unpaid (Keep box unchanged)</option>
-                    <option value="true" ${isPaid ? 'selected' : ''}>✅ Paid (Turn small box green)</option>
-                  </select>
-                  <button type="button" class="btn btn-sm" id="btn-quick-toggle-paid" style="white-space: nowrap; font-weight: 700; background: ${isPaid ? '#f1f5f9' : '#10b981'}; color: ${isPaid ? '#475569' : 'white'}; border: 1px solid ${isPaid ? '#cbd5e1' : '#10b981'};">
-                    ${isPaid ? 'Set as Unpaid' : '✓ Mark as Paid'}
-                  </button>
-                </div>
+              <div class="form-group">
+                <label class="form-label" style="font-weight: 700;">Shift Payment Status</label>
+                <select class="form-select" id="shift-is-paid-input" style="font-weight: 600; ${isPaid ? 'border-color:#10b981; color:#10b981;' : ''}">
+                  <option value="false" ${!isPaid ? 'selected' : ''}>Unpaid</option>
+                  <option value="true" ${isPaid ? 'selected' : ''}>Paid</option>
+                </select>
               </div>
             `
                 : ""
@@ -3307,6 +3321,43 @@
         state.showProfileMenu = false;
         const menu = document.getElementById("profile-dropdown");
         if (menu) menu.classList.add("hidden");
+      }
+    });
+
+    // Notification Bell toggle
+    const notifToggleBtn = document.getElementById("btn-notifications-toggle");
+    const notifDropdown = document.getElementById("notifications-dropdown");
+    if (notifToggleBtn && notifDropdown) {
+      notifToggleBtn.addEventListener("click", e => {
+        e.stopPropagation();
+        state.showNotifications = !state.showNotifications;
+        notifDropdown.classList.toggle("hidden", !state.showNotifications);
+      });
+    }
+
+    // Mark all notifications read
+    const btnMarkAllNotifs = document.getElementById("btn-mark-all-notifs-read");
+    if (btnMarkAllNotifs) {
+      btnMarkAllNotifs.addEventListener("click", async e => {
+        e.stopPropagation();
+        const user = state.currentUser;
+        if (!user) return;
+        const userNotifs = getUserNotifications(user);
+        userNotifs.forEach(n => {
+          if (!n.readBy) n.readBy = [];
+          if (!n.readBy.includes(user.id)) n.readBy.push(user.id);
+        });
+        await saveData();
+        renderApp();
+      });
+    }
+
+    // Close notifications dropdown on document click
+    document.addEventListener("click", e => {
+      if (state.showNotifications && !e.target.closest(".notifications-container")) {
+        state.showNotifications = false;
+        const d = document.getElementById("notifications-dropdown");
+        if (d) d.classList.add("hidden");
       }
     });
 
@@ -4072,6 +4123,16 @@
         const shift = (state.data.shifts || []).find(s => s.id === shiftId);
         if (shift) {
           shift.isPaid = !shift.isPaid;
+          if (shift.employeeId) {
+            addNotification({
+              recipientEmployeeId: shift.employeeId,
+              forAdmin: false,
+              title: shift.isPaid ? "💵 Shift Marked as Paid" : "Shift Payment Status Updated",
+              message: `Your shift on ${shift.date} (${formatShiftRange(shift.startTime, shift.endTime)}) has been marked as ${shift.isPaid ? "Paid" : "Unpaid"}.`,
+              type: "payment",
+              date: shift.date
+            });
+          }
           await saveData();
           showToast(shift.isPaid ? "✅ Shift marked as PAID (box turned green)!" : "Shift marked as UNPAID (standard box).", "success");
         }
@@ -4116,6 +4177,15 @@
         if (shift) {
           shift.employeeId = myEmpId;
           shift.status = "published";
+          const claimantEmp = (state.data.employees || []).find(emp => emp.id === myEmpId);
+          const claimantName = claimantEmp ? claimantEmp.name : (state.currentUser.name || "A staff member");
+          addNotification({
+            forAdmin: true,
+            title: "✋ Open Shift Claimed",
+            message: `${claimantName} claimed the open shift on ${shift.date} (${formatShiftRange(shift.startTime, shift.endTime)}).`,
+            type: "claim",
+            date: shift.date
+          });
           await saveData();
           showToast("You claimed this shift! It is now on your schedule.", "success");
         }
@@ -4178,17 +4248,19 @@
 
     // Save Shift with exact chosen status (Draft or Published)
     const saveShiftWithStatus = async (forcedStatus = null) => {
-      const empId = document.getElementById("shift-employee-input").value || null;
-      const deptId = document.getElementById("shift-department-input").value;
-      const role = document.getElementById("shift-role-input").value.trim();
-      const date = document.getElementById("shift-date-input").value;
-      const startTime = document.getElementById("shift-start-input").value;
-      const endTime = document.getElementById("shift-end-input").value;
-      const breakMinutes = Number(document.getElementById("shift-break-input").value || 0);
-      const rate = Number(document.getElementById("shift-rate-input").value || 0);
-      const notes = document.getElementById("shift-notes-input").value.trim();
+      const empId = document.getElementById("shift-employee-input")?.value || null;
+      const deptInput = document.getElementById("shift-department-input");
+      const deptId = deptInput ? deptInput.value : (empId ? ((state.data.employees || []).find(e => e.id === empId) || {}).departmentId : ((state.data.departments || [])[0] || {}).id || "dept_foh");
+      const roleInput = document.getElementById("shift-role-input");
+      const role = roleInput ? roleInput.value.trim() : (empId ? ((state.data.employees || []).find(e => e.id === empId) || {}).role || "Staff Member" : "Staff Member");
+      const date = document.getElementById("shift-date-input")?.value;
+      const startTime = document.getElementById("shift-start-input")?.value;
+      const endTime = document.getElementById("shift-end-input")?.value;
+      const breakMinutes = Number(document.getElementById("shift-break-input")?.value || 0);
+      const rate = Number(document.getElementById("shift-rate-input")?.value || 0);
+      const notes = (document.getElementById("shift-notes-input")?.value || "").trim();
       const statusInput = document.getElementById("shift-status-input");
-      const dropdownStatus = statusInput ? statusInput.value : "published";
+      const dropdownStatus = statusInput ? statusInput.value : (state.editingShift ? state.editingShift.status : "published");
       const isPaidInput = document.getElementById("shift-is-paid-input");
       const isPaid = isPaidInput ? (isPaidInput.value === "true") : (state.editingShift ? Boolean(state.editingShift.isPaid) : false);
 
@@ -4214,6 +4286,7 @@
         isPaid: Boolean(isPaid)
       };
 
+      const isEdit = !state.editingShift.isNew;
       if (state.editingShift.isNew) {
         if (!state.data.shifts) state.data.shifts = [];
         state.data.shifts.push(shiftPayload);
@@ -4224,6 +4297,19 @@
         } else {
           state.data.shifts.push(shiftPayload);
         }
+      }
+
+      // Targeted Notification for this employee ONLY
+      if (empId) {
+        const isOvertimeShift = isShiftOvertime(shiftPayload);
+        addNotification({
+          recipientEmployeeId: empId,
+          forAdmin: false,
+          title: isOvertimeShift ? "⚡ Overtime Shift Assigned" : (isEdit ? "📅 Shift Updated" : "📅 New Shift Assigned"),
+          message: `Your shift on ${date} (${formatShiftRange(startTime, endTime)}) has been ${isEdit ? "updated" : "assigned to you"}.${isPaid ? " Marked as Paid." : ""}`,
+          type: isOvertimeShift ? "overtime" : "shift",
+          date
+        });
       }
 
       state.editingShift = null;
@@ -4239,43 +4325,11 @@
 
     // Payment Status UI inside Shift Modal
     const paidSelect = document.getElementById("shift-is-paid-input");
-    const paidBadge = document.getElementById("shift-paid-badge");
-    const paidStatusText = document.getElementById("shift-paid-status-text");
-    const btnQuickTogglePaid = document.getElementById("btn-quick-toggle-paid");
-
-    const updatePaidUI = (paid) => {
-      if (paidBadge) {
-        paidBadge.textContent = paid ? "✓ PAID" : "UNPAID";
-        paidBadge.style.background = paid ? "#10b981" : "var(--border-light)";
-        paidBadge.style.color = paid ? "white" : "var(--text-muted)";
-      }
-      if (paidStatusText) {
-        paidStatusText.textContent = paid ? "Box turns GREEN in rota" : "Standard color (Unchanged)";
-        paidStatusText.style.color = paid ? "#10b981" : "var(--text-muted)";
-      }
-      if (btnQuickTogglePaid) {
-        btnQuickTogglePaid.textContent = paid ? "Set as Unpaid" : "✓ Mark as Paid";
-        btnQuickTogglePaid.style.background = paid ? "#f1f5f9" : "#10b981";
-        btnQuickTogglePaid.style.color = paid ? "#475569" : "white";
-        btnQuickTogglePaid.style.borderColor = paid ? "#cbd5e1" : "#10b981";
-      }
-      if (paidSelect) {
-        paidSelect.style.borderColor = paid ? "#10b981" : "";
-        paidSelect.style.color = paid ? "#10b981" : "";
-      }
-    };
-
     if (paidSelect) {
       paidSelect.addEventListener("change", () => {
-        updatePaidUI(paidSelect.value === "true");
-      });
-    }
-
-    if (btnQuickTogglePaid && paidSelect) {
-      btnQuickTogglePaid.addEventListener("click", () => {
-        const next = paidSelect.value !== "true";
-        paidSelect.value = next ? "true" : "false";
-        updatePaidUI(next);
+        const isPaid = paidSelect.value === "true";
+        paidSelect.style.borderColor = isPaid ? "#10b981" : "";
+        paidSelect.style.color = isPaid ? "#10b981" : "";
       });
     }
 

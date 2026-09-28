@@ -34,7 +34,7 @@
       "departmentId": "mgmt",
       "role": "Staff Member",
       "hourlyRate": 10,
-      "contractedHours": 35,
+      "contractedHours": 0,
       "email": "mantresh19@gmail.com",
       "phone": "",
       "avatarColor": "#8b5cf6",
@@ -54,7 +54,7 @@
       "departmentId": "general",
       "role": "Staff Member",
       "hourlyRate": 10,
-      "contractedHours": 35,
+      "contractedHours": 0,
       "email": "",
       "phone": "",
       "avatarColor": "#0ea5e9",
@@ -74,7 +74,7 @@
       "departmentId": "mgmt",
       "role": "Staff Member",
       "hourlyRate": 10,
-      "contractedHours": 35,
+      "contractedHours": 0,
       "email": "",
       "phone": "",
       "avatarColor": "#f59e0b",
@@ -94,7 +94,7 @@
       "departmentId": "general",
       "role": "Staff Member",
       "hourlyRate": 10,
-      "contractedHours": 35,
+      "contractedHours": 0,
       "email": "",
       "phone": "",
       "avatarColor": "#ec4899",
@@ -114,7 +114,7 @@
       "departmentId": "general",
       "role": "Staff Member",
       "hourlyRate": 10,
-      "contractedHours": 35,
+      "contractedHours": 0,
       "email": "",
       "phone": "",
       "avatarColor": "#0ea5e9",
@@ -155,7 +155,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false
     },
     {
       "id": "shift_1790268261412",
@@ -177,11 +178,12 @@
       "role": "Staff Member",
       "date": "2026-10-01",
       "startTime": "08:00",
-      "endTime": "22:00",
+      "endTime": "16:00",
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false
     },
     {
       "id": "shift_1790268323046",
@@ -194,7 +196,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false
     },
     {
       "id": "shift_1790268344913",
@@ -311,7 +314,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": true
     },
     {
       "id": "shift_1790368355572",
@@ -376,7 +380,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": true
     },
     {
       "id": "shift_1790368525370",
@@ -428,7 +433,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": true
     },
     {
       "id": "shift_1790368615840",
@@ -480,7 +486,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": true
     },
     {
       "id": "shift_1790369109499",
@@ -545,7 +552,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": true
     },
     {
       "id": "shift_1790369202034",
@@ -636,7 +644,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": true
     },
     {
       "id": "shift_1790369427853",
@@ -675,7 +684,8 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": true
     },
     {
       "id": "shift_1790369550665",
@@ -741,13 +751,82 @@
       "rate": 10,
       "notes": "",
       "status": "published"
+    },
+    {
+      "id": "shift_1790626388330",
+      "employeeId": "emp_1790368388939",
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-01",
+      "startTime": "16:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false
+    },
+    {
+      "id": "shift_1790626462583",
+      "employeeId": null,
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-05",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false
+    },
+    {
+      "id": "shift_1790626476095",
+      "employeeId": null,
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-07",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false
+    },
+    {
+      "id": "shift_1790626494246",
+      "employeeId": null,
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-09",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false
+    },
+    {
+      "id": "shift_1790626510511",
+      "employeeId": null,
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-10",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false
     }
   ],
   "users": [
     {
       "id": "user_admin",
       "username": "admin",
-      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
       "role": "admin",
       "name": "Manager (Admin)",
       "employeeId": null,
@@ -759,7 +838,6 @@
     {
       "id": "user_mantresh",
       "username": "mantresh",
-      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
       "role": "admin",
       "name": "Mantresh",
       "employeeId": "emp_1790267945703",
@@ -771,7 +849,6 @@
     {
       "id": "user_shon",
       "username": "shon",
-      "passwordHash": "f81cdc6ee622bcddb6053a13b53ee8093c6639f2aa323f06a01e7e1f94f4d80c",
       "role": "staff",
       "name": "Shon",
       "employeeId": "emp_1790267994714",
@@ -783,7 +860,6 @@
     {
       "id": "user_isuru",
       "username": "isuru",
-      "passwordHash": "63fbc5f344fdcae2dc896921cea91ebd5c870164c4b16f2c2a81f89c4dbbe5cd",
       "role": "staff",
       "name": "Isuru",
       "employeeId": "emp_1790268011960",
@@ -795,7 +871,6 @@
     {
       "id": "user_riya",
       "username": "riya",
-      "passwordHash": "6adeddb447d1230f9863266e14ebdb9d7f86c4a71e453dffb442c9db126702c2",
       "role": "staff",
       "name": "Riya",
       "employeeId": "emp_1790268027518",
@@ -807,7 +882,6 @@
     {
       "id": "user_swastik",
       "username": "swastik",
-      "passwordHash": "3a7ab0ca92bdd297a935d489b34395c5dfea89239230373d3bdb26478730717f",
       "role": "staff",
       "name": "Swastik",
       "employeeId": "emp_1790368388939",
