@@ -827,6 +827,7 @@
     {
       "id": "user_admin",
       "username": "admin",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
       "role": "admin",
       "name": "Manager (Admin)",
       "employeeId": null,
@@ -838,6 +839,7 @@
     {
       "id": "user_mantresh",
       "username": "mantresh",
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
       "role": "admin",
       "name": "Mantresh",
       "employeeId": "emp_1790267945703",
@@ -849,6 +851,7 @@
     {
       "id": "user_shon",
       "username": "shon",
+      "passwordHash": "cd230bf25bb6b86db045544c251b6d327df1bda8d9a8d762488935337fdfdb7d",
       "role": "staff",
       "name": "Shon",
       "employeeId": "emp_1790267994714",
@@ -860,6 +863,7 @@
     {
       "id": "user_isuru",
       "username": "isuru",
+      "passwordHash": "5a825d4b2274864458470386ace79f630092a8f49b5b633b022a610230ecbe4c",
       "role": "staff",
       "name": "Isuru",
       "employeeId": "emp_1790268011960",
@@ -871,6 +875,7 @@
     {
       "id": "user_riya",
       "username": "riya",
+      "passwordHash": "bc97aaa7b5bde4bae9d3b658e6d4bf711b2d8bb5d7a27f17e95815efc6e0618d",
       "role": "staff",
       "name": "Riya",
       "employeeId": "emp_1790268027518",
@@ -882,6 +887,7 @@
     {
       "id": "user_swastik",
       "username": "swastik",
+      "passwordHash": "9418da7af89fccd032acba8a75de03278170e65d5302f0c2b7387e2b709dcf76",
       "role": "staff",
       "name": "Swastik",
       "employeeId": "emp_1790368388939",
