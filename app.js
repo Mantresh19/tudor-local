@@ -1205,7 +1205,12 @@
             <button type="button" class="btn-planday-today" id="btn-planday-switch-day" title="Switch to single day view" style="border-color: var(--border-color); color: var(--text-muted); font-size: 11px; padding: 2px 6px;">📋 Day</button>
             ${
               isAdmin && draftShiftsThisWeek.length > 0
-                ? `<button type="button" class="btn btn-success btn-xs" id="btn-publish-rota-planday" style="font-size: 11px; padding: 3px 7px; border-radius: 6px;">🚀 Publish (${draftShiftsThisWeek.length})</button>`
+                ? `<button type="button" class="btn btn-success btn-xs" id="btn-publish-rota-planday" style="font-size: 11px; padding: 2px 6px; border-radius: 6px;">🚀 Publish (${draftShiftsThisWeek.length})</button>`
+                : ""
+            }
+            ${
+              isAdmin
+                ? `<button type="button" class="btn btn-primary btn-xs" id="btn-planday-add-shift-quick" style="font-size: 11px; padding: 2px 7px; border-radius: 6px;" title="Add Shift">+ Shift</button>`
                 : ""
             }
           </div>
@@ -1216,7 +1221,7 @@
           ${weekDates.map(d => {
             const dateStr = formatDate(d);
             const dayShort = d.toLocaleDateString("en-GB", { weekday: "short" });
-            const dayNum = d.toLocaleDateString("en-GB", { day: "numeric" });
+            const dayNum = String(d.getDate()).padStart(2, "0");
             const isToday = dateStr === todayStr;
             const hasShifts = (state.data.shifts || []).some(
               s => s.date === dateStr && (isAdmin || s.status === "published")
@@ -1257,10 +1262,11 @@
                     return `
                       <div class="planday-cell">
                         ${dayOpenShifts.map(s => `
-                          <div class="planday-shift-box open-shift-box" data-shift-id="${s.id}" title="Open Shift: ${s.startTime}-${s.endTime}">
+                          <div class="planday-shift-box open-shift-box" data-shift-id="${s.id}" title="Open Shift: ${s.startTime} - ${s.endTime}">
                             <div class="shift-role-text">${s.role || "Open"}</div>
-                            <div class="shift-time-text">${s.startTime}-${s.endTime}</div>
-                            ${s.breakMinutes ? '<div class="shift-break-dot">●</div>' : ""}
+                            <div class="shift-start-time">${s.startTime}</div>
+                            <div class="shift-close-time">${s.endTime}</div>
+                            ${s.breakMinutes ? '<div class="shift-box-footer"><span class="shift-break-dot">●</span></div>' : ""}
                           </div>
                         `).join("")}
                       </div>
@@ -1316,15 +1322,15 @@
                                 ${dayShifts.map(shift => {
                                   const isPaid = Boolean(shift.isPaid);
                                   const role = shift.role || emp.role || "Staff";
-                                  const timeText = `${shift.startTime}-${shift.endTime}`;
 
                                   return `
                                     <div class="planday-shift-box ${isPaid ? "is-paid" : "is-unpaid"}" 
                                          data-shift-id="${shift.id}" 
-                                         title="${emp.name}: ${timeText}${isPaid ? " (PAID)" : " (UNPAID)"}">
+                                         title="${emp.name}: ${shift.startTime} - ${shift.endTime}${isPaid ? " (PAID)" : " (UNPAID)"}">
                                       <div class="shift-role-text" title="${role}">${role}</div>
-                                      <div class="shift-time-text">${timeText}</div>
-                                      ${shift.breakMinutes ? '<div class="shift-break-dot">●</div>' : ""}
+                                      <div class="shift-start-time">${shift.startTime}</div>
+                                      <div class="shift-close-time">${shift.endTime}</div>
+                                      ${shift.breakMinutes ? '<div class="shift-box-footer"><span class="shift-break-dot">●</span></div>' : ""}
                                     </div>
                                   `;
                                 }).join("")}
@@ -3261,6 +3267,13 @@
     }
 
     // 2. Main Authenticated Application
+    const isPlandaySchedule = state.activeTab === "schedule" && (window.innerWidth <= 768 || state.scheduleViewMode === "planday_mobile") && state.scheduleViewMode !== "list";
+    if (isPlandaySchedule) {
+      document.body.classList.add("planday-schedule-active");
+    } else {
+      document.body.classList.remove("planday-schedule-active");
+    }
+
     let mainContentHtml = "";
     if (state.activeTab === "overview") {
       mainContentHtml = renderMobileOverview();
@@ -3716,6 +3729,27 @@
           await saveServerData();
           renderApp();
         }
+      });
+    }
+
+    const btnPlandayAddQuick = document.getElementById("btn-planday-add-shift-quick");
+    if (btnPlandayAddQuick) {
+      btnPlandayAddQuick.addEventListener("click", () => {
+        const firstEmp = (state.data.employees || [])[0];
+        const date = getSelectedDateStr();
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: firstEmp ? firstEmp.role : "Staff Member",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: "draft",
+          employeeId: firstEmp ? firstEmp.id : null,
+          rate: firstEmp ? firstEmp.hourlyRate : 10.0,
+          isPaid: false
+        });
       });
     }
 

@@ -2186,11 +2186,14 @@ table.rota-table th.col-entity {
    Planday Mobile 7-Day Team Schedule View (Image 2 Reference)
    ========================================================================== */
 .planday-mobile-schedule-container {
-  max-width: 100%;
-  margin: 0 auto;
+  width: 100%;
+  max-width: 100vw;
+  margin: 0;
+  padding: 0 0 5rem 0;
   background-color: var(--bg-main);
-  min-height: calc(100vh - 120px);
-  padding-bottom: 2.5rem;
+  min-height: 100vh;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* 1. Top bar with Month, Business Name, Actions */
@@ -2198,12 +2201,14 @@ table.rota-table th.col-entity {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.65rem 0.75rem;
+  padding: 0.5rem 0.65rem;
   background-color: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
   top: 0;
   z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .planday-month-nav {
@@ -2215,13 +2220,15 @@ table.rota-table th.col-entity {
 .planday-nav-arrow {
   background: none;
   border: none;
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 700;
   color: #0284c7;
   cursor: pointer;
-  padding: 2px 5px;
+  padding: 1px 4px;
   line-height: 1;
   border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
 }
 
 .planday-nav-arrow:hover {
@@ -2236,12 +2243,12 @@ table.rota-table th.col-entity {
 }
 
 .planday-business-name {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: #0284c7;
   text-align: center;
   flex: 1;
-  padding: 0 6px;
+  padding: 0 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -2250,7 +2257,7 @@ table.rota-table th.col-entity {
 .planday-top-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .btn-planday-today {
@@ -2259,10 +2266,11 @@ table.rota-table th.col-entity {
   color: #0284c7;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .btn-planday-today:hover {
@@ -2270,17 +2278,19 @@ table.rota-table th.col-entity {
   color: white;
 }
 
-/* 2. 7-Day Header Strip */
+/* 2. 7-Day Header Strip (Strict 7 equal columns) */
 .planday-week-strip {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 3px;
-  padding: 0.5rem 0.5rem 0.4rem;
+  gap: 2px;
+  padding: 0.4rem 3px 0.35rem 3px;
   background-color: var(--bg-card);
   border-bottom: 1px solid var(--border-color);
   position: sticky;
-  top: 48px;
+  top: 44px;
   z-index: 9;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .planday-day-col-header {
@@ -2289,9 +2299,10 @@ table.rota-table th.col-entity {
   align-items: center;
   justify-content: center;
   padding: 2px 0;
-  border-radius: 6px;
+  border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.1s ease;
+  min-width: 0;
 }
 
 .planday-day-col-header:hover {
@@ -2299,10 +2310,11 @@ table.rota-table th.col-entity {
 }
 
 .planday-day-name {
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 500;
   color: var(--text-muted);
   text-transform: capitalize;
+  line-height: 1.1;
 }
 
 .planday-day-number {
@@ -2310,6 +2322,7 @@ table.rota-table th.col-entity {
   font-weight: 700;
   color: var(--text-main);
   margin-top: 1px;
+  line-height: 1.1;
 }
 
 .planday-day-col-header.is-today .planday-day-name,
@@ -2323,29 +2336,29 @@ table.rota-table th.col-entity {
   height: 4px;
   border-radius: 50%;
   background-color: #0284c7;
-  margin-top: 3px;
+  margin-top: 2px;
 }
 
 .planday-day-dot-empty {
   width: 4px;
   height: 4px;
-  margin-top: 3px;
+  margin-top: 2px;
   visibility: hidden;
 }
 
 /* 3. Schedule Rows Body */
 .planday-schedule-body {
   background-color: var(--bg-card);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .planday-schedule-row {
-  padding: 0.55rem 0.5rem 0.65rem;
+  padding: 0.5rem 0 0.55rem 0;
   border-bottom: 1px solid var(--border-light);
   transition: background-color 0.1s ease;
-}
-
-.planday-schedule-row:hover {
-  background-color: var(--bg-card-hover);
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .planday-open-shifts-section {
@@ -2358,7 +2371,9 @@ table.rota-table th.col-entity {
   align-items: center;
   gap: 6px;
   margin-bottom: 0.35rem;
-  padding: 0 2px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .planday-avatar-mini {
@@ -2401,20 +2416,26 @@ table.rota-table th.col-entity {
   margin-left: auto;
 }
 
-/* 7 Days Grid per row */
+/* 7 Days Grid per row (Strict alignment with week strip) */
 .planday-row-days-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 3px;
+  gap: 2px;
+  padding: 0 3px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .planday-cell {
-  min-height: 56px;
+  min-height: 76px;
+  height: 76px;
+  min-width: 0;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 2px;
   position: relative;
+  box-sizing: border-box;
   transition: background-color 0.15s ease;
 }
 
@@ -2423,37 +2444,63 @@ table.rota-table th.col-entity {
   cursor: pointer;
 }
 
-/* Shift Box */
+/* Shift Box - TALL VERTICAL RECTANGLE MATCHING IMAGE 2 */
 .planday-shift-box {
   width: 100%;
-  border-radius: 5px;
-  padding: 4px 2px;
+  min-width: 0;
+  box-sizing: border-box;
+  border-radius: 4px;
+  padding: 5px 3px 4px 3px;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: flex-start;
-  box-sizing: border-box;
+  min-height: 76px;
+  height: 76px;
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   overflow: hidden;
-  min-height: 50px;
+  text-align: left;
 }
 
 .planday-shift-box:hover {
   transform: translateY(-1px);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* EXACT GREEN FROM IMAGE 2 */
+/* EXACT GREEN FROM IMAGE 2 FOR PAID SHIFTS */
 .planday-shift-box.is-paid {
   background-color: #15803d !important;
   color: #ffffff !important;
 }
 
-/* EXACT GREY FROM IMAGE 2 */
+.planday-shift-box.is-paid .shift-role-text {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.planday-shift-box.is-paid .shift-start-time,
+.planday-shift-box.is-paid .shift-close-time,
+.planday-shift-box.is-paid .shift-break-dot {
+  color: #ffffff !important;
+}
+
+/* EXACT GREY FROM IMAGE 2 FOR UNPAID SHIFTS */
 .planday-shift-box.is-unpaid {
   background-color: #e2e8f0 !important;
   color: #1e293b !important;
+}
+
+.planday-shift-box.is-unpaid .shift-role-text {
+  color: #475569 !important;
+}
+
+.planday-shift-box.is-unpaid .shift-start-time,
+.planday-shift-box.is-unpaid .shift-close-time {
+  color: #0f172a !important;
+}
+
+.planday-shift-box.is-unpaid .shift-break-dot {
+  color: #64748b !important;
 }
 
 [data-theme="dark"] .planday-shift-box.is-unpaid {
@@ -2461,10 +2508,28 @@ table.rota-table th.col-entity {
   color: #f8fafc !important;
 }
 
+[data-theme="dark"] .planday-shift-box.is-unpaid .shift-role-text {
+  color: #94a3b8 !important;
+}
+
+[data-theme="dark"] .planday-shift-box.is-unpaid .shift-start-time,
+[data-theme="dark"] .planday-shift-box.is-unpaid .shift-close-time {
+  color: #f8fafc !important;
+}
+
 .planday-shift-box.open-shift-box {
   background-color: #fee2e2 !important;
   color: #991b1b !important;
-  border: 1px dashed #fca5a5;
+  border: 1px dashed #f87171;
+}
+
+.planday-shift-box.open-shift-box .shift-role-text {
+  color: #b91c1c !important;
+}
+
+.planday-shift-box.open-shift-box .shift-start-time,
+.planday-shift-box.open-shift-box .shift-close-time {
+  color: #991b1b !important;
 }
 
 [data-theme="dark"] .planday-shift-box.open-shift-box {
@@ -2472,57 +2537,72 @@ table.rota-table th.col-entity {
   color: #fecaca !important;
 }
 
+/* Shift Box Content Typography */
 .shift-role-text {
-  font-size: clamp(7.5px, 2.1vw, 8.5px);
-  font-weight: 700;
+  font-size: 8.5px;
+  font-weight: 600;
   width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding: 0 1px;
+  padding: 0;
   line-height: 1.15;
+  margin-bottom: 3px;
+  letter-spacing: -0.2px;
 }
 
-.shift-time-text {
-  font-size: clamp(7.5px, 2.1vw, 9.5px);
-  font-weight: 800;
+.shift-start-time {
+  font-size: clamp(9.5px, 2.6vw, 11px);
+  font-weight: 700;
   letter-spacing: -0.3px;
-  padding: 0 1px;
+  padding: 0;
   line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  width: 100%;
+}
+
+.shift-close-time {
+  font-size: clamp(9.5px, 2.6vw, 11px);
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  padding: 0;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+  margin-top: 1px;
+}
+
+.shift-box-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
   width: 100%;
 }
 
 .shift-break-dot {
   font-size: 8px;
-  margin-top: 1px;
-  padding: 0 1px;
   line-height: 1;
 }
 
-.planday-shift-box.is-paid .shift-role-text,
-.planday-shift-box.is-paid .shift-time-text,
-.planday-shift-box.is-paid .shift-break-dot {
-  color: #ffffff !important;
-}
-
-.planday-shift-box.is-unpaid .shift-role-text,
-.planday-shift-box.is-unpaid .shift-time-text {
-  color: #1e293b !important;
-}
-
-[data-theme="dark"] .planday-shift-box.is-unpaid .shift-role-text,
-[data-theme="dark"] .planday-shift-box.is-unpaid .shift-time-text {
-  color: #f8fafc !important;
-}
-
+/* Full-bleed Edge-to-Edge Mobile Layout without Margins Clipping */
 @media (max-width: 768px) {
-  .planday-mobile-schedule-container {
-    margin: -0.75rem -0.85rem 0 -0.85rem;
+  body.planday-schedule-active header.app-header {
+    display: none !important;
+  }
+
+  body.planday-schedule-active main.app-main {
+    padding: 0 !important;
+    gap: 0 !important;
+    margin: 0 !important;
   }
 }
+
 
 
 
