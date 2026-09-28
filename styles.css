@@ -1243,8 +1243,27 @@ table.rota-table th.col-entity {
 }
 
 .mobile-nav-item .mobile-nav-icon {
-  font-size: 20px;
-  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-bottom: 2px;
+}
+
+.mobile-nav-item .mobile-nav-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--text-muted);
+  transition: stroke 0.15s ease, transform 0.15s ease;
+}
+
+.mobile-nav-item.active .mobile-nav-icon svg {
+  stroke: var(--primary);
+}
+
+.mobile-nav-item:active .mobile-nav-icon svg {
+  transform: scale(0.92);
 }
 
 /* Mobile Overview (Planday 'Your Schedule') */

@@ -811,16 +811,19 @@
 
         <nav class="main-nav">
           <button class="nav-tab ${state.activeTab === "overview" ? "active" : ""}" data-tab="overview">
-            🏠 Overview
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+            Overview
           </button>
           <button class="nav-tab ${state.activeTab === "schedule" ? "active" : ""}" data-tab="schedule">
-            📅 Schedule
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+            Schedule
           </button>
           ${
             canInv
               ? `
             <button class="nav-tab ${state.activeTab === "inventory" ? "active" : ""}" data-tab="inventory">
-              📦 Inventory
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+              Inventory
             </button>
           `
               : ""
@@ -829,8 +832,9 @@
             isAdmin
               ? `
             <button class="nav-tab ${state.activeTab === "staff" ? "active" : ""}" data-tab="staff">
-              👥 Staff & Access (${(state.data.employees || []).length})
-              ${pendingResets > 0 ? `<span class="nav-badge" style="background:#fef3c7;color:#b45309;">🔔 ${pendingResets}</span>` : ""}
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px;"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+              Staff & Access (${(state.data.employees || []).length})
+              ${pendingResets > 0 ? `<span class="nav-badge" style="background:#fef3c7;color:#b45309;">${pendingResets}</span>` : ""}
             </button>
           `
               : ""
@@ -851,22 +855,29 @@
           <!-- Notifications Bell -->
           <div class="notifications-container">
             <button type="button" class="notif-bell-btn" id="btn-notifications-toggle" title="Notifications">
-              🔔
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
               ${unreadCount > 0 ? `<span class="notif-count-badge">${unreadCount}</span>` : ""}
             </button>
 
             <div class="notifications-dropdown-menu ${state.showNotifications ? "" : "hidden"}" id="notifications-dropdown">
               <div class="notif-dropdown-header">
-                <span class="notif-dropdown-title">🔔 Notifications ${unreadCount > 0 ? `(${unreadCount} new)` : ""}</span>
+                <span class="notif-dropdown-title">Notifications ${unreadCount > 0 ? `(${unreadCount} new)` : ""}</span>
                 ${userNotifs.length > 0 ? `<button type="button" class="btn btn-sm btn-secondary" id="btn-mark-all-notifs-read" style="font-size: 11px; padding: 2px 7px;">Mark all read</button>` : ""}
               </div>
               <div class="notif-list">
                 ${
                   userNotifs.length === 0
-                    ? `<div class="notif-empty">✨ No notifications right now</div>`
+                    ? `<div class="notif-empty">No notifications right now</div>`
                     : userNotifs.map(n => {
                         const isUnread = !(n.readBy || []).includes(user ? user.id : "");
-                        const icon = n.type === "claim" ? "✋" : (n.type === "overtime" ? "⚡" : "📅");
+                        const icon = n.type === "claim"
+                          ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
+                          : (n.type === "overtime"
+                            ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`
+                            : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`);
                         const dateFormatted = n.timestamp ? new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : "";
                         return `
                           <div class="notif-item ${isUnread ? "unread" : ""}">
@@ -905,14 +916,14 @@
               <div class="dropdown-divider"></div>
 
               <button class="dropdown-item" id="menu-open-settings">
-                <span class="dropdown-icon">⚙️</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                 <span>Settings & Preferences</span>
               </button>
 
               <div class="dropdown-divider"></div>
 
               <button class="dropdown-item dropdown-item-danger" id="menu-logout">
-                <span class="dropdown-icon">🚪</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px;"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                 <span>Log Out</span>
               </button>
             </div>
@@ -939,20 +950,25 @@
     return `
       <div class="reset-alert-banner">
         <div style="display: flex; align-items: center; gap: 8px;">
-          <span style="font-size: 1.25rem;">🔔</span>
+          <span style="display: flex; align-items: center; color: #1e40af;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+            </svg>
+          </span>
           <div>
             <strong style="color: #1e3a8a;">Password Reset Request:</strong>
             <span style="color: #1e40af;"> ${first.name || first.username} requested a password reset (${first.requestedAt || "recently"}).</span>
           </div>
         </div>
         <button class="btn btn-primary btn-sm btn-generate-otp-banner" data-user-id="${first.userId}" style="white-space: nowrap;">
-          🔑 Generate One-Time Password
+          Generate One-Time Password
         </button>
       </div>
     `;
   }
 
-  // Render Rota Controls Bar (Clean Minimalist Week Navigator + View Toggle)
+  // Render Rota Controls Bar (Clean Minimalist Week Navigator)
   function renderRotaControls() {
     const weekDates = getWeekDates();
     const startStr = weekDates[0].toLocaleDateString("en-GB", { day: "numeric", month: "short" });
@@ -970,18 +986,9 @@
         </div>
 
         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-          <div class="schedule-view-toggle">
-            <button class="btn ${state.scheduleViewMode === "list" ? "btn-primary" : "btn-secondary"}" id="btn-view-mode-list" title="View everyone working by day">
-              📋 Day View
-            </button>
-            <button class="btn ${state.scheduleViewMode === "grid" ? "btn-primary" : "btn-secondary"}" id="btn-view-mode-grid" title="Full 7-day grid table">
-              📊 Week Grid
-            </button>
-          </div>
-
           ${
             isAdmin && kpis.draftCount > 0
-              ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">🚀 Publish Rota (${kpis.draftCount})</button>`
+              ? `<button class="btn btn-success btn-sm" id="btn-publish-rota">Publish Rota (${kpis.draftCount})</button>`
               : ""
           }
         </div>
@@ -1007,153 +1014,12 @@
     return weekDates[0];
   }
 
-  // Render Day Roster View (Shows Everyone's Shifts on Selected Day)
-  function renderDayRosterView(selectedDate) {
-    const weekDates = getWeekDates();
-    const isAdmin = state.currentUser && state.currentUser.role === "admin";
-    const myEmpId = state.currentUser ? state.currentUser.employeeId : null;
-
-    // Filter shifts for the selected date (staff only see published shifts)
-    const dayShifts = (state.data.shifts || [])
-      .filter(s => {
-        if (s.date !== selectedDate) return false;
-        if (!isAdmin && s.status === "draft") return false;
-        return true;
-      })
-      .sort((a, b) => (a.startTime || "").localeCompare(b.startTime || ""));
-
-    // Total hours for this day
-    let totalDayHours = 0;
-    dayShifts.forEach(s => {
-      totalDayHours += calculateNetHours(s.startTime, s.endTime, s.breakMinutes);
-    });
-
-    // Format selected date nicely
-    const selDateObj = parseDate(selectedDate);
-    const dayFullTitle = selDateObj.toLocaleDateString("en-GB", {
-      weekday: "long",
-      day: "numeric",
-      month: "short"
-    });
-
-    const dayPillsHtml = weekDates.map(d => {
-      const dateStr = formatDate(d);
-      const dayShort = d.toLocaleDateString("en-GB", { weekday: "short" });
-      const dayNum = d.toLocaleDateString("en-GB", { day: "numeric" });
-      const isSelected = dateStr === selectedDate;
-      const count = (state.data.shifts || []).filter(s => {
-        if (s.date !== dateStr) return false;
-        if (!isAdmin && s.status === "draft") return false;
-        return true;
-      }).length;
-
-      return `
-        <button class="mobile-day-pill ${isSelected ? "active" : ""}" data-date="${dateStr}">
-          <span class="pill-day">${dayShort}</span>
-          <span class="pill-num">${dayNum}</span>
-          ${count > 0 ? `<span class="pill-dot"></span>` : ""}
-        </button>
-      `;
-    }).join("");
-
-    let rosterListHtml = "";
-    if (dayShifts.length === 0) {
-      rosterListHtml = `
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 3rem 1.5rem; text-align: center; color: var(--text-muted); margin-top: 0.5rem; box-shadow: var(--shadow-sm);">
-          <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">☕</div>
-          <div style="font-weight: 700; color: var(--text-main); font-size: 1.05rem;">No shifts scheduled for ${dayFullTitle}</div>
-          <p style="font-size: 0.85rem; margin-top: 6px; color: var(--text-muted);">
-            Tap another day in the strip above to see colleagues scheduled that day${isAdmin ? ", or click Add Shift to schedule someone" : ""}.
-          </p>
-          ${
-            isAdmin
-              ? `<button class="btn btn-primary btn-sm" id="btn-empty-day-add" data-date="${selectedDate}" style="margin-top: 1rem;">+ Add Shift for this Day</button>`
-              : ""
-          }
-        </div>
-      `;
-    } else {
-      rosterListHtml = dayShifts.map(shift => {
-        const emp = (state.data.employees || []).find(e => e.id === shift.employeeId);
-        const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "General Staff", color: "#0ea5e9" };
-        const isMyShift = myEmpId && shift.employeeId === myEmpId;
-        const isOpenShift = !shift.employeeId;
-        const empName = emp ? emp.name : "Open Shift";
-        const empInitial = emp ? emp.name[0].toUpperCase() : "O";
-        const avatarBg = emp ? emp.avatarColor || dept.color || "#0ea5e9" : "#ea580c";
-        const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
-        const isDraft = shift.status === "draft";
-        const isOvertime = isShiftOvertime(shift);
-        const isPaidShift = Boolean(shift.isPaid);
-
-        return `
-          <div class="day-roster-card ${isMyShift ? "my-shift" : ""} ${isPaidShift ? "roster-paid" : ""}" data-shift-id="${shift.id}" style="${isPaidShift ? "" : `border-left-color: ${isOvertime ? "#ef4444" : (isOpenShift ? (isDraft ? "#d97706" : "#16a34a") : (dept.color || "#0ea5e9"))};`} cursor: ${isAdmin ? "pointer" : "default"};">
-            <div class="day-roster-avatar" style="background-color: ${avatarBg}; color: white;">
-              ${empInitial}
-            </div>
-            <div class="day-roster-info">
-              <div class="day-roster-name">
-                <span>${empName}</span>
-                ${isMyShift ? `<span style="background:var(--primary);color:white;font-size:10px;padding:1px 6px;border-radius:10px;font-weight:700;">YOU</span>` : ""}
-                ${isPaidShift ? `<span class="shift-badge badge-paid" style="background:#10b981;color:white;font-size:10px;font-weight:700;">✓ PAID</span>` : ""}
-                ${isOvertime ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:10px;font-weight:700;">⚡ Overtime</span>` : ""}
-                ${isDraft && isAdmin ? `<span class="badge badge-draft" style="font-size:10px;">Draft</span>` : ""}
-                ${isOpenShift && !isDraft ? `<span class="shift-badge badge-open-live" style="font-size:10px;">Open</span>` : ""}
-              </div>
-              <div class="day-roster-role">
-                ${shift.role || (emp ? emp.role : "Staff Member")} · <span style="color: ${dept.color}; font-weight: 600;">${dept.name}</span>
-              </div>
-              ${shift.notes ? `<div style="font-size: 0.725rem; color: var(--text-light); margin-top: 3px; font-style: italic;">📝 ${shift.notes}</div>` : ""}
-            </div>
-            <div class="day-roster-time">
-              <div class="day-roster-hours">
-                ${formatShiftRange(shift.startTime, shift.endTime)}
-              </div>
-              <div class="day-roster-net">
-                ${netH} hrs ${shift.breakMinutes ? `(${shift.breakMinutes}m break)` : ""}
-              </div>
-              ${
-                isOpenShift && myEmpId && !isDraft && !isAdmin
-                  ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="font-size: 11px; padding: 3px 8px; margin-top: 5px; font-weight: 700;">✋ Claim</button>`
-                  : ""
-              }
-            </div>
-          </div>
-        `;
-      }).join("");
-    }
-
-    return `
-      <!-- 7-Day Horizontal Strip Selector -->
-      <div class="mobile-day-strip-wrap">
-        <div class="mobile-day-strip">
-          ${dayPillsHtml}
-        </div>
-      </div>
-
-      <!-- Day Roster Header & Count -->
-      <div class="day-roster-header">
-        <div class="day-roster-title">
-          <span>${dayFullTitle}</span>
-          <span style="font-weight: 500; color: var(--text-muted); font-size: 0.825rem;">
-            · ${dayShifts.length} colleague${dayShifts.length === 1 ? "" : "s"} (${totalDayHours.toFixed(1)}h)
-          </span>
-        </div>
-        ${
-          isAdmin
-            ? `<button class="btn btn-primary btn-sm" id="btn-day-add-shift" data-date="${selectedDate}">+ Add Shift</button>`
-            : ""
-        }
-      </div>
-
-      <!-- List of Everyone's Shifts on this Day -->
-      <div class="day-roster-list">
-        ${rosterListHtml}
-      </div>
-    `;
+  // Day Roster View removed - schedule is week-only per user requirements
+  function renderDayRosterView() {
+    return "";
   }
 
-  // Render Planday Mobile Schedule (Image 2 Exact Layout)
+  // Render Planday Mobile Schedule (Image 2 Exact Layout - Week Only)
   function renderPlandayMobileSchedule() {
     const weekDates = getWeekDates();
     const weekDateStrs = weekDates.map(formatDate);
@@ -1169,6 +1035,13 @@
       );
       if (match) myEmpId = match.id;
     }
+
+    const userNotifs = (state.data.notifications || []).filter(n => {
+      if (!state.currentUser) return false;
+      if (isAdmin) return true;
+      return n.targetUserId === state.currentUser.id || n.targetUserId === state.currentUser.employeeId;
+    });
+    const unreadCount = userNotifs.filter(n => !(n.readBy || []).includes(state.currentUser ? state.currentUser.id : "")).length;
 
     const draftShiftsThisWeek = (state.data.shifts || []).filter(
       s => weekDateStrs.includes(s.date) && s.status === "draft"
@@ -1202,10 +1075,9 @@
 
           <div class="planday-top-actions">
             <button type="button" class="btn-planday-today" id="btn-planday-today">Today</button>
-            <button type="button" class="btn-planday-today" id="btn-planday-switch-day" title="Switch to single day view" style="border-color: var(--border-color); color: var(--text-muted); font-size: 11px; padding: 2px 6px;">📋 Day</button>
             ${
               isAdmin && draftShiftsThisWeek.length > 0
-                ? `<button type="button" class="btn btn-success btn-xs" id="btn-publish-rota-planday" style="font-size: 11px; padding: 2px 6px; border-radius: 6px;">🚀 Publish (${draftShiftsThisWeek.length})</button>`
+                ? `<button type="button" class="btn btn-success btn-xs" id="btn-publish-rota-planday" style="font-size: 11px; padding: 2px 6px; border-radius: 6px;">Publish (${draftShiftsThisWeek.length})</button>`
                 : ""
             }
             ${
@@ -1213,6 +1085,13 @@
                 ? `<button type="button" class="btn btn-primary btn-xs" id="btn-planday-add-shift-quick" style="font-size: 11px; padding: 2px 7px; border-radius: 6px;" title="Add Shift">+ Shift</button>`
                 : ""
             }
+            <button type="button" class="btn-planday-bell notif-bell-btn" id="btn-planday-notifs-toggle" title="Notifications" style="width: 28px; height: 28px; border-radius: 6px; padding: 0;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              ${unreadCount > 0 ? `<span class="notif-count-badge" style="top: -5px; right: -5px; font-size: 9px; min-width: 14px; height: 14px; padding: 0 3px;">${unreadCount}</span>` : ""}
+            </button>
           </div>
         </div>
 
@@ -1290,7 +1169,14 @@
             employees.length === 0
               ? `
             <div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted);">
-              <div style="font-size: 2rem; margin-bottom: 0.5rem;">👥</div>
+              <div style="display:flex;justify-content:center;margin-bottom:0.5rem;color:var(--text-muted);">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+              </div>
               <p>No employees found. Add staff in the Staff tab to begin scheduling.</p>
             </div>
           `
@@ -1356,10 +1242,10 @@
     `;
   }
 
-  // Render Team Schedule View (Day Roster, Week Grid, or Planday Mobile Schedule)
+  // Render Team Schedule View (Week-only View)
   function renderScheduleView() {
     const isMobile = window.innerWidth <= 768;
-    const isPlandayMobile = state.scheduleViewMode === "planday_mobile" || (isMobile && state.scheduleViewMode !== "list");
+    const isPlandayMobile = state.scheduleViewMode === "planday_mobile" || isMobile;
 
     if (isPlandayMobile) {
       return `
@@ -1368,16 +1254,10 @@
       `;
     }
 
-    const selectedDate = getSelectedDateStr();
-
     return `
       ${renderAdminResetBanner()}
       ${renderRotaControls()}
-      ${
-        state.scheduleViewMode === "list"
-          ? renderDayRosterView(selectedDate)
-          : renderScheduleGrid()
-      }
+      ${renderScheduleGrid()}
     `;
   }
 
@@ -1458,7 +1338,7 @@
           <div>
             <div style="font-size: 0.825rem; color: var(--text-muted); font-weight: 500;">Welcome back,</div>
             <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--text-main); margin-top: 2px;">
-              ${displayName} 👋
+              ${displayName}
             </h2>
           </div>
           <div class="mobile-hours-badge">
@@ -1473,7 +1353,12 @@
         <div class="planday-card">
           <div class="planday-card-header">
             <div class="planday-card-title">
-              <div class="planday-icon-badge blue">👤</div>
+              <div class="planday-icon-badge blue">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
               <span>Your schedule</span>
             </div>
             <button class="planday-see-all-link" id="btn-overview-see-all">
@@ -1485,7 +1370,14 @@
             myShifts.length === 0
               ? `
             <div style="padding: 2rem 1rem; text-align: center; color: var(--text-muted);">
-              <div style="font-size: 2.25rem; margin-bottom: 0.5rem;">🏖️</div>
+              <div style="margin-bottom: 0.5rem; display: flex; justify-content: center; color: var(--text-muted);">
+                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+              </div>
               <div style="font-weight: 700; color: var(--text-main); font-size: 0.95rem;">No upcoming shifts</div>
               <div style="font-size: 0.8rem; margin-top: 4px; color: var(--text-muted);">
                 You don't have any shifts scheduled right now. Tap Schedule below to check everyone's rota.
@@ -1510,9 +1402,9 @@
                   <div class="planday-shift-content">
                     <div class="planday-shift-main">
                       <div class="planday-shift-time" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                        <span>⏰ ${formatShiftRange(shift.startTime, shift.endTime)}</span>
+                        <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         ${shift.isPaid ? `<span class="shift-badge badge-paid" style="background:#10b981;color:white;font-size:9px;font-weight:700;">✓ PAID</span>` : ""}
-                        ${isOvertime ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">⚡ Overtime</span>` : ""}
+                        ${isOvertime ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">Overtime</span>` : ""}
                         ${shift.status === "draft" && isAdmin ? `<span class="shift-badge badge-draft" style="font-size:9px;">Draft</span>` : ""}
                       </div>
                       <div class="planday-shift-meta" style="margin-top: 4px; font-size: 0.85rem; color: var(--text-muted);">
@@ -1547,7 +1439,11 @@
           <div class="planday-card" style="border-left: 4px solid #ef4444; margin-top: 1rem;">
             <div class="planday-card-header">
               <div class="planday-card-title">
-                <div class="planday-icon-badge" style="background:#fee2e2;color:#b91c1c;">⚡</div>
+                <div class="planday-icon-badge" style="background:#fee2e2;color:#b91c1c;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+                  </svg>
+                </div>
                 <span style="color:#991b1b;font-weight:800;">Overtime Shifts This Week (${overtimeShiftsThisWeek.length})</span>
               </div>
             </div>
@@ -1565,7 +1461,7 @@
                   <div class="planday-shift-content" style="background: transparent; border: none;">
                     <div class="planday-shift-main">
                       <div class="planday-shift-time" style="color: #b91c1c; font-weight: 700; display: flex; align-items: center; gap: 6px;">
-                        <span>⏰ ${formatShiftRange(shift.startTime, shift.endTime)} · ${h}h</span>
+                        <span>${formatShiftRange(shift.startTime, shift.endTime)} · ${h}h</span>
                         ${shift.isPaid ? `<span class="shift-badge badge-paid" style="background:#10b981;color:white;font-size:9px;font-weight:700;">✓ PAID</span>` : ""}
                       </div>
                       <div class="planday-shift-meta" style="margin-top: 4px; font-size: 0.825rem; color: #b91c1c; font-weight: 600;">
@@ -1589,7 +1485,14 @@
           <div class="planday-card">
             <div class="planday-card-header">
               <div class="planday-card-title">
-                <div class="planday-icon-badge red">📅</div>
+                <div class="planday-icon-badge red">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                  </svg>
+                </div>
                 <span>Open shifts</span>
               </div>
               <button class="planday-see-all-link" id="btn-overview-open-shifts">
@@ -1613,7 +1516,7 @@
                   <div class="planday-shift-content" style="background-color: #fff1f2; border-color: #fecdd3;">
                     <div class="planday-shift-main">
                       <div class="planday-shift-time" style="color: #b91c1c; display: flex; align-items: center; gap: 6px;">
-                        <span>⏰ ${formatShiftRange(shift.startTime, shift.endTime)}</span>
+                        <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         ${isAdmin ? (isDraft ? `<span class="shift-badge badge-draft" style="font-size:9px;">Draft</span>` : `<span class="shift-badge badge-open-live" style="font-size:9px;">Live</span>`) : ""}
                       </div>
                       <div class="planday-shift-meta" style="color: #9f1239; font-size: 0.85rem; font-weight: 600; margin-top: 3px;">
@@ -1637,7 +1540,7 @@
         <!-- Quick Jump to Team Week Grid Banner -->
         <div style="background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 100%); border-radius: var(--radius-lg); padding: 1.25rem 1.35rem; color: white; margin-top: 1rem; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); display: flex; align-items: center; justify-content: space-between; gap: 1rem;">
           <div>
-            <div style="font-weight: 700; font-size: 1rem;">📅 Full Week Grid Rota</div>
+            <div style="font-weight: 700; font-size: 1rem;">Full Week Grid Rota</div>
             <div style="font-size: 0.8rem; opacity: 0.9; margin-top: 2px;">
               See the complete weekly schedule grid for the entire team
             </div>
@@ -1650,7 +1553,7 @@
     `;
   }
 
-  // Render Mobile Bottom Navigation Bar
+  // Render Mobile Bottom Navigation Bar (Image 2 Exact Icons)
   function renderBottomNav() {
     if (!state.currentUser) return "";
     const isAdmin = state.currentUser && state.currentUser.role === "admin";
@@ -1660,18 +1563,37 @@
     return `
       <nav class="mobile-bottom-nav">
         <button class="mobile-nav-item ${state.activeTab === "overview" ? "active" : ""}" data-tab="overview">
-          <span class="mobile-nav-icon">🏠</span>
+          <span class="mobile-nav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              <polyline points="9 22 9 12 15 12 15 22"></polyline>
+            </svg>
+          </span>
           <span>Overview</span>
         </button>
         <button class="mobile-nav-item ${state.activeTab === "schedule" ? "active" : ""}" data-tab="schedule">
-          <span class="mobile-nav-icon">📅</span>
+          <span class="mobile-nav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </span>
           <span>Schedule</span>
         </button>
         ${
           canInv
             ? `
           <button class="mobile-nav-item ${state.activeTab === "inventory" ? "active" : ""}" data-tab="inventory">
-            <span class="mobile-nav-icon">📦</span>
+            <span class="mobile-nav-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="16.5" y1="9.4" x2="7.5" y2="4.21"></line>
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+            </span>
             <span>Inventory</span>
           </button>
         `
@@ -1682,7 +1604,12 @@
             ? `
           <button class="mobile-nav-item ${state.activeTab === "staff" ? "active" : ""}" data-tab="staff">
             <span class="mobile-nav-icon" style="position:relative;">
-              👥
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
               ${pendingResets > 0 ? `<span style="position:absolute;top:-4px;right:-8px;background:#ef4444;color:white;border-radius:50%;font-size:9px;padding:1px 4px;font-weight:700;">${pendingResets}</span>` : ""}
             </span>
             <span>Staff</span>
@@ -1691,7 +1618,12 @@
             : ""
         }
         <button class="mobile-nav-item" id="mobile-nav-settings">
-          <span class="mobile-nav-icon">⚙️</span>
+          <span class="mobile-nav-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </span>
           <span>Settings</span>
         </button>
       </nav>
@@ -1709,7 +1641,14 @@
     if ((state.data.employees || []).length === 0) {
       return `
         <div style="background: white; border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 4rem 2rem; text-align: center; box-shadow: var(--shadow-sm);">
-          <div style="font-size: 3rem; margin-bottom: 1rem;">✨</div>
+          <div style="display: flex; justify-content: center; margin-bottom: 1rem; color: #3b82f6;">
+            <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+          </div>
           <h2 style="font-size: 1.35rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem;">Your Rota is Clean & Blank</h2>
           <p style="color: #64748b; font-size: 0.9rem; max-width: 480px; margin: 0 auto 1.5rem;">
             Add your staff members in the Staff tab to begin scheduling.
@@ -1831,7 +1770,7 @@
                     </div>
                     ${
                       !isAdmin && myEmpId && !isDraft
-                        ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="width: 100%; margin-top: 6px; padding: 3px 6px; font-size: 11px; font-weight:700;">✋ Claim Shift</button>`
+                        ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="width: 100%; margin-top: 6px; padding: 3px 6px; font-size: 11px; font-weight:700;">Claim Shift</button>`
                         : ""
                     }
                   </div>
@@ -1924,10 +1863,10 @@
                       <div class="shift-time">
                         <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         ${shift.breakMinutes ? `<span class="shift-break">-${shift.breakMinutes}m</span>` : ""}
-                        ${isOvertimeShift ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">⚡ OT</span>` : ""}
+                        ${isOvertimeShift ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">OT</span>` : ""}
                       </div>
                       <div class="shift-role-title">
-                        ${shift.role} ${isMyShift ? `<span style="color:#2563eb;font-weight:700;">★ Me</span>` : ""}
+                        ${shift.role} ${isMyShift ? `<span style="color:#2563eb;font-weight:700;">Me</span>` : ""}
                       </div>
                       <div class="shift-footer">
                         <span>${hours}h net ${isAdmin ? `· ${currency}${(hours * (shift.rate || emp.hourlyRate || 0)).toFixed(0)}` : ""}</span>
@@ -1940,7 +1879,7 @@
                           }
                           ${
                             isAdmin
-                              ? `<button type="button" class="btn-quick-shift-paid" data-shift-id="${shift.id}" title="${isPaidShift ? "Mark as Unpaid" : "Mark as Paid"}" style="background: none; border: none; cursor: pointer; padding: 0 0 0 2px; font-size: 11px; line-height: 1;">${isPaidShift ? "✅" : "💵"}</button>`
+                              ? `<button type="button" class="btn-quick-shift-paid" data-shift-id="${shift.id}" title="${isPaidShift ? "Mark as Unpaid" : "Mark as Paid"}" style="background: none; border: none; cursor: pointer; padding: 0 0 0 2px; line-height: 1;">${isPaidShift ? `<span style="font-size:9px;background:#10b981;color:white;font-weight:700;padding:1px 4px;border-radius:3px;">PAID</span>` : `<span style="font-size:9px;background:#f1f5f9;color:#64748b;font-weight:600;padding:1px 4px;border-radius:3px;border:1px solid #cbd5e1;">UNPAID</span>`}</button>`
                               : ""
                           }
                         </div>
@@ -2027,11 +1966,11 @@
                         <span>${formatShiftRange(shift.startTime, shift.endTime)}</span>
                         <div style="display: flex; gap: 3px; align-items: center;">
                           ${isPaidShift ? `<span class="shift-badge badge-paid">PAID</span>` : ""}
-                          ${isOvertimeShift ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">⚡ OT</span>` : ""}
+                          ${isOvertimeShift ? `<span class="shift-badge badge-overtime" style="background:#fee2e2;color:#b91c1c;border:1px solid #fca5a5;font-size:9px;font-weight:700;">OT</span>` : ""}
                           ${isDraft ? `<span class="shift-badge badge-draft">Draft</span>` : (isOpen ? `<span class="shift-badge badge-open-live">Live</span>` : "")}
                           ${
                             isAdmin
-                              ? `<button type="button" class="btn-quick-shift-paid" data-shift-id="${shift.id}" title="${isPaidShift ? "Mark as Unpaid" : "Mark as Paid"}" style="background: none; border: none; cursor: pointer; padding: 0 0 0 2px; font-size: 11px; line-height: 1;">${isPaidShift ? "✅" : "💵"}</button>`
+                              ? `<button type="button" class="btn-quick-shift-paid" data-shift-id="${shift.id}" title="${isPaidShift ? "Mark as Unpaid" : "Mark as Paid"}" style="background: none; border: none; cursor: pointer; padding: 0 0 0 2px; line-height: 1;">${isPaidShift ? `<span style="font-size:9px;background:#10b981;color:white;font-weight:700;padding:1px 4px;border-radius:3px;">PAID</span>` : `<span style="font-size:9px;background:#f1f5f9;color:#64748b;font-weight:600;padding:1px 4px;border-radius:3px;border:1px solid #cbd5e1;">UNPAID</span>`}</button>`
                               : ""
                           }
                         </div>
@@ -2040,7 +1979,7 @@
                       <div style="font-size:0.7rem;color:var(--text-muted);">${shift.role} · ${hours}h</div>
                       ${
                         isOpen && !isAdmin && myEmpId && !isDraft
-                          ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="width: 100%; margin-top: 5px; padding: 2px 6px; font-size: 11px; font-weight:700;">✋ Claim</button>`
+                          ? `<button class="btn btn-primary btn-sm btn-request-claim" data-shift-id="${shift.id}" style="width: 100%; margin-top: 5px; padding: 2px 6px; font-size: 11px; font-weight:700;">Claim</button>`
                           : ""
                       }
                     </div>
@@ -3258,6 +3197,63 @@
     `;
   }
 
+  // Render Notifications Modal (accessible across Desktop and Mobile topbars)
+  function renderNotificationsModal() {
+    if (!state.showNotifications) return "";
+    const user = state.currentUser;
+    const userNotifs = (state.data.notifications || []).filter(n => {
+      if (!user) return false;
+      if (user.role === "admin") return true;
+      return n.targetUserId === user.id || n.targetUserId === user.employeeId;
+    });
+    const unreadCount = userNotifs.filter(n => !(n.readBy || []).includes(user ? user.id : "")).length;
+
+    return `
+      <div class="modal-backdrop" id="notifications-modal-backdrop" style="display: flex;">
+        <div class="modal-content" style="max-width: 440px; width: 92%; border-radius: var(--radius-lg); overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);">
+          <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; border-bottom: 1px solid var(--border-color); background: var(--bg-card);">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+              </svg>
+              <h3 class="modal-title" style="margin: 0; font-size: 1.05rem; font-weight: 700;">Notifications ${unreadCount > 0 ? `(${unreadCount} new)` : ""}</h3>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              ${userNotifs.length > 0 ? `<button type="button" class="btn btn-xs btn-secondary" id="btn-modal-mark-all-read" style="font-size: 11px; padding: 3px 8px; border-radius: 6px;">Mark all read</button>` : ""}
+              <button type="button" class="modal-close" id="btn-close-notifs-modal" style="font-size: 1.25rem; line-height: 1; border: none; background: none; cursor: pointer; color: var(--text-muted);">✕</button>
+            </div>
+          </div>
+          <div class="modal-body" style="padding: 0; max-height: 420px; overflow-y: auto;">
+            ${
+              userNotifs.length === 0
+                ? `<div style="padding: 3rem 1.5rem; text-align: center; color: var(--text-muted); font-size: 0.9rem;">No notifications right now</div>`
+                : userNotifs.map(n => {
+                    const isUnread = !(n.readBy || []).includes(user ? user.id : "");
+                    const icon = n.type === "claim"
+                      ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>`
+                      : (n.type === "overtime"
+                        ? `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>`
+                        : `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`);
+                    const dateFormatted = n.timestamp ? new Date(n.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', day: 'numeric', month: 'short' }) : "";
+                    return `
+                      <div class="notif-item ${isUnread ? "unread" : ""}" style="padding: 0.85rem 1.15rem; border-bottom: 1px solid var(--border-light); display: flex; gap: 10px; align-items: flex-start; ${isUnread ? "background: rgba(37, 99, 235, 0.05);" : ""}">
+                        <div class="notif-icon" style="color: var(--primary); margin-top: 2px;">${icon}</div>
+                        <div class="notif-body" style="flex: 1;">
+                          <div class="notif-title" style="font-weight: 700; font-size: 0.85rem; color: var(--text-main);">${n.title}</div>
+                          <div class="notif-msg" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">${n.message}</div>
+                          <div class="notif-time" style="font-size: 0.7rem; color: var(--text-light); margin-top: 4px;">${dateFormatted}</div>
+                        </div>
+                      </div>
+                    `;
+                  }).join("")
+            }
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   // Master Render Function
   function renderApp() {
     const root = document.getElementById("app-root");
@@ -3271,7 +3267,7 @@
     }
 
     // 2. Main Authenticated Application
-    const isPlandaySchedule = state.activeTab === "schedule" && (window.innerWidth <= 768 || state.scheduleViewMode === "planday_mobile") && state.scheduleViewMode !== "list";
+    const isPlandaySchedule = state.activeTab === "schedule" && (window.innerWidth <= 768 || state.scheduleViewMode === "planday_mobile");
     if (isPlandaySchedule) {
       document.body.classList.add("planday-schedule-active");
     } else {
@@ -3303,6 +3299,7 @@
       ${renderMustChangePasswordModal()}
       ${renderStockNumpadModal()}
       ${renderProductModal()}
+      ${renderNotificationsModal()}
     `;
 
     bindEvents();
@@ -3546,42 +3543,65 @@
       }
     });
 
-    // Notification Bell toggle
+    // Notification Bell toggle (Header + Mobile Schedule Topbar)
     const notifToggleBtn = document.getElementById("btn-notifications-toggle");
-    const notifDropdown = document.getElementById("notifications-dropdown");
-    if (notifToggleBtn && notifDropdown) {
+    if (notifToggleBtn) {
       notifToggleBtn.addEventListener("click", e => {
         e.stopPropagation();
         state.showNotifications = !state.showNotifications;
-        notifDropdown.classList.toggle("hidden", !state.showNotifications);
-      });
-    }
-
-    // Mark all notifications read
-    const btnMarkAllNotifs = document.getElementById("btn-mark-all-notifs-read");
-    if (btnMarkAllNotifs) {
-      btnMarkAllNotifs.addEventListener("click", async e => {
-        e.stopPropagation();
-        const user = state.currentUser;
-        if (!user) return;
-        const userNotifs = getUserNotifications(user);
-        userNotifs.forEach(n => {
-          if (!n.readBy) n.readBy = [];
-          if (!n.readBy.includes(user.id)) n.readBy.push(user.id);
-        });
-        await saveData();
         renderApp();
       });
     }
 
-    // Close notifications dropdown on document click
-    document.addEventListener("click", e => {
-      if (state.showNotifications && !e.target.closest(".notifications-container")) {
+    const btnPlandayNotifs = document.getElementById("btn-planday-notifs-toggle");
+    if (btnPlandayNotifs) {
+      btnPlandayNotifs.addEventListener("click", e => {
+        e.stopPropagation();
+        state.showNotifications = !state.showNotifications;
+        renderApp();
+      });
+    }
+
+    const btnCloseNotifsModal = document.getElementById("btn-close-notifs-modal");
+    if (btnCloseNotifsModal) {
+      btnCloseNotifsModal.addEventListener("click", () => {
         state.showNotifications = false;
-        const d = document.getElementById("notifications-dropdown");
-        if (d) d.classList.add("hidden");
-      }
-    });
+        renderApp();
+      });
+    }
+
+    const notifsBackdrop = document.getElementById("notifications-modal-backdrop");
+    if (notifsBackdrop) {
+      notifsBackdrop.addEventListener("click", (e) => {
+        if (e.target === notifsBackdrop) {
+          state.showNotifications = false;
+          renderApp();
+        }
+      });
+    }
+
+    // Mark all notifications read
+    const markAllNotifsRead = async (e) => {
+      if (e) e.stopPropagation();
+      const user = state.currentUser;
+      if (!user) return;
+      const userNotifs = (state.data.notifications || []).filter(n => {
+        if (user.role === "admin") return true;
+        return n.targetUserId === user.id || n.targetUserId === user.employeeId;
+      });
+      userNotifs.forEach(n => {
+        if (!n.readBy) n.readBy = [];
+        if (!n.readBy.includes(user.id)) n.readBy.push(user.id);
+      });
+      await saveServerData();
+      renderApp();
+    };
+
+    const btnMarkAllNotifs = document.getElementById("btn-mark-all-notifs-read");
+    if (btnMarkAllNotifs) btnMarkAllNotifs.addEventListener("click", markAllNotifsRead);
+
+    const btnModalMarkAll = document.getElementById("btn-modal-mark-all-read");
+    if (btnModalMarkAll) btnModalMarkAll.addEventListener("click", markAllNotifsRead);
 
     // Tab switching
     document.querySelectorAll(".nav-tab").forEach(tab => {
@@ -3705,14 +3725,6 @@
     if (btnPlandayToday) {
       btnPlandayToday.addEventListener("click", () => {
         state.currentMonday = getMonday(new Date());
-        renderApp();
-      });
-    }
-
-    const btnPlandaySwitchDay = document.getElementById("btn-planday-switch-day");
-    if (btnPlandaySwitchDay) {
-      btnPlandaySwitchDay.addEventListener("click", () => {
-        state.scheduleViewMode = "list";
         renderApp();
       });
     }
@@ -3869,84 +3881,6 @@
           rate: 10.0,
           isPaid: false
         });
-      });
-    });
-
-    // Schedule: Mobile Day Strip Pills
-    document.querySelectorAll(".mobile-day-pill").forEach(pill => {
-      pill.addEventListener("click", () => {
-        state.selectedScheduleDate = pill.dataset.date;
-        renderApp();
-      });
-    });
-
-    // Schedule: View Mode Toggle (Day View vs Week Grid)
-    const btnModeList = document.getElementById("btn-view-mode-list");
-    if (btnModeList) {
-      btnModeList.addEventListener("click", () => {
-        state.scheduleViewMode = "list";
-        renderApp();
-      });
-    }
-
-    const btnModeGrid = document.getElementById("btn-view-mode-grid");
-    if (btnModeGrid) {
-      btnModeGrid.addEventListener("click", () => {
-        state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
-        renderApp();
-      });
-    }
-
-    // Schedule Day View: Add Shift
-    const btnDayAddShift = document.getElementById("btn-day-add-shift");
-    if (btnDayAddShift) {
-      btnDayAddShift.addEventListener("click", () => {
-        const date = btnDayAddShift.dataset.date;
-        const firstEmp = (state.data.employees || [])[0];
-        openShiftModal({
-          isNew: true,
-          date: date,
-          startTime: "09:00",
-          endTime: "17:00",
-          breakMinutes: 0,
-          role: firstEmp ? firstEmp.role : "Staff Member",
-          departmentId: state.data.departments[0]?.id || "general",
-          status: "draft",
-          employeeId: firstEmp ? firstEmp.id : null,
-          rate: firstEmp ? firstEmp.hourlyRate : 10.0
-        });
-      });
-    }
-
-    const btnEmptyDayAdd = document.getElementById("btn-empty-day-add");
-    if (btnEmptyDayAdd) {
-      btnEmptyDayAdd.addEventListener("click", () => {
-        const date = btnEmptyDayAdd.dataset.date;
-        const firstEmp = (state.data.employees || [])[0];
-        openShiftModal({
-          isNew: true,
-          date: date,
-          startTime: "09:00",
-          endTime: "17:00",
-          breakMinutes: 0,
-          role: firstEmp ? firstEmp.role : "Staff Member",
-          departmentId: state.data.departments[0]?.id || "general",
-          status: "draft",
-          employeeId: firstEmp ? firstEmp.id : null,
-          rate: firstEmp ? firstEmp.hourlyRate : 10.0
-        });
-      });
-    }
-
-    // Schedule Day View: Click Card to Edit Shift (Admin only)
-    document.querySelectorAll(".day-roster-card").forEach(card => {
-      card.addEventListener("click", () => {
-        if (!isAdmin) return;
-        const shiftId = card.dataset.shiftId;
-        const shift = (state.data.shifts || []).find(s => s.id === shiftId);
-        if (shift) {
-          openShiftModal(JSON.parse(JSON.stringify(shift)));
-        }
       });
     });
 
