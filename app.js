@@ -1078,8 +1078,8 @@
         const dept = (state.data.departments || []).find(d => d.id === shift.departmentId) || { name: "General Staff", color: "#0ea5e9" };
         const isMyShift = myEmpId && shift.employeeId === myEmpId;
         const isOpenShift = !shift.employeeId;
-        const empName = emp ? emp.name : "🔓 Open / Unassigned Shift";
-        const empInitial = emp ? emp.name[0].toUpperCase() : "🔓";
+        const empName = emp ? emp.name : "Open Shift";
+        const empInitial = emp ? emp.name[0].toUpperCase() : "O";
         const avatarBg = emp ? emp.avatarColor || dept.color || "#0ea5e9" : "#ea580c";
         const netH = calculateNetHours(shift.startTime, shift.endTime, shift.breakMinutes);
         const isDraft = shift.status === "draft";
@@ -1239,19 +1239,15 @@
 
         <!-- 3. Schedule Rows Body -->
         <div class="planday-schedule-body">
-          <!-- Open Shifts Section (if admin or open shifts exist) -->
+          <!-- Open Shifts Section (shows empty space / grid only when open shifts exist, otherwise minimized) -->
           ${
-            isAdmin || openShiftsThisWeek.length > 0
+            openShiftsThisWeek.length > 0
               ? `
             <div class="planday-schedule-row planday-open-shifts-section">
-              <div class="planday-row-title">
-                <span style="font-size: 13px; line-height: 1;">🔓</span>
-                <span class="planday-employee-name" style="color: #b91c1c;">Open shift</span>
-                ${
-                  openShiftsThisWeek.length > 0
-                    ? `<span style="font-size: 10px; background: #fee2e2; color: #b91c1c; padding: 1px 6px; border-radius: 9999px; font-weight: 700;">${openShiftsThisWeek.length}</span>`
-                    : ""
-                }
+              <div class="planday-row-title" style="padding: 0 8px;">
+                <span class="planday-employee-name" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Open shift</span>
+                <span style="font-size: 10px; background: #fee2e2; color: #b91c1c; padding: 1px 6px; border-radius: 9999px; font-weight: 700; margin-left: 4px;">${openShiftsThisWeek.length}</span>
+                ${isAdmin ? `<button type="button" class="btn-planday-add-open-shift" style="margin-left: auto; background: none; border: none; color: #0284c7; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Add</button>` : ''}
               </div>
               <div class="planday-row-days-grid">
                 ${weekDates.map(d => {
@@ -1278,7 +1274,15 @@
               </div>
             </div>
           `
-              : ""
+              : `
+            <!-- Minimized Open Shift Row when no open shifts this week -->
+            <div class="planday-schedule-row planday-open-shifts-section planday-minimized" style="padding: 0.45rem 8px; cursor: ${isAdmin ? 'pointer' : 'default'};">
+              <div class="planday-row-title" style="margin-bottom: 0; padding: 0;">
+                <span class="planday-employee-name" style="font-size: 0.85rem; font-weight: 600; color: var(--text-main);">Open shift</span>
+                ${isAdmin ? `<button type="button" class="btn-planday-add-open-shift" style="margin-left: auto; background: none; border: none; color: #0284c7; font-size: 0.75rem; font-weight: 600; cursor: pointer;">+ Add open shift</button>` : ''}
+              </div>
+            </div>
+          `
           }
 
           <!-- Employee Rows -->
@@ -1815,7 +1819,7 @@
                       ${shift.breakMinutes ? `<span class="shift-break">-${shift.breakMinutes}m</span>` : ""}
                     </div>
                     <div class="shift-role-title" style="font-weight:600;color:var(--text-main);">
-                      🔓 ${shift.role || "Open Shift"}
+                      ${shift.role || "Open Shift"}
                     </div>
                     <div class="shift-footer">
                       <span>${hours}h net ${isAdmin ? `· ${currency}${(hours * (shift.rate || 10)).toFixed(0)}` : ""}</span>
@@ -1859,7 +1863,7 @@
             <td class="entity-cell open-shifts-entity-cell">
               <div class="employee-row-info">
                 <div class="emp-avatar" style="background-color: #ea580c; color: white; font-weight: 700; font-size: 0.95rem;">
-                  🔓
+                  O
                 </div>
                 <div class="emp-details">
                   <div class="emp-name" style="color: #c2410c; font-weight: 700;">
@@ -2032,7 +2036,7 @@
                           }
                         </div>
                       </div>
-                      <div class="shift-role-title"><strong>${emp ? emp.name : "🔓 Open Shift"}</strong></div>
+                      <div class="shift-role-title"><strong>${emp ? emp.name : "Open Shift"}</strong></div>
                       <div style="font-size:0.7rem;color:var(--text-muted);">${shift.role} · ${hours}h</div>
                       ${
                         isOpen && !isAdmin && myEmpId && !isDraft
@@ -3811,6 +3815,47 @@
       cell.addEventListener("click", () => {
         if (!isAdmin) return;
         const date = cell.dataset.date;
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: "Open Shift",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: "published",
+          employeeId: null,
+          rate: 10.0,
+          isPaid: false
+        });
+      });
+    });
+
+    document.querySelectorAll(".btn-planday-add-open-shift").forEach(btn => {
+      btn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        if (!isAdmin) return;
+        const date = getSelectedDateStr();
+        openShiftModal({
+          isNew: true,
+          date: date,
+          startTime: "09:00",
+          endTime: "17:00",
+          breakMinutes: 0,
+          role: "Open Shift",
+          departmentId: state.data.departments[0]?.id || "general",
+          status: "published",
+          employeeId: null,
+          rate: 10.0,
+          isPaid: false
+        });
+      });
+    });
+
+    document.querySelectorAll(".planday-open-shifts-section.planday-minimized").forEach(row => {
+      row.addEventListener("click", () => {
+        if (!isAdmin) return;
+        const date = getSelectedDateStr();
         openShiftModal({
           isNew: true,
           date: date,

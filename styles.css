@@ -2366,6 +2366,18 @@ table.rota-table th.col-entity {
   border-bottom: 1px solid var(--border-color);
 }
 
+.planday-open-shifts-section.planday-minimized {
+  background-color: var(--bg-card);
+  border-bottom: 1px solid var(--border-light);
+  min-height: auto;
+  padding: 0.45rem 8px;
+  transition: background-color 0.15s ease;
+}
+
+.planday-open-shifts-section.planday-minimized:hover {
+  background-color: var(--bg-card-hover);
+}
+
 .planday-row-title {
   display: flex;
   align-items: center;
