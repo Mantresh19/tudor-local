@@ -2454,19 +2454,21 @@ table.rota-table th.col-entity {
   padding: 0 3px;
   width: 100%;
   box-sizing: border-box;
+  align-items: stretch;
 }
 
 .planday-cell {
-  min-height: 76px;
-  height: 76px;
+  min-height: 56px;
+  height: 100%;
   min-width: 0;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   position: relative;
   box-sizing: border-box;
   transition: background-color 0.15s ease;
+  justify-content: flex-start;
 }
 
 .planday-cell.can-add:hover {
@@ -2474,19 +2476,18 @@ table.rota-table th.col-entity {
   cursor: pointer;
 }
 
-/* Shift Box - TALL VERTICAL RECTANGLE MATCHING IMAGE 2 */
+/* Shift Box - SNUG VERTICAL RECTANGLE MATCHING IMAGE 2 */
 .planday-shift-box {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
   border-radius: 4px;
-  padding: 5px 3px 4px 3px;
+  padding: 4px 3px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: flex-start;
-  min-height: 76px;
-  height: 76px;
+  min-height: 56px;
   cursor: pointer;
   transition: transform 0.1s ease, box-shadow 0.1s ease;
   overflow: hidden;
@@ -2547,24 +2548,36 @@ table.rota-table th.col-entity {
   color: #f8fafc !important;
 }
 
+/* REFINED OPEN SHIFTS: Warm amber dashed card, pleasant and distinct */
 .planday-shift-box.open-shift-box {
-  background-color: #fee2e2 !important;
-  color: #991b1b !important;
-  border: 1px dashed #f87171;
+  background-color: #fffbeb !important;
+  color: #92400e !important;
+  border: 1.5px dashed #f59e0b !important;
 }
 
 .planday-shift-box.open-shift-box .shift-role-text {
-  color: #b91c1c !important;
+  color: #b45309 !important;
+  font-weight: 700;
 }
 
 .planday-shift-box.open-shift-box .shift-start-time,
 .planday-shift-box.open-shift-box .shift-close-time {
-  color: #991b1b !important;
+  color: #78350f !important;
 }
 
 [data-theme="dark"] .planday-shift-box.open-shift-box {
-  background-color: #7f1d1d !important;
-  color: #fecaca !important;
+  background-color: rgba(245, 158, 11, 0.12) !important;
+  color: #fde68a !important;
+  border: 1.5px dashed #d97706 !important;
+}
+
+[data-theme="dark"] .planday-shift-box.open-shift-box .shift-role-text {
+  color: #fbbf24 !important;
+}
+
+[data-theme="dark"] .planday-shift-box.open-shift-box .shift-start-time,
+[data-theme="dark"] .planday-shift-box.open-shift-box .shift-close-time {
+  color: #fef3c7 !important;
 }
 
 /* Shift Box Content Typography */
@@ -2577,7 +2590,7 @@ table.rota-table th.col-entity {
   text-overflow: ellipsis;
   padding: 0;
   line-height: 1.15;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
   letter-spacing: -0.2px;
 }
 
@@ -2607,7 +2620,7 @@ table.rota-table th.col-entity {
 }
 
 .shift-box-footer {
-  margin-top: auto;
+  margin-top: 2px;
   display: flex;
   align-items: center;
   justify-content: flex-start;
@@ -2618,6 +2631,47 @@ table.rota-table th.col-entity {
 .shift-break-dot {
   font-size: 8px;
   line-height: 1;
+}
+
+/* Compact Unscheduled Employee Row */
+.planday-empty-emp-row {
+  padding: 0.42rem 0 !important;
+  transition: background-color 0.1s ease;
+}
+
+.planday-empty-emp-row.is-admin-clickable {
+  cursor: pointer;
+}
+
+.planday-empty-emp-row.is-admin-clickable:hover {
+  background-color: var(--bg-card-hover);
+}
+
+.planday-avatar-muted {
+  background-color: #f1f5f9 !important;
+  color: #64748b !important;
+  border: 1px solid #e2e8f0;
+}
+
+[data-theme="dark"] .planday-avatar-muted {
+  background-color: #334155 !important;
+  color: #94a3b8 !important;
+  border: 1px solid #475569;
+}
+
+.planday-open-count-badge {
+  font-size: 10px;
+  background-color: #fef3c7;
+  color: #b45309;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  font-weight: 700;
+  margin-left: 4px;
+}
+
+[data-theme="dark"] .planday-open-count-badge {
+  background-color: rgba(245, 158, 11, 0.2);
+  color: #fde68a;
 }
 
 /* Full-bleed Edge-to-Edge Mobile Layout without Margins Clipping */
