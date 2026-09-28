@@ -2503,40 +2503,33 @@
       <div class="modal-overlay" id="settings-modal-overlay">
         <div class="modal-content" style="max-width: 480px;">
           <div class="modal-header">
-            <h3 class="modal-title">⚙️ Settings & Preferences</h3>
+            <h3 class="modal-title" style="display: flex; align-items: center; gap: 8px;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Settings & Preferences</span>
+            </h3>
             <button class="modal-close" id="btn-close-settings">&times;</button>
           </div>
 
           <div class="modal-body">
             <!-- 1. Theme Selection -->
             <div class="settings-section-card">
-              <div class="settings-section-title">🎨 Appearance Theme</div>
+              <div class="settings-section-title">Appearance Theme</div>
               <div class="segmented-control" id="theme-toggle-group">
                 <button type="button" class="segmented-option ${state.theme === "light" ? "active" : ""}" data-theme-val="light">
-                  ☀️ Light
+                  Light
                 </button>
                 <button type="button" class="segmented-option ${state.theme === "dark" ? "active" : ""}" data-theme-val="dark">
-                  🌙 Dark
+                  Dark
                 </button>
               </div>
             </div>
 
-            <!-- 2. Time Format -->
+            <!-- 2. Account Credentials -->
             <div class="settings-section-card">
-              <div class="settings-section-title">🕒 Time Format</div>
-              <div class="segmented-control" id="time-format-toggle-group">
-                <button type="button" class="segmented-option ${state.timeFormat === "12h" ? "active" : ""}" data-time-val="12h">
-                  12-Hour (9:00 AM – 10:00 PM)
-                </button>
-                <button type="button" class="segmented-option ${state.timeFormat === "24h" ? "active" : ""}" data-time-val="24h">
-                  24-Hour (09:00 – 22:00)
-                </button>
-              </div>
-            </div>
-
-            <!-- 3. Account Credentials -->
-            <div class="settings-section-card">
-              <div class="settings-section-title">👤 My Account Details</div>
+              <div class="settings-section-title">My Account Details</div>
               <div class="form-group">
                 <label class="form-label">Username</label>
                 <input type="text" class="form-input" id="set-account-username" value="${user.username || ""}" placeholder="Enter new username">
@@ -2556,62 +2549,62 @@
               </button>
             </div>
 
-            <!-- 4. Share Rota Link -->
-            <div class="settings-section-card">
-              <div class="settings-section-title">🔗 Share Rota with Team</div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
-                Send this link to your team so they can log in and view their shifts:
-              </p>
-              <div style="display: flex; gap: 8px;">
-                <input type="text" class="form-input" readonly value="${currentUrl}" id="settings-share-url" style="font-family: monospace; font-size: 0.825rem;">
-                <button type="button" class="btn btn-primary btn-sm" id="btn-settings-copy-url" style="white-space: nowrap;">
-                  📋 Copy
-                </button>
-              </div>
-            </div>
-
-            <!-- 5. Database & Data Safety (MongoDB) -->
-            <div class="settings-section-card" id="db-safety-section">
-              <div class="settings-section-title" style="display:flex; justify-content:space-between; align-items:center;">
-                <span>🛡️ Database & Data Safety</span>
-                <span class="badge" id="db-status-badge" style="background:#dcfce7;color:#15803d;font-weight:700;font-size:11px;">Active</span>
-              </div>
-              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                Your rota shifts and team data are preserved directly into MongoDB (<code style="font-size:11px;">tudor_rota</code>) with two-way sync.
-              </p>
-              <div id="db-status-details" style="background:var(--bg-main); border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.6; margin-bottom:0.75rem;">
-                <div style="display:flex; justify-content:space-between;">
-                  <span style="color:var(--text-muted);">Database:</span>
-                  <span style="font-weight:600;" id="db-database-name">tudor_rota</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                  <span style="color:var(--text-muted);">Connected URI:</span>
-                  <span style="font-family:monospace;font-size:11px;" id="db-uri-display">mongodb://localhost:27017</span>
-                </div>
-                <div style="display:flex; justify-content:space-between;">
-                  <span style="color:var(--text-muted);">Total Shifts Saved:</span>
-                  <span style="font-weight:700;color:#2563eb;" id="db-shifts-count">${(state.data.shifts || []).length} shifts</span>
-                </div>
-                <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border-color);color:#16a34a;font-weight:600;display:flex;align-items:center;gap:6px;" id="db-safety-msg">
-                  <span>✓</span> <span>All shifts safe from server spin-downs & restarts</span>
-                </div>
-              </div>
-              <div style="display:flex; gap:8px;">
-                <button type="button" class="btn btn-secondary btn-sm" id="btn-check-db-status" style="flex:1;">
-                  🔄 Test DB Connection
-                </button>
-                <button type="button" class="btn btn-primary btn-sm" id="btn-force-sync-db" style="flex:1;">
-                  💾 Force Save All to DB
-                </button>
-              </div>
-            </div>
-
             ${
               isAdmin
                 ? `
+              <!-- 3. Share Rota Link (Management Only) -->
+              <div class="settings-section-card">
+                <div class="settings-section-title">Share Rota with Team</div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.6rem;">
+                  Send this link to your team so they can log in and view their shifts:
+                </p>
+                <div style="display: flex; gap: 8px;">
+                  <input type="text" class="form-input" readonly value="${currentUrl}" id="settings-share-url" style="font-family: monospace; font-size: 0.825rem;">
+                  <button type="button" class="btn btn-primary btn-sm" id="btn-settings-copy-url" style="white-space: nowrap;">
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <!-- 4. Database & Data Safety (MongoDB - Management Only) -->
+              <div class="settings-section-card" id="db-safety-section">
+                <div class="settings-section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                  <span>Database & Data Safety</span>
+                  <span class="badge" id="db-status-badge" style="background:#dcfce7;color:#15803d;font-weight:700;font-size:11px;">Active</span>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                  Your rota shifts and team data are preserved directly into MongoDB (<code style="font-size:11px;">tudor_rota</code>) with two-way sync.
+                </p>
+                <div id="db-status-details" style="background:var(--bg-main); border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.6; margin-bottom:0.75rem;">
+                  <div style="display:flex; justify-content:space-between;">
+                    <span style="color:var(--text-muted);">Database:</span>
+                    <span style="font-weight:600;" id="db-database-name">tudor_rota</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <span style="color:var(--text-muted);">Connected URI:</span>
+                    <span style="font-family:monospace;font-size:11px;" id="db-uri-display">mongodb://localhost:27017</span>
+                  </div>
+                  <div style="display:flex; justify-content:space-between;">
+                    <span style="color:var(--text-muted);">Total Shifts Saved:</span>
+                    <span style="font-weight:700;color:#2563eb;" id="db-shifts-count">${(state.data.shifts || []).length} shifts</span>
+                  </div>
+                  <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border-color);color:#16a34a;font-weight:600;display:flex;align-items:center;gap:6px;" id="db-safety-msg">
+                    <span>✓</span> <span>All shifts safe from server spin-downs & restarts</span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:8px;">
+                  <button type="button" class="btn btn-secondary btn-sm" id="btn-check-db-status" style="flex:1;">
+                    Test DB Connection
+                  </button>
+                  <button type="button" class="btn btn-primary btn-sm" id="btn-force-sync-db" style="flex:1;">
+                    Force Save All to DB
+                  </button>
+                </div>
+              </div>
+
               <!-- 5. Business Settings (Admin Only) -->
               <div class="settings-section-card">
-                <div class="settings-section-title">🏢 Business & Currency</div>
+                <div class="settings-section-title">Business & Currency</div>
                 <div class="form-row">
                   <div class="form-group">
                     <label class="form-label">Venue / Business Name</label>
@@ -2637,7 +2630,7 @@
               <!-- 6. Clear All Shifts Tool -->
               <div style="border-top: 1px solid var(--border-color); padding-top: 0.75rem;">
                 <button class="btn btn-danger-outline btn-sm" id="btn-action-clear-shifts" style="width: 100%; justify-content: center;">
-                  🧹 Clear All Shifts (Keep Staff & Logins)
+                  Clear All Shifts (Keep Staff & Logins)
                 </button>
               </div>
             `
@@ -4316,7 +4309,7 @@
             if (dbUri) dbUri.textContent = d.uri || "mongodb://localhost:27017";
             if (dbCount) dbCount.textContent = `${(d.counts && d.counts.shifts !== undefined) ? d.counts.shifts : (state.data.shifts || []).length} shifts`;
             if (dbMsg) dbMsg.innerHTML = `<span>✓</span> <span>Connected to MongoDB (${d.database}). All shifts securely preserved!</span>`;
-            showToast("✅ MongoDB is active and all shift data is safe!", "success");
+            showToast("MongoDB is active and all shift data is safe!", "success");
           } else {
             if (badge) { badge.textContent = "Storage Active"; badge.style.background = "#fef3c7"; badge.style.color = "#b45309"; }
             if (dbMsg) dbMsg.innerHTML = `<span>✓</span> <span>Local & cloud two-way shift preservation active.</span>`;
@@ -4325,7 +4318,7 @@
         } catch (err) {
           showToast("Shift preservation active locally and in browser cache.", "info");
         } finally {
-          btnCheckDb.textContent = "🔄 Test DB Connection";
+          btnCheckDb.textContent = "Test DB Connection";
           btnCheckDb.disabled = false;
         }
       });
@@ -4340,11 +4333,11 @@
           await saveData();
           const dbCount = document.getElementById("db-shifts-count");
           if (dbCount) dbCount.textContent = `${(state.data.shifts || []).length} shifts`;
-          showToast(`💾 Saved ${(state.data.shifts || []).length} shifts to MongoDB and local backup!`, "success");
+          showToast(`Saved ${(state.data.shifts || []).length} shifts to MongoDB and local backup!`, "success");
         } catch (e) {
           showToast("Saved locally.", "info");
         } finally {
-          btnForceSyncDb.textContent = "💾 Force Save All to DB";
+          btnForceSyncDb.textContent = "Force Save All to DB";
           btnForceSyncDb.disabled = false;
         }
       });
