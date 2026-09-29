@@ -28,6 +28,7 @@ MONGO_DB_NAME = os.environ.get("MONGODB_DB", "tudor_rota")
 _mongo_client = None
 _mongo_db = None
 _mongo_connected = False
+_db_version = int(time.time() * 1000)
 
 def init_mongo():
     global _mongo_client, _mongo_db, _mongo_connected
@@ -140,9 +141,13 @@ def read_db():
     return fallback
 
 def write_db(data):
-    # Ensure every user has a valid passwordHash before writing
-    if isinstance(data, dict) and "users" in data:
-        ensure_user_passwords(data["users"])
+    global _db_version
+    _db_version = int(time.time() * 1000)
+    if isinstance(data, dict):
+        data["_last_updated"] = _db_version
+        # Ensure every user has a valid passwordHash before writing
+        if "users" in data:
+            ensure_user_passwords(data["users"])
     # 1. Always maintain local data.json file mirror
     try:
         with open(DATA_FILE, "w", encoding="utf-8") as f:
@@ -199,8 +204,18 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
 
     def do_GET(self):
         parsed = urlparse(self.path)
+        if parsed.path == "/api/data-version":
+            db_data = read_db()
+            v = db_data.get("_last_updated") or _db_version
+            self.send_json(200, {
+                "version": v,
+                "timestamp": int(time.time() * 1000)
+            })
+            return
+
         if parsed.path == "/api/data":
             data = read_db()
+            data["_last_updated"] = data.get("_last_updated") or _db_version
             # Strip password hashes before sending client data
             safe_data = json.loads(json.dumps(data))
             for u in safe_data.get("users", []):
@@ -294,8 +309,11 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                 if "inventory" not in req_data:
                     req_data["inventory"] = db.get("inventory", [])
 
+                if "notifications" not in req_data:
+                    req_data["notifications"] = db.get("notifications", [])
+
                 write_db(req_data)
-                self.send_json(200, {"success": True, "message": "Saved successfully"})
+                self.send_json(200, {"success": True, "version": _db_version, "message": "Saved successfully"})
             except Exception as e:
                 self.send_json(400, {"error": str(e)})
             return

@@ -265,28 +265,168 @@
   }
 
   // Persistence: Save to backend / localStorage
+  // Persistence: Save to backend / localStorage
   async function saveData() {
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+    renderApp();
     try {
-      await fetch("/api/data", {
+      const res = await fetch("/api/data", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
         body: JSON.stringify(state.data)
       });
+      if (res.ok) {
+        const json = await res.json();
+        if (json && json.version) {
+          lastKnownServerVersion = json.version;
+          state.data._last_updated = json.version;
+          localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+        }
+      }
     } catch (err) {
       console.warn("Server sync skipped, cached locally:", err);
     }
-    renderApp();
+  }
+
+  // Real-Time Multi-Device Sync Engine
+  let lastKnownServerVersion = 0;
+  let isSyncing = false;
+  let syncIntervalId = null;
+
+  async function checkServerSync() {
+    if (isSyncing) return;
+    if (!navigator.onLine) return;
+
+    try {
+      isSyncing = true;
+
+      // 1. Fast, ultra-lightweight version check (< 100 bytes)
+      const verRes = await fetch(`/api/data-version?_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+      });
+      if (!verRes.ok) return;
+
+      const verData = await verRes.json();
+      const serverVersion = verData.version || 0;
+
+      // If server version matches what we already have, do nothing! (0 CPU, 0 bandwidth, 0 flicker)
+      if (lastKnownServerVersion && serverVersion <= lastKnownServerVersion) {
+        return;
+      }
+
+      // 2. Version changed! Fetch fresh data from server
+      const dataRes = await fetch(`/api/data?_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+      });
+      if (!dataRes.ok) return;
+
+      const serverData = await dataRes.json();
+      if (!serverData || typeof serverData !== "object") return;
+
+      // Check if user is currently interacting with an open modal or input field
+      const isModalOpen = Boolean(
+        state.editingShift ||
+        state.editingEmployee ||
+        state.showSettingsModal ||
+        state.adjustingInventoryItem ||
+        state.editingProduct ||
+        state.grantingAccessUser ||
+        state.activeOtpRequest ||
+        state.mustChangePasswordUser
+      );
+
+      const activeEl = document.activeElement;
+      const isTyping = activeEl && (
+        activeEl.tagName === "INPUT" ||
+        activeEl.tagName === "TEXTAREA" ||
+        activeEl.tagName === "SELECT" ||
+        activeEl.isContentEditable
+      );
+
+      // If user is actively typing or editing a form modal, merge silently in memory
+      // so we NEVER blow away their active keystrokes or close their modal!
+      if (isModalOpen || isTyping) {
+        state.data.shifts = serverData.shifts || state.data.shifts;
+        state.data.employees = serverData.employees || state.data.employees;
+        state.data.departments = serverData.departments || state.data.departments;
+        state.data.notifications = serverData.notifications || state.data.notifications;
+        state.data.inventory = serverData.inventory || state.data.inventory;
+        state.data.settings = serverData.settings || state.data.settings;
+        lastKnownServerVersion = serverVersion;
+        localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+        return;
+      }
+
+      // Sync user permissions in real-time
+      if (state.currentUser && serverData.users) {
+        const freshUser = serverData.users.find(u =>
+          u.id === state.currentUser.id ||
+          (u.username && state.currentUser.username && u.username.toLowerCase() === state.currentUser.username.toLowerCase())
+        );
+        if (freshUser) {
+          state.currentUser.role = freshUser.role;
+          state.currentUser.hasRotaAccess = freshUser.hasRotaAccess;
+          state.currentUser.hasInventoryAccess = freshUser.hasInventoryAccess;
+          state.currentUser.employeeId = freshUser.employeeId || state.currentUser.employeeId;
+          localStorage.setItem("tudor_rota_user", JSON.stringify(state.currentUser));
+        }
+      }
+
+      // Safe to update UI: preserve scroll position
+      state.data = serverData;
+      lastKnownServerVersion = serverVersion;
+      localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+
+      const scrollY = window.scrollY;
+      renderApp();
+      if (scrollY > 0) window.scrollTo(0, scrollY);
+
+    } catch (err) {
+      console.warn("Real-time sync check skipped:", err);
+    } finally {
+      isSyncing = false;
+    }
+  }
+
+  function startRealtimeSync() {
+    if (syncIntervalId) clearInterval(syncIntervalId);
+    // Poll every 3 seconds for near-instant multi-device sync
+    syncIntervalId = setInterval(checkServerSync, 3000);
+
+    // Instant sync when switching back to tab / unlocking phone
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") {
+        checkServerSync();
+      }
+    });
+
+    // Instant sync when browser window is focused
+    window.addEventListener("focus", () => {
+      checkServerSync();
+    });
+
+    // Instant sync when internet connection is restored
+    window.addEventListener("online", () => {
+      checkServerSync();
+    });
   }
 
   // Load Data with Robust Persistence & User Access Preservation
   async function loadData() {
     let loadedFromApi = false;
     try {
-      const res = await fetch("/api/data");
+      const res = await fetch(`/api/data?_t=${Date.now()}`, {
+        cache: "no-store",
+        headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
+      });
       if (res.ok) {
         state.data = await res.json();
         loadedFromApi = true;
+        if (state.data._last_updated) {
+          lastKnownServerVersion = state.data._last_updated;
+        }
       }
     } catch (e) {
       console.log("Loading from localStorage fallback...");
@@ -315,58 +455,30 @@
     if (!state.data.departments) state.data.departments = CLEAN_DATA.departments;
     if (!state.data.notifications) state.data.notifications = [];
 
-    // UNBREAKABLE ACCESS PRESERVATION:
-    // Merge users from CLEAN_DATA and localStorage so granted access never disappears on server restart or page load
-    let needsServerSync = false;
-    try {
-      const localStr = localStorage.getItem("planday_rota_data");
-      const localUsers = localStr ? (JSON.parse(localStr).users || []) : [];
-      const knownUsers = [...CLEAN_DATA.users, ...localUsers];
-
-      for (const refU of knownUsers) {
-        const existing = state.data.users.find(u =>
-          (refU.id && u.id === refU.id) ||
-          (refU.employeeId && u.employeeId && u.employeeId === refU.employeeId) ||
-          (refU.username && u.username && u.username.toLowerCase() === refU.username.toLowerCase())
-        );
-
-        if (!existing) {
-          state.data.users.push(JSON.parse(JSON.stringify(refU)));
-          needsServerSync = true;
-        } else {
-          if (refU.hasRotaAccess && !existing.hasRotaAccess) {
-            existing.hasRotaAccess = true;
-            existing.isActive = true;
-            needsServerSync = true;
-          }
-          if (refU.hasInventoryAccess && !existing.hasInventoryAccess) {
-            existing.hasInventoryAccess = true;
-          }
-          if (!existing.employeeId && refU.employeeId) {
-            existing.employeeId = refU.employeeId;
-          }
-        }
+    // Ensure core admin users always exist so access is never lost
+    for (const refU of CLEAN_DATA.users) {
+      const existing = state.data.users.find(u =>
+        (refU.id && u.id === refU.id) ||
+        (refU.username && u.username && u.username.toLowerCase() === refU.username.toLowerCase())
+      );
+      if (!existing) {
+        state.data.users.push(JSON.parse(JSON.stringify(refU)));
       }
-    } catch (err) {
-      console.warn("User merge warning:", err);
     }
 
-    // UNBREAKABLE SHIFTS PRESERVATION:
-    // Merge shifts from localStorage so shifts are never lost when server restarts or spins down
-    try {
-      const localStr = localStorage.getItem("planday_rota_data");
-      const localShifts = localStr ? (JSON.parse(localStr).shifts || []) : [];
-      const currentShiftIds = new Set((state.data.shifts || []).map(s => s.id));
-
-      for (const ls of localShifts) {
-        if (ls && ls.id && !currentShiftIds.has(ls.id)) {
-          state.data.shifts.push(ls);
-          currentShiftIds.add(ls.id);
-          needsServerSync = true;
+    // Only merge cached local shifts when completely offline (to avoid resurrecting deleted shifts)
+    if (!loadedFromApi) {
+      try {
+        const localStr = localStorage.getItem("planday_rota_data");
+        const localShifts = localStr ? (JSON.parse(localStr).shifts || []) : [];
+        const currentShiftIds = new Set((state.data.shifts || []).map(s => s.id));
+        for (const ls of localShifts) {
+          if (ls && ls.id && !currentShiftIds.has(ls.id)) {
+            state.data.shifts.push(ls);
+            currentShiftIds.add(ls.id);
+          }
         }
-      }
-    } catch (err) {
-      console.warn("Shift merge warning:", err);
+      } catch (err) {}
     }
 
     // Normalize legacy open shifts: ensure employeeId is null and status is standard draft/published
@@ -378,19 +490,11 @@
       }
     });
 
-    // Always update localStorage with the complete merged data
+    // Always update localStorage with current state
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
 
-    // If server was missing any users (e.g. after a Render container restart), sync back silently
-    if (needsServerSync && loadedFromApi) {
-      fetch("/api/data", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(state.data)
-      }).catch(() => {});
-    }
-
     renderApp();
+    startRealtimeSync();
   }
 
   // Calculate Week Dates (Mon to Sun)
@@ -5401,7 +5505,11 @@
   }, 1000);
 
   // Initialize
-  document.addEventListener("DOMContentLoaded", () => {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", () => {
+      loadData();
+    });
+  } else {
     loadData();
-  });
+  }
 })();
