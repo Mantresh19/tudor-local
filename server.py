@@ -203,7 +203,7 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header("Access-Control-Allow-Origin", "*")
-        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+        self.send_header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
         self.send_header("Access-Control-Allow-Headers", "Content-Type, Authorization")
         self.send_header("Service-Worker-Allowed", "/")
         self.send_header("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -212,6 +212,24 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
     def do_OPTIONS(self):
         self.send_response(200)
         self.end_headers()
+
+    def do_DELETE(self):
+        parsed = urlparse(self.path)
+        if parsed.path.startswith("/api/shifts/"):
+            shift_id = parsed.path.split("/api/shifts/")[1].strip()
+            if shift_id:
+                if is_mongo_active():
+                    try:
+                        _mongo_db.shifts.delete_one({"_id": shift_id})
+                        _mongo_db.shifts.delete_one({"id": shift_id})
+                    except Exception as e:
+                        print(f"MongoDB delete error: {e}")
+                db = read_db()
+                db["shifts"] = [s for s in db.get("shifts", []) if s.get("id") != shift_id]
+                write_db(db)
+                self.send_json(200, {"success": True, "version": _db_version, "id": shift_id, "message": "Shift permanently deleted"})
+                return
+        self.send_json(404, {"error": "Not found"})
 
     def send_json(self, status_code, payload):
         self.send_response(status_code)
@@ -320,7 +338,9 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
 
                     req_data["users"] = client_users
 
-                if "shifts" not in req_data or not isinstance(req_data.get("shifts"), list):
+                if "shifts" in req_data and isinstance(req_data.get("shifts"), list):
+                    req_data["shifts"] = req_data["shifts"]
+                else:
                     req_data["shifts"] = db.get("shifts", [])
 
                 if "employees" not in req_data or not isinstance(req_data.get("employees"), list):
@@ -341,35 +361,50 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                 if "notifications" not in req_data:
                     req_data["notifications"] = db.get("notifications", [])
 
-                # Merge deleted shift tombstones
-                existing_del = set(db.get("deletedShiftIds", []))
-                client_del = set(req_data.get("deletedShiftIds", []))
-                merged_del = list(existing_del.union(client_del))
-                req_data["deletedShiftIds"] = merged_del
-                del_set = set(merged_del)
-
-                # Safely merge shifts: preserve non-deleted shifts from db, and update/insert with client shifts
-                db_shifts = {s.get("id"): s for s in db.get("shifts", []) if isinstance(s, dict) and s.get("id")}
-                client_shifts = {s.get("id"): s for s in req_data.get("shifts", []) if isinstance(s, dict) and s.get("id")}
-
-                merged_shifts_dict = dict(db_shifts)
-                for s_id, s_data in client_shifts.items():
-                    if s_id in merged_shifts_dict:
-                        db_updated = merged_shifts_dict[s_id].get("updatedAt", 0)
-                        client_updated = s_data.get("updatedAt", 0)
-                        if client_updated >= db_updated:
-                            merged_shifts_dict[s_id] = s_data
-                    else:
-                        merged_shifts_dict[s_id] = s_data
-
-                # Ensure no deleted shift remains in shifts list
-                req_data["shifts"] = [s for s_id, s in merged_shifts_dict.items() if s_id not in del_set]
-
                 write_db(req_data)
                 self.send_json(200, {"success": True, "version": _db_version, "message": "Saved successfully"})
             except Exception as e:
                 self.send_json(400, {"error": str(e)})
             return
+
+        # Direct shift save/update
+        if parsed.path == "/api/shifts":
+            shift = req_data
+            if shift and shift.get("id"):
+                if is_mongo_active():
+                    try:
+                        doc = dict(shift)
+                        doc["_id"] = shift["id"]
+                        _mongo_db.shifts.replace_one({"_id": shift["id"]}, doc, upsert=True)
+                    except Exception as e:
+                        print(f"MongoDB save shift error: {e}")
+                db = read_db()
+                shifts = db.get("shifts", [])
+                idx = next((i for i, s in enumerate(shifts) if s.get("id") == shift["id"]), -1)
+                if idx != -1:
+                    shifts[idx] = shift
+                else:
+                    shifts.append(shift)
+                db["shifts"] = shifts
+                write_db(db)
+                self.send_json(200, {"success": True, "version": _db_version, "shift": shift})
+                return
+
+        # Direct shift delete
+        if parsed.path == "/api/shifts/delete":
+            shift_id = req_data.get("id") or req_data.get("shiftId")
+            if shift_id:
+                if is_mongo_active():
+                    try:
+                        _mongo_db.shifts.delete_one({"_id": shift_id})
+                        _mongo_db.shifts.delete_one({"id": shift_id})
+                    except Exception as e:
+                        print(f"MongoDB delete shift error: {e}")
+                db = read_db()
+                db["shifts"] = [s for s in db.get("shifts", []) if s.get("id") != shift_id]
+                write_db(db)
+                self.send_json(200, {"success": True, "version": _db_version, "id": shift_id, "message": "Shift permanently deleted"})
+                return
 
         # 2. Login Endpoint
         if parsed.path == "/api/auth/login":

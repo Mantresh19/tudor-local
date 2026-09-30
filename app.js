@@ -369,14 +369,8 @@
         activeEl.isContentEditable
       );
 
-      // Merge and enforce deleted shift tombstones
-      if (serverData.deletedShiftIds && Array.isArray(serverData.deletedShiftIds)) {
-        const mergedDel = new Set([...(state.data.deletedShiftIds || []), ...serverData.deletedShiftIds]);
-        state.data.deletedShiftIds = Array.from(mergedDel);
-      }
-      const syncDelSet = new Set(state.data.deletedShiftIds || []);
-      if (serverData.shifts && Array.isArray(serverData.shifts)) {
-        serverData.shifts = serverData.shifts.filter(s => s && s.id && !syncDelSet.has(s.id));
+      if (serverData.shifts && !Array.isArray(serverData.shifts)) {
+        serverData.shifts = [];
       }
 
       // If user is actively typing or editing a form modal, merge silently in memory
@@ -505,49 +499,6 @@
       }
     }
 
-    // Merge deletedShiftIds tombstones from local storage
-    if (localData && Array.isArray(localData.deletedShiftIds)) {
-      const mergedDel = new Set([...state.data.deletedShiftIds, ...localData.deletedShiftIds]);
-      state.data.deletedShiftIds = Array.from(mergedDel);
-    }
-    const delSet = new Set(state.data.deletedShiftIds || []);
-
-    // Filter server shifts against delSet
-    state.data.shifts = (state.data.shifts || []).filter(s => s && s.id && !delSet.has(s.id));
-
-    // Tombstone recovery: If localData has shifts not present on server and not in delSet, restore them!
-    let hasRecoveredShifts = false;
-    if (localData && Array.isArray(localData.shifts)) {
-      const serverShiftMap = new Map();
-      state.data.shifts.forEach(s => {
-        if (s && s.id) serverShiftMap.set(s.id, s);
-      });
-
-      for (const ls of localData.shifts) {
-        if (!ls || !ls.id) continue;
-        if (delSet.has(ls.id)) continue; // Shift was intentionally deleted! Do NOT restore!
-
-        if (!serverShiftMap.has(ls.id)) {
-          // Missing from server! Restore user-scheduled shift!
-          state.data.shifts.push(ls);
-          serverShiftMap.set(ls.id, ls);
-          hasRecoveredShifts = true;
-        } else {
-          // Shift exists in both: compare updatedAt
-          const existing = serverShiftMap.get(ls.id);
-          const localUpdated = ls.updatedAt || 0;
-          const serverUpdated = existing.updatedAt || 0;
-          if (localUpdated > serverUpdated) {
-            const idx = state.data.shifts.findIndex(s => s.id === ls.id);
-            if (idx !== -1) {
-              state.data.shifts[idx] = ls;
-              hasRecoveredShifts = true;
-            }
-          }
-        }
-      }
-    }
-
     // Normalize legacy open shifts: ensure employeeId is null and status is standard draft/published
     (state.data.shifts || []).forEach(s => {
       if (s.employeeId === "" || s.employeeId === undefined) s.employeeId = null;
@@ -557,13 +508,8 @@
       }
     });
 
-    // Save consolidated state in localStorage
+    // Save clean state in localStorage
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
-
-    // If we recovered shifts missing from the server, push them back to the server now!
-    if (hasRecoveredShifts && loadedFromApi) {
-      saveData();
-    }
 
     renderApp();
     startRealtimeSync();
@@ -4916,6 +4862,16 @@
       state.editingShift = null;
       state.selectedScheduleDate = date;
       setCurrentMonday(getMonday(new Date(date)));
+
+      // Direct atomic write to MongoDB
+      try {
+        fetch("/api/shifts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(shiftPayload)
+        });
+      } catch (e) {}
+
       await saveData();
       if (finalStatus === "published") {
         showToast(empId ? "🚀 Shift published and live for staff!" : "🚀 Open shift published! Live for team to claim.", "success");
@@ -4960,20 +4916,35 @@
       publishShiftModalBtn.addEventListener("click", () => saveShiftWithStatus("published"));
     }
 
-    // Delete Shift with tombstone tracking to prevent accidental resurrection
+    // Delete Shift permanently from MongoDB backend
     const deleteShiftBtn = document.getElementById("btn-delete-shift");
     if (deleteShiftBtn) {
       deleteShiftBtn.addEventListener("click", async () => {
         if (!confirm("Are you sure you want to delete this shift?")) return;
         const deletedId = state.editingShift.id;
-        if (!state.data.deletedShiftIds) state.data.deletedShiftIds = [];
-        if (deletedId && !state.data.deletedShiftIds.includes(deletedId)) {
-          state.data.deletedShiftIds.push(deletedId);
-        }
         state.data.shifts = (state.data.shifts || []).filter(s => s.id !== deletedId);
         state.editingShift = null;
-        await saveData();
+        renderApp();
         showToast("Shift deleted.", "error");
+
+        // 1. Direct atomic DELETE from MongoDB backend
+        try {
+          await fetch(`/api/shifts/${encodeURIComponent(deletedId)}`, {
+            method: "DELETE"
+          });
+        } catch (err) {
+          console.warn("DELETE /api/shifts failed:", err);
+          try {
+            await fetch("/api/shifts/delete", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: deletedId })
+            });
+          } catch (e2) {}
+        }
+
+        // 2. Also save data state cleanly
+        await saveData();
       });
     }
 
