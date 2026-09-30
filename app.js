@@ -121,12 +121,19 @@
     authView: "login", // 'login' | 'forgot' | 'reset_otp'
     authError: "",
     authSuccess: "",
-    activeTab: "overview", // Always opens Overview first per user request
+    activeTab: localStorage.getItem("tudor_active_tab") || "overview", // Preserves user tab across reloads
     selectedScheduleDate: null, // Selected day YYYY-MM-DD for day roster
     scheduleViewMode: window.innerWidth <= 768 ? "planday_mobile" : "grid", // 'planday_mobile' (Planday 7-day grid matching Image 2) | 'grid' (desktop table)
     showAllUpcomingShifts: false, // false (shows 3 closest) | true (shows all upcoming shifts)
     showNotifications: false, // Toggle notification bell dropdown
-    currentMonday: getMonday(new Date()),
+    currentMonday: (() => {
+      const saved = localStorage.getItem("tudor_current_monday");
+      if (saved) {
+        const d = new Date(saved);
+        if (!isNaN(d.getTime())) return d;
+      }
+      return getMonday(new Date());
+    })(),
     groupingMode: "employee", // 'employee' or 'department'
     selectedDepartment: "all",
     searchQuery: "",
@@ -246,6 +253,23 @@
     return new Date(y, m - 1, d);
   }
 
+  // Persistent navigation state helpers
+  function setActiveTab(tab) {
+    if (!tab) return;
+    state.activeTab = tab;
+    try {
+      localStorage.setItem("tudor_active_tab", tab);
+    } catch (e) {}
+  }
+
+  function setCurrentMonday(d) {
+    if (!d || isNaN(new Date(d).getTime())) return;
+    state.currentMonday = d;
+    try {
+      localStorage.setItem("tudor_current_monday", formatDate(d));
+    } catch (e) {}
+  }
+
   // Calculate Net Hours from start, end, break
   function calculateNetHours(startTime, endTime, breakMinutes = 0) {
     if (!startTime || !endTime) return 0;
@@ -345,6 +369,16 @@
         activeEl.isContentEditable
       );
 
+      // Merge and enforce deleted shift tombstones
+      if (serverData.deletedShiftIds && Array.isArray(serverData.deletedShiftIds)) {
+        const mergedDel = new Set([...(state.data.deletedShiftIds || []), ...serverData.deletedShiftIds]);
+        state.data.deletedShiftIds = Array.from(mergedDel);
+      }
+      const syncDelSet = new Set(state.data.deletedShiftIds || []);
+      if (serverData.shifts && Array.isArray(serverData.shifts)) {
+        serverData.shifts = serverData.shifts.filter(s => s && s.id && !syncDelSet.has(s.id));
+      }
+
       // If user is actively typing or editing a form modal, merge silently in memory
       // so we NEVER blow away their active keystrokes or close their modal!
       if (isModalOpen || isTyping) {
@@ -416,34 +450,38 @@
   // Load Data with Robust Persistence & User Access Preservation
   async function loadData() {
     let loadedFromApi = false;
+    let serverData = null;
     try {
       const res = await fetch(`/api/data?_t=${Date.now()}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
       });
       if (res.ok) {
-        state.data = await res.json();
+        serverData = await res.json();
         loadedFromApi = true;
-        if (state.data._last_updated) {
-          lastKnownServerVersion = state.data._last_updated;
+        if (serverData && serverData._last_updated) {
+          lastKnownServerVersion = serverData._last_updated;
         }
       }
     } catch (e) {
       console.log("Loading from localStorage fallback...");
     }
 
-    if (!loadedFromApi) {
-      const local = localStorage.getItem("planday_rota_data");
-      if (local) {
-        try {
-          state.data = JSON.parse(local);
-        } catch (e) {}
-      } else {
-        try {
-          const res = await fetch("./data.json");
-          if (res.ok) state.data = await res.json();
-        } catch (e) {}
-      }
+    let localData = null;
+    try {
+      const localStr = localStorage.getItem("planday_rota_data");
+      if (localStr) localData = JSON.parse(localStr);
+    } catch (e) {}
+
+    if (loadedFromApi && serverData) {
+      state.data = serverData;
+    } else if (localData) {
+      state.data = localData;
+    } else {
+      try {
+        const res = await fetch("./data.json");
+        if (res.ok) state.data = await res.json();
+      } catch (e) {}
     }
 
     if (!state.data) state.data = JSON.parse(JSON.stringify(CLEAN_DATA));
@@ -454,6 +492,7 @@
     if (!state.data.settings) state.data.settings = CLEAN_DATA.settings;
     if (!state.data.departments) state.data.departments = CLEAN_DATA.departments;
     if (!state.data.notifications) state.data.notifications = [];
+    if (!state.data.deletedShiftIds) state.data.deletedShiftIds = [];
 
     // Ensure core admin users always exist so access is never lost
     for (const refU of CLEAN_DATA.users) {
@@ -466,19 +505,47 @@
       }
     }
 
-    // Only merge cached local shifts when completely offline (to avoid resurrecting deleted shifts)
-    if (!loadedFromApi) {
-      try {
-        const localStr = localStorage.getItem("planday_rota_data");
-        const localShifts = localStr ? (JSON.parse(localStr).shifts || []) : [];
-        const currentShiftIds = new Set((state.data.shifts || []).map(s => s.id));
-        for (const ls of localShifts) {
-          if (ls && ls.id && !currentShiftIds.has(ls.id)) {
-            state.data.shifts.push(ls);
-            currentShiftIds.add(ls.id);
+    // Merge deletedShiftIds tombstones from local storage
+    if (localData && Array.isArray(localData.deletedShiftIds)) {
+      const mergedDel = new Set([...state.data.deletedShiftIds, ...localData.deletedShiftIds]);
+      state.data.deletedShiftIds = Array.from(mergedDel);
+    }
+    const delSet = new Set(state.data.deletedShiftIds || []);
+
+    // Filter server shifts against delSet
+    state.data.shifts = (state.data.shifts || []).filter(s => s && s.id && !delSet.has(s.id));
+
+    // Tombstone recovery: If localData has shifts not present on server and not in delSet, restore them!
+    let hasRecoveredShifts = false;
+    if (localData && Array.isArray(localData.shifts)) {
+      const serverShiftMap = new Map();
+      state.data.shifts.forEach(s => {
+        if (s && s.id) serverShiftMap.set(s.id, s);
+      });
+
+      for (const ls of localData.shifts) {
+        if (!ls || !ls.id) continue;
+        if (delSet.has(ls.id)) continue; // Shift was intentionally deleted! Do NOT restore!
+
+        if (!serverShiftMap.has(ls.id)) {
+          // Missing from server! Restore user-scheduled shift!
+          state.data.shifts.push(ls);
+          serverShiftMap.set(ls.id, ls);
+          hasRecoveredShifts = true;
+        } else {
+          // Shift exists in both: compare updatedAt
+          const existing = serverShiftMap.get(ls.id);
+          const localUpdated = ls.updatedAt || 0;
+          const serverUpdated = existing.updatedAt || 0;
+          if (localUpdated > serverUpdated) {
+            const idx = state.data.shifts.findIndex(s => s.id === ls.id);
+            if (idx !== -1) {
+              state.data.shifts[idx] = ls;
+              hasRecoveredShifts = true;
+            }
           }
         }
-      } catch (err) {}
+      }
     }
 
     // Normalize legacy open shifts: ensure employeeId is null and status is standard draft/published
@@ -490,8 +557,13 @@
       }
     });
 
-    // Always update localStorage with current state
+    // Save consolidated state in localStorage
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+
+    // If we recovered shifts missing from the server, push them back to the server now!
+    if (hasRecoveredShifts && loadedFromApi) {
+      saveData();
+    }
 
     renderApp();
     startRealtimeSync();
@@ -3735,7 +3807,7 @@
     // Tab switching
     document.querySelectorAll(".nav-tab").forEach(tab => {
       tab.addEventListener("click", () => {
-        state.activeTab = tab.dataset.tab;
+        setActiveTab(tab.dataset.tab);
         renderApp();
       });
     });
@@ -3750,7 +3822,7 @@
         }
         const tab = item.dataset.tab;
         if (tab) {
-          state.activeTab = tab;
+          setActiveTab(tab);
           renderApp();
         }
       });
@@ -3784,7 +3856,7 @@
     const seeAllBtn = document.getElementById("btn-overview-see-all");
     if (seeAllBtn) {
       seeAllBtn.addEventListener("click", () => {
-        state.activeTab = "schedule";
+        setActiveTab("schedule");
         state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
       });
@@ -3793,7 +3865,7 @@
     const openShiftsSeeAll = document.getElementById("btn-overview-open-shifts");
     if (openShiftsSeeAll) {
       openShiftsSeeAll.addEventListener("click", () => {
-        state.activeTab = "schedule";
+        setActiveTab("schedule");
         state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
       });
@@ -3802,7 +3874,7 @@
     const jumpScheduleBtn = document.getElementById("btn-jump-to-schedule");
     if (jumpScheduleBtn) {
       jumpScheduleBtn.addEventListener("click", () => {
-        state.activeTab = "schedule";
+        setActiveTab("schedule");
         state.scheduleViewMode = window.innerWidth <= 768 ? "planday_mobile" : "grid";
         renderApp();
       });
@@ -3812,9 +3884,9 @@
       item.addEventListener("click", () => {
         const d = item.dataset.date;
         const shiftId = item.dataset.shiftId;
-        state.activeTab = "schedule";
+        setActiveTab("schedule");
         if (d) {
-          state.currentMonday = getMonday(new Date(d));
+          setCurrentMonday(getMonday(new Date(d)));
           state.selectedScheduleDate = d;
         }
         if (isAdmin && shiftId) {
@@ -3835,7 +3907,7 @@
       btnPlandayPrevWeek.addEventListener("click", () => {
         const d = new Date(state.currentMonday);
         d.setDate(d.getDate() - 7);
-        state.currentMonday = d;
+        setCurrentMonday(d);
         renderApp();
       });
     }
@@ -3845,7 +3917,7 @@
       btnPlandayNextWeek.addEventListener("click", () => {
         const d = new Date(state.currentMonday);
         d.setDate(d.getDate() + 7);
-        state.currentMonday = d;
+        setCurrentMonday(d);
         renderApp();
       });
     }
@@ -3853,7 +3925,7 @@
     const btnPlandayToday = document.getElementById("btn-planday-today");
     if (btnPlandayToday) {
       btnPlandayToday.addEventListener("click", () => {
-        state.currentMonday = getMonday(new Date());
+        setCurrentMonday(getMonday(new Date()));
         renderApp();
       });
     }
@@ -4065,7 +4137,7 @@
       prevBtn.addEventListener("click", () => {
         const d = new Date(state.currentMonday);
         d.setDate(d.getDate() - 7);
-        state.currentMonday = d;
+        setCurrentMonday(d);
         renderApp();
       });
     }
@@ -4075,7 +4147,7 @@
       nextBtn.addEventListener("click", () => {
         const d = new Date(state.currentMonday);
         d.setDate(d.getDate() + 7);
-        state.currentMonday = d;
+        setCurrentMonday(d);
         renderApp();
       });
     }
@@ -4083,7 +4155,7 @@
     const todayBtn = document.getElementById("btn-today");
     if (todayBtn) {
       todayBtn.addEventListener("click", () => {
-        state.currentMonday = getMonday(new Date());
+        setCurrentMonday(getMonday(new Date()));
         renderApp();
       });
     }
@@ -4806,8 +4878,14 @@
         rate,
         notes,
         status: finalStatus,
-        isPaid: Boolean(isPaid)
+        isPaid: Boolean(isPaid),
+        updatedAt: Date.now()
       };
+
+      // Un-tombstone if previously deleted
+      if (state.data.deletedShiftIds) {
+        state.data.deletedShiftIds = state.data.deletedShiftIds.filter(id => id !== shiftPayload.id);
+      }
 
       const isEdit = !state.editingShift.isNew;
       if (state.editingShift.isNew) {
@@ -4837,7 +4915,7 @@
 
       state.editingShift = null;
       state.selectedScheduleDate = date;
-      state.currentMonday = getMonday(new Date(date));
+      setCurrentMonday(getMonday(new Date(date)));
       await saveData();
       if (finalStatus === "published") {
         showToast(empId ? "🚀 Shift published and live for staff!" : "🚀 Open shift published! Live for team to claim.", "success");
@@ -4882,12 +4960,17 @@
       publishShiftModalBtn.addEventListener("click", () => saveShiftWithStatus("published"));
     }
 
-    // Delete Shift
+    // Delete Shift with tombstone tracking to prevent accidental resurrection
     const deleteShiftBtn = document.getElementById("btn-delete-shift");
     if (deleteShiftBtn) {
       deleteShiftBtn.addEventListener("click", async () => {
         if (!confirm("Are you sure you want to delete this shift?")) return;
-        state.data.shifts = state.data.shifts.filter(s => s.id !== state.editingShift.id);
+        const deletedId = state.editingShift.id;
+        if (!state.data.deletedShiftIds) state.data.deletedShiftIds = [];
+        if (deletedId && !state.data.deletedShiftIds.includes(deletedId)) {
+          state.data.deletedShiftIds.push(deletedId);
+        }
+        state.data.shifts = (state.data.shifts || []).filter(s => s.id !== deletedId);
         state.editingShift = null;
         await saveData();
         showToast("Shift deleted.", "error");
@@ -5050,7 +5133,7 @@
     const backScheduleBtn = document.getElementById("btn-back-to-schedule");
     if (backScheduleBtn) {
       backScheduleBtn.addEventListener("click", () => {
-        state.activeTab = "schedule";
+        setActiveTab("schedule");
         renderApp();
       });
     }

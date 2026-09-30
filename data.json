@@ -3041,5 +3041,8 @@
       "imageUrl": "https://images.openfoodfacts.org/images/products/761/303/512/0029/front_en.7.400.jpg",
       "updatedAt": "2026-09-26T01:30:00.000Z"
     }
-  ]
+  ],
+  "notifications": [],
+  "deletedShiftIds": [],
+  "_last_updated": 1790765829309
 }

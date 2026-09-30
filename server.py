@@ -99,6 +99,13 @@ def read_db():
                     d.pop("_id", None)
                 data[col_name] = docs
 
+            # Deleted shift IDs tombstone
+            del_doc = _mongo_db.settings.find_one({"_id": "deleted_shift_ids"})
+            if del_doc and "ids" in del_doc:
+                data["deletedShiftIds"] = del_doc["ids"]
+            else:
+                data["deletedShiftIds"] = []
+
             # Ensure every user has a valid passwordHash
             ensure_user_passwords(data.get("users", []))
 
@@ -132,11 +139,13 @@ def read_db():
                     data["employees"] = []
                 if "notifications" not in data:
                     data["notifications"] = []
+                if "deletedShiftIds" not in data:
+                    data["deletedShiftIds"] = []
                 ensure_user_passwords(data["users"])
                 return data
         except Exception:
             pass
-    fallback = {"users": [], "resetRequests": [], "shifts": [], "employees": [], "notifications": []}
+    fallback = {"users": [], "resetRequests": [], "shifts": [], "employees": [], "notifications": [], "deletedShiftIds": []}
     ensure_user_passwords(fallback["users"])
     return fallback
 
@@ -163,6 +172,14 @@ def write_db(data):
                 s_copy = dict(data["settings"])
                 s_copy["_id"] = "app_settings"
                 _mongo_db.settings.replace_one({"_id": "app_settings"}, s_copy, upsert=True)
+
+            # Deleted shift IDs tombstone
+            if "deletedShiftIds" in data and isinstance(data["deletedShiftIds"], list):
+                _mongo_db.settings.replace_one(
+                    {"_id": "deleted_shift_ids"},
+                    {"_id": "deleted_shift_ids", "ids": data["deletedShiftIds"]},
+                    upsert=True
+                )
 
             # Collections with unique IDs
             for col_name in ["departments", "employees", "shifts", "users", "resetRequests", "inventory", "notifications"]:
@@ -303,6 +320,18 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
 
                     req_data["users"] = client_users
 
+                if "shifts" not in req_data or not isinstance(req_data.get("shifts"), list):
+                    req_data["shifts"] = db.get("shifts", [])
+
+                if "employees" not in req_data or not isinstance(req_data.get("employees"), list):
+                    req_data["employees"] = db.get("employees", [])
+
+                if "departments" not in req_data or not isinstance(req_data.get("departments"), list):
+                    req_data["departments"] = db.get("departments", [])
+
+                if "settings" not in req_data or not isinstance(req_data.get("settings"), dict):
+                    req_data["settings"] = db.get("settings", {})
+
                 if "resetRequests" not in req_data:
                     req_data["resetRequests"] = db.get("resetRequests", [])
 
@@ -311,6 +340,30 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
 
                 if "notifications" not in req_data:
                     req_data["notifications"] = db.get("notifications", [])
+
+                # Merge deleted shift tombstones
+                existing_del = set(db.get("deletedShiftIds", []))
+                client_del = set(req_data.get("deletedShiftIds", []))
+                merged_del = list(existing_del.union(client_del))
+                req_data["deletedShiftIds"] = merged_del
+                del_set = set(merged_del)
+
+                # Safely merge shifts: preserve non-deleted shifts from db, and update/insert with client shifts
+                db_shifts = {s.get("id"): s for s in db.get("shifts", []) if isinstance(s, dict) and s.get("id")}
+                client_shifts = {s.get("id"): s for s in req_data.get("shifts", []) if isinstance(s, dict) and s.get("id")}
+
+                merged_shifts_dict = dict(db_shifts)
+                for s_id, s_data in client_shifts.items():
+                    if s_id in merged_shifts_dict:
+                        db_updated = merged_shifts_dict[s_id].get("updatedAt", 0)
+                        client_updated = s_data.get("updatedAt", 0)
+                        if client_updated >= db_updated:
+                            merged_shifts_dict[s_id] = s_data
+                    else:
+                        merged_shifts_dict[s_id] = s_data
+
+                # Ensure no deleted shift remains in shifts list
+                req_data["shifts"] = [s for s_id, s in merged_shifts_dict.items() if s_id not in del_set]
 
                 write_db(req_data)
                 self.send_json(200, {"success": True, "version": _db_version, "message": "Saved successfully"})
