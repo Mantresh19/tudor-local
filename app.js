@@ -319,6 +319,8 @@
   // Persistence: Save to backend / localStorage
   // Persistence: Save to backend / localStorage
   async function saveData() {
+    if (!state.data) state.data = {};
+    state.data.deletedShiftIds = Array.from(getDeletedShiftIds());
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
     renderApp();
     try {
@@ -344,6 +346,120 @@
   let lastKnownServerVersion = 0;
   let isSyncing = false;
   let syncIntervalId = null;
+
+  // Unified Smart Bi-Directional Reconciliation:
+  // 1. Tombstone Enforcement: Deleted shifts NEVER reappear on any device or reload.
+  // 2. Local Shift Preservation: User-created shifts on this device are NEVER wiped by server reboots or older payloads.
+  // 3. Last-Write-Wins: Newer timestamps win on shift edits.
+  // 4. Automatic Upstream Sync: If this device has valid user shifts missing from the server, push them to the server so all devices get them.
+  function reconcileRotaData(incomingData, fallbackData = null) {
+    const base = incomingData && typeof incomingData === "object" ? incomingData : (fallbackData || {});
+
+    // 1. Reconcile deleted shift IDs
+    const delSet = getDeletedShiftIds();
+    if (incomingData && Array.isArray(incomingData.deletedShiftIds)) {
+      incomingData.deletedShiftIds.forEach(id => {
+        if (id) delSet.add(id);
+      });
+      localStorage.setItem("tudor_deleted_shift_ids", JSON.stringify([...delSet]));
+    }
+
+    // 2. Build shift map: Never discard user-created shifts, never resurrect deleted shifts
+    const shiftMap = new Map();
+
+    // First: Load incoming shifts that are NOT in delSet
+    if (incomingData && Array.isArray(incomingData.shifts)) {
+      for (const s of incomingData.shifts) {
+        if (s && s.id && !delSet.has(s.id)) {
+          shiftMap.set(s.id, s);
+        }
+      }
+    }
+
+    // Second: Merge local candidates from current in-memory state and localStorage
+    const localCandidates = [];
+    if (state.data && Array.isArray(state.data.shifts)) {
+      localCandidates.push(...state.data.shifts);
+    }
+    try {
+      const localStr = localStorage.getItem("planday_rota_data");
+      if (localStr) {
+        const parsed = JSON.parse(localStr);
+        if (parsed && Array.isArray(parsed.shifts)) {
+          localCandidates.push(...parsed.shifts);
+        }
+      }
+    } catch (e) {}
+
+    let hasLocalShiftsToPush = false;
+    for (const ls of localCandidates) {
+      if (!ls || !ls.id || delSet.has(ls.id)) continue;
+
+      if (!shiftMap.has(ls.id)) {
+        // Shift created on this device that incoming server data is missing!
+        // PRESERVE IT! Never let server wipe it!
+        shiftMap.set(ls.id, ls);
+        hasLocalShiftsToPush = true;
+      } else {
+        // Shift exists in both: compare updatedAt (newer wins)
+        const incomingShift = shiftMap.get(ls.id);
+        const localUpdated = ls.updatedAt || 0;
+        const incomingUpdated = incomingShift.updatedAt || 0;
+        if (localUpdated > incomingUpdated) {
+          shiftMap.set(ls.id, ls);
+          hasLocalShiftsToPush = true;
+        }
+      }
+    }
+
+    const reconciledShifts = Array.from(shiftMap.values());
+    // Normalize open shifts
+    reconciledShifts.forEach(s => {
+      if (s.employeeId === "" || s.employeeId === undefined) s.employeeId = null;
+      if (s.status === "open") {
+        s.status = "published";
+        s.employeeId = null;
+      }
+    });
+
+    const result = {
+      ...base,
+      shifts: reconciledShifts,
+      deletedShiftIds: Array.from(delSet),
+      employees: (Array.isArray(base.employees) && base.employees.length > 0)
+        ? base.employees
+        : (state.data && Array.isArray(state.data.employees) && state.data.employees.length > 0 ? state.data.employees : []),
+      departments: (Array.isArray(base.departments) && base.departments.length > 0)
+        ? base.departments
+        : (state.data && Array.isArray(state.data.departments) ? state.data.departments : CLEAN_DATA.departments),
+      users: (Array.isArray(base.users) && base.users.length > 0)
+        ? base.users
+        : (state.data && Array.isArray(state.data.users) && state.data.users.length > 0 ? state.data.users : CLEAN_DATA.users),
+      settings: base.settings || (state.data && state.data.settings ? state.data.settings : CLEAN_DATA.settings),
+      notifications: Array.isArray(base.notifications)
+        ? base.notifications
+        : (state.data && Array.isArray(state.data.notifications) ? state.data.notifications : []),
+      inventory: Array.isArray(base.inventory)
+        ? base.inventory
+        : (state.data && Array.isArray(state.data.inventory) ? state.data.inventory : []),
+      resetRequests: Array.isArray(base.resetRequests)
+        ? base.resetRequests
+        : (state.data && Array.isArray(state.data.resetRequests) ? state.data.resetRequests : [])
+    };
+
+    // Ensure core admin users always exist
+    for (const refU of CLEAN_DATA.users) {
+      const existing = result.users.find(u =>
+        (refU.id && u.id === refU.id) ||
+        (refU.username && u.username && u.username.toLowerCase() === refU.username.toLowerCase())
+      );
+      if (!existing) {
+        result.users.push(JSON.parse(JSON.stringify(refU)));
+      }
+    }
+
+    return { reconciled: result, hasLocalShiftsToPush };
+  }
 
   async function checkServerSync() {
     if (isSyncing) return;
@@ -377,6 +493,9 @@
       const serverData = await dataRes.json();
       if (!serverData || typeof serverData !== "object") return;
 
+      // Reconcile incoming server data with local state & tombstones
+      const { reconciled, hasLocalShiftsToPush } = reconcileRotaData(serverData);
+
       // Check if user is currently interacting with an open modal or input field
       const isModalOpen = Boolean(
         state.editingShift ||
@@ -397,27 +516,9 @@
         activeEl.isContentEditable
       );
 
-      if (serverData.shifts && !Array.isArray(serverData.shifts)) {
-        serverData.shifts = [];
-      }
-
-      // If user is actively typing or editing a form modal, merge silently in memory
-      // so we NEVER blow away their active keystrokes or close their modal!
-      if (isModalOpen || isTyping) {
-        state.data.shifts = serverData.shifts || state.data.shifts;
-        state.data.employees = serverData.employees || state.data.employees;
-        state.data.departments = serverData.departments || state.data.departments;
-        state.data.notifications = serverData.notifications || state.data.notifications;
-        state.data.inventory = serverData.inventory || state.data.inventory;
-        state.data.settings = serverData.settings || state.data.settings;
-        lastKnownServerVersion = serverVersion;
-        localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
-        return;
-      }
-
       // Sync user permissions in real-time
-      if (state.currentUser && serverData.users) {
-        const freshUser = serverData.users.find(u =>
+      if (state.currentUser && reconciled.users) {
+        const freshUser = reconciled.users.find(u =>
           u.id === state.currentUser.id ||
           (u.username && state.currentUser.username && u.username.toLowerCase() === state.currentUser.username.toLowerCase())
         );
@@ -430,11 +531,21 @@
         }
       }
 
-      // Safe to update UI: preserve scroll position
-      state.data = serverData;
+      state.data = reconciled;
       lastKnownServerVersion = serverVersion;
       localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
 
+      if (hasLocalShiftsToPush) {
+        // Local device held shifts that server was missing! Push upstream so all devices get them!
+        saveData();
+      }
+
+      // If user is actively typing or editing a form modal, do NOT clobber active DOM
+      if (isModalOpen || isTyping) {
+        return;
+      }
+
+      // Safe to update UI: preserve scroll position
       const scrollY = window.scrollY;
       renderApp();
       if (scrollY > 0) window.scrollTo(0, scrollY);
@@ -495,84 +606,12 @@
       if (localStr) localData = JSON.parse(localStr);
     } catch (e) {}
 
-    // Base state from server or local
-    const baseData = (loadedFromApi && serverData) ? serverData : (localData || JSON.parse(JSON.stringify(CLEAN_DATA)));
-    if (!baseData.employees) baseData.employees = [];
-    if (!baseData.shifts) baseData.shifts = [];
-    if (!baseData.users || baseData.users.length === 0) baseData.users = JSON.parse(JSON.stringify(CLEAN_DATA.users));
-    if (!baseData.resetRequests) baseData.resetRequests = [];
-    if (!baseData.settings) baseData.settings = CLEAN_DATA.settings;
-    if (!baseData.departments) baseData.departments = CLEAN_DATA.departments;
-    if (!baseData.notifications) baseData.notifications = [];
+    const incoming = (loadedFromApi && serverData) ? serverData : localData;
+    const { reconciled, hasLocalShiftsToPush } = reconcileRotaData(incoming, localData || CLEAN_DATA);
 
-    // Ensure core admin users always exist so access is never lost
-    for (const refU of CLEAN_DATA.users) {
-      const existing = baseData.users.find(u =>
-        (refU.id && u.id === refU.id) ||
-        (refU.username && u.username && u.username.toLowerCase() === refU.username.toLowerCase())
-      );
-      if (!existing) {
-        baseData.users.push(JSON.parse(JSON.stringify(refU)));
-      }
-    }
-
-    // 1. Reconcile deleted shift IDs
-    const delSet = getDeletedShiftIds();
-    if (serverData && Array.isArray(serverData.deletedShiftIds)) {
-      serverData.deletedShiftIds.forEach(id => delSet.add(id));
-      localStorage.setItem("tudor_deleted_shift_ids", JSON.stringify([...delSet]));
-    }
-
-    // 2. Build shift map: Never discard user-created shifts, never resurrect deleted shifts
-    const shiftMap = new Map();
-    // Load server shifts that are not deleted
-    if (serverData && Array.isArray(serverData.shifts)) {
-      for (const s of serverData.shifts) {
-        if (s && s.id && !delSet.has(s.id)) {
-          shiftMap.set(s.id, s);
-        }
-      }
-    }
-
-    // Merge local shifts: preserve new shifts created on this device that server doesn't have yet
-    let hasLocalShiftsToPush = false;
-    if (localData && Array.isArray(localData.shifts)) {
-      for (const ls of localData.shifts) {
-        if (!ls || !ls.id || delSet.has(ls.id)) continue;
-
-        if (!shiftMap.has(ls.id)) {
-          // New shift created by user! Keep it on screen!
-          shiftMap.set(ls.id, ls);
-          hasLocalShiftsToPush = true;
-        } else {
-          // Exists in both: newer timestamp wins
-          const existing = shiftMap.get(ls.id);
-          const localUpdated = ls.updatedAt || 0;
-          const serverUpdated = existing.updatedAt || 0;
-          if (localUpdated > serverUpdated) {
-            shiftMap.set(ls.id, ls);
-            hasLocalShiftsToPush = true;
-          }
-        }
-      }
-    }
-
-    baseData.shifts = Array.from(shiftMap.values());
-    state.data = baseData;
-
-    // Normalize legacy open shifts: ensure employeeId is null and status is standard draft/published
-    (state.data.shifts || []).forEach(s => {
-      if (s.employeeId === "" || s.employeeId === undefined) s.employeeId = null;
-      if (s.status === "open") {
-        s.status = "published";
-        s.employeeId = null;
-      }
-    });
-
-    // Save clean state in localStorage
+    state.data = reconciled;
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
 
-    // If local storage held new shifts that were missing from server, push them to server now!
     if (hasLocalShiftsToPush && loadedFromApi) {
       saveData();
     }
@@ -4620,6 +4659,10 @@
     if (clearShiftsBtn) {
       clearShiftsBtn.addEventListener("click", async () => {
         if (!confirm("Are you sure you want to remove all shifts? Staff and logins will be kept.")) return;
+        const currentShiftIds = (state.data.shifts || []).map(s => s.id);
+        currentShiftIds.forEach(id => {
+          if (id) addDeletedShiftId(id);
+        });
         state.data.shifts = [];
         state.showSettingsModal = false;
         await saveData();

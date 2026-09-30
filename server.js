@@ -68,6 +68,7 @@ function readDataJson() {
       d.inventory = d.inventory || [];
       d.notifications = d.notifications || [];
       d.resetRequests = d.resetRequests || [];
+      d.deletedShiftIds = d.deletedShiftIds || [];
       ensureUserPasswords(d.users);
       return d;
     }
@@ -82,7 +83,8 @@ function readDataJson() {
     settings: {},
     inventory: [],
     notifications: [],
-    resetRequests: []
+    resetRequests: [],
+    deletedShiftIds: []
   };
 }
 
@@ -315,6 +317,16 @@ app.post("/api/data", async (req, res) => {
           await mongoDb.collection("users").replaceOne({ _id: u.id }, doc, { upsert: true });
         }
       }
+      if (Array.isArray(payload.deletedShiftIds)) {
+        const delDoc = await mongoDb.collection("settings").findOne({ _id: "deleted_shift_ids" });
+        const existingDel = (delDoc && Array.isArray(delDoc.ids)) ? delDoc.ids : [];
+        const mergedDel = Array.from(new Set([...existingDel, ...payload.deletedShiftIds]));
+        await mongoDb.collection("settings").replaceOne(
+          { _id: "deleted_shift_ids" },
+          { _id: "deleted_shift_ids", ids: mergedDel },
+          { upsert: true }
+        );
+      }
     }
 
     // Always maintain local data.json file mirror
@@ -325,6 +337,9 @@ app.post("/api/data", async (req, res) => {
     if (payload.settings) current.settings = payload.settings;
     if (Array.isArray(payload.inventory)) current.inventory = payload.inventory;
     if (Array.isArray(payload.notifications)) current.notifications = payload.notifications;
+    const existingFileDel = Array.isArray(current.deletedShiftIds) ? current.deletedShiftIds : [];
+    const clientDel = Array.isArray(payload.deletedShiftIds) ? payload.deletedShiftIds : [];
+    current.deletedShiftIds = Array.from(new Set([...existingFileDel, ...clientDel]));
     current._last_updated = dbVersion;
     writeDataJson(current);
 

@@ -370,6 +370,13 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                 if "notifications" not in req_data:
                     req_data["notifications"] = db.get("notifications", [])
 
+                if "deletedShiftIds" in req_data and isinstance(req_data["deletedShiftIds"], list):
+                    db_del = set(db.get("deletedShiftIds", []))
+                    client_del = set(req_data["deletedShiftIds"])
+                    req_data["deletedShiftIds"] = list(db_del.union(client_del))
+                else:
+                    req_data["deletedShiftIds"] = db.get("deletedShiftIds", [])
+
                 write_db(req_data)
                 self.send_json(200, {"success": True, "version": _db_version, "message": "Saved successfully"})
             except Exception as e:
