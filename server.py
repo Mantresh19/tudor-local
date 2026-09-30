@@ -222,10 +222,19 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                     try:
                         _mongo_db.shifts.delete_one({"_id": shift_id})
                         _mongo_db.shifts.delete_one({"id": shift_id})
+                        _mongo_db.settings.update_one(
+                            {"_id": "deleted_shift_ids"},
+                            {"$addToSet": {"ids": shift_id}},
+                            upsert=True
+                        )
                     except Exception as e:
                         print(f"MongoDB delete error: {e}")
                 db = read_db()
                 db["shifts"] = [s for s in db.get("shifts", []) if s.get("id") != shift_id]
+                db_del = db.get("deletedShiftIds", [])
+                if shift_id not in db_del:
+                    db_del.append(shift_id)
+                db["deletedShiftIds"] = db_del
                 write_db(db)
                 self.send_json(200, {"success": True, "version": _db_version, "id": shift_id, "message": "Shift permanently deleted"})
                 return
@@ -376,10 +385,17 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                         doc = dict(shift)
                         doc["_id"] = shift["id"]
                         _mongo_db.shifts.replace_one({"_id": shift["id"]}, doc, upsert=True)
+                        _mongo_db.settings.update_one(
+                            {"_id": "deleted_shift_ids"},
+                            {"$pull": {"ids": shift["id"]}}
+                        )
                     except Exception as e:
                         print(f"MongoDB save shift error: {e}")
                 db = read_db()
                 shifts = db.get("shifts", [])
+                db_del = db.get("deletedShiftIds", [])
+                if shift["id"] in db_del:
+                    db["deletedShiftIds"] = [x for x in db_del if x != shift["id"]]
                 idx = next((i for i, s in enumerate(shifts) if s.get("id") == shift["id"]), -1)
                 if idx != -1:
                     shifts[idx] = shift
@@ -398,10 +414,19 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                     try:
                         _mongo_db.shifts.delete_one({"_id": shift_id})
                         _mongo_db.shifts.delete_one({"id": shift_id})
+                        _mongo_db.settings.update_one(
+                            {"_id": "deleted_shift_ids"},
+                            {"$addToSet": {"ids": shift_id}},
+                            upsert=True
+                        )
                     except Exception as e:
                         print(f"MongoDB delete shift error: {e}")
                 db = read_db()
                 db["shifts"] = [s for s in db.get("shifts", []) if s.get("id") != shift_id]
+                db_del = db.get("deletedShiftIds", [])
+                if shift_id not in db_del:
+                    db_del.append(shift_id)
+                db["deletedShiftIds"] = db_del
                 write_db(db)
                 self.send_json(200, {"success": True, "version": _db_version, "id": shift_id, "message": "Shift permanently deleted"})
                 return

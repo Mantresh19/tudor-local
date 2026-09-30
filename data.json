@@ -1,7 +1,7 @@
 {
   "settings": {
     "businessName": "Tudor Local",
-    "currency": "\u00a3",
+    "currency": "£",
     "targetLaborPercentage": 20,
     "projectedWeeklyRevenue": 0
   },
@@ -130,20 +130,6 @@
     }
   ],
   "shifts": [
-    {
-      "id": "shift_1790268149164",
-      "employeeId": "emp_1790268011960",
-      "departmentId": "mgmt",
-      "role": "Staff Member",
-      "date": "2026-09-28",
-      "startTime": "08:00",
-      "endTime": "22:00",
-      "breakMinutes": 0,
-      "rate": 10,
-      "notes": "",
-      "status": "published",
-      "isPaid": false
-    },
     {
       "id": "shift_1790268236379",
       "employeeId": "emp_1790267994714",
@@ -821,6 +807,21 @@
       "notes": "",
       "status": "published",
       "isPaid": false
+    },
+    {
+      "id": "shift_1790268149164",
+      "employeeId": "emp_1790268011960",
+      "departmentId": "mgmt",
+      "role": "Staff Member",
+      "date": "2026-09-28",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1790781597504
     }
   ],
   "users": [
@@ -3043,6 +3044,8 @@
     }
   ],
   "notifications": [],
-  "deletedShiftIds": [],
-  "_last_updated": 1790775056364
+  "deletedShiftIds": [
+    "shift_user_fresh_777"
+  ],
+  "_last_updated": 1790781597504
 }

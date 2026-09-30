@@ -160,6 +160,11 @@ async function getDbSnapshot() {
           return copy;
         });
       }
+
+      // Deleted shift IDs tracking
+      const delDoc = await mongoDb.collection("settings").findOne({ _id: "deleted_shift_ids" });
+      data.deletedShiftIds = (delDoc && Array.isArray(delDoc.ids)) ? delDoc.ids : [];
+
       ensureUserPasswords(data.users);
       data._last_updated = dbVersion;
       return data;
@@ -360,11 +365,18 @@ app.post("/api/shifts", async (req, res) => {
     if (isMongoConnected && mongoDb) {
       const doc = { ...shift, _id: shift.id };
       await mongoDb.collection("shifts").replaceOne({ _id: shift.id }, doc, { upsert: true });
+      await mongoDb.collection("settings").updateOne(
+        { _id: "deleted_shift_ids" },
+        { $pull: { ids: shift.id } }
+      );
     }
 
     // Mirror to data.json
     const fileData = readDataJson();
     fileData.shifts = fileData.shifts || [];
+    if (fileData.deletedShiftIds) {
+      fileData.deletedShiftIds = fileData.deletedShiftIds.filter(id => id !== shift.id);
+    }
     const idx = fileData.shifts.findIndex(s => s.id === shift.id);
     if (idx !== -1) {
       fileData.shifts[idx] = shift;
@@ -392,11 +404,20 @@ app.delete("/api/shifts/:id", async (req, res) => {
     if (isMongoConnected && mongoDb) {
       await mongoDb.collection("shifts").deleteOne({ _id: shiftId });
       await mongoDb.collection("shifts").deleteOne({ id: shiftId });
+      await mongoDb.collection("settings").updateOne(
+        { _id: "deleted_shift_ids" },
+        { $addToSet: { ids: shiftId } },
+        { upsert: true }
+      );
     }
 
     // Mirror to data.json
     const fileData = readDataJson();
     fileData.shifts = (fileData.shifts || []).filter(s => s.id !== shiftId);
+    fileData.deletedShiftIds = fileData.deletedShiftIds || [];
+    if (!fileData.deletedShiftIds.includes(shiftId)) {
+      fileData.deletedShiftIds.push(shiftId);
+    }
     fileData._last_updated = dbVersion;
     writeDataJson(fileData);
 
@@ -418,10 +439,19 @@ app.post("/api/shifts/delete", async (req, res) => {
     if (isMongoConnected && mongoDb) {
       await mongoDb.collection("shifts").deleteOne({ _id: shiftId });
       await mongoDb.collection("shifts").deleteOne({ id: shiftId });
+      await mongoDb.collection("settings").updateOne(
+        { _id: "deleted_shift_ids" },
+        { $addToSet: { ids: shiftId } },
+        { upsert: true }
+      );
     }
 
     const fileData = readDataJson();
     fileData.shifts = (fileData.shifts || []).filter(s => s.id !== shiftId);
+    fileData.deletedShiftIds = fileData.deletedShiftIds || [];
+    if (!fileData.deletedShiftIds.includes(shiftId)) {
+      fileData.deletedShiftIds.push(shiftId);
+    }
     fileData._last_updated = dbVersion;
     writeDataJson(fileData);
 

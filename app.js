@@ -270,6 +270,34 @@
     } catch (e) {}
   }
 
+  // Persistent tracking of deleted shift IDs to guarantee deleted shifts stay dead
+  function getDeletedShiftIds() {
+    try {
+      const stored = localStorage.getItem("tudor_deleted_shift_ids");
+      return stored ? new Set(JSON.parse(stored)) : new Set();
+    } catch (e) {
+      return new Set();
+    }
+  }
+
+  function addDeletedShiftId(id) {
+    if (!id) return;
+    try {
+      const set = getDeletedShiftIds();
+      set.add(id);
+      localStorage.setItem("tudor_deleted_shift_ids", JSON.stringify([...set]));
+    } catch (e) {}
+  }
+
+  function unDeleteShiftId(id) {
+    if (!id) return;
+    try {
+      const set = getDeletedShiftIds();
+      set.delete(id);
+      localStorage.setItem("tudor_deleted_shift_ids", JSON.stringify([...set]));
+    } catch (e) {}
+  }
+
   // Calculate Net Hours from start, end, break
   function calculateNetHours(startTime, endTime, breakMinutes = 0) {
     if (!startTime || !endTime) return 0;
@@ -441,7 +469,7 @@
     });
   }
 
-  // Load Data with Robust Persistence & User Access Preservation
+  // Load Data with Smart Bi-directional Sync & Deletion Protection
   async function loadData() {
     let loadedFromApi = false;
     let serverData = null;
@@ -467,37 +495,70 @@
       if (localStr) localData = JSON.parse(localStr);
     } catch (e) {}
 
-    if (loadedFromApi && serverData) {
-      state.data = serverData;
-    } else if (localData) {
-      state.data = localData;
-    } else {
-      try {
-        const res = await fetch("./data.json");
-        if (res.ok) state.data = await res.json();
-      } catch (e) {}
-    }
-
-    if (!state.data) state.data = JSON.parse(JSON.stringify(CLEAN_DATA));
-    if (!state.data.employees) state.data.employees = [];
-    if (!state.data.shifts) state.data.shifts = [];
-    if (!state.data.users || state.data.users.length === 0) state.data.users = JSON.parse(JSON.stringify(CLEAN_DATA.users));
-    if (!state.data.resetRequests) state.data.resetRequests = [];
-    if (!state.data.settings) state.data.settings = CLEAN_DATA.settings;
-    if (!state.data.departments) state.data.departments = CLEAN_DATA.departments;
-    if (!state.data.notifications) state.data.notifications = [];
-    if (!state.data.deletedShiftIds) state.data.deletedShiftIds = [];
+    // Base state from server or local
+    const baseData = (loadedFromApi && serverData) ? serverData : (localData || JSON.parse(JSON.stringify(CLEAN_DATA)));
+    if (!baseData.employees) baseData.employees = [];
+    if (!baseData.shifts) baseData.shifts = [];
+    if (!baseData.users || baseData.users.length === 0) baseData.users = JSON.parse(JSON.stringify(CLEAN_DATA.users));
+    if (!baseData.resetRequests) baseData.resetRequests = [];
+    if (!baseData.settings) baseData.settings = CLEAN_DATA.settings;
+    if (!baseData.departments) baseData.departments = CLEAN_DATA.departments;
+    if (!baseData.notifications) baseData.notifications = [];
 
     // Ensure core admin users always exist so access is never lost
     for (const refU of CLEAN_DATA.users) {
-      const existing = state.data.users.find(u =>
+      const existing = baseData.users.find(u =>
         (refU.id && u.id === refU.id) ||
         (refU.username && u.username && u.username.toLowerCase() === refU.username.toLowerCase())
       );
       if (!existing) {
-        state.data.users.push(JSON.parse(JSON.stringify(refU)));
+        baseData.users.push(JSON.parse(JSON.stringify(refU)));
       }
     }
+
+    // 1. Reconcile deleted shift IDs
+    const delSet = getDeletedShiftIds();
+    if (serverData && Array.isArray(serverData.deletedShiftIds)) {
+      serverData.deletedShiftIds.forEach(id => delSet.add(id));
+      localStorage.setItem("tudor_deleted_shift_ids", JSON.stringify([...delSet]));
+    }
+
+    // 2. Build shift map: Never discard user-created shifts, never resurrect deleted shifts
+    const shiftMap = new Map();
+    // Load server shifts that are not deleted
+    if (serverData && Array.isArray(serverData.shifts)) {
+      for (const s of serverData.shifts) {
+        if (s && s.id && !delSet.has(s.id)) {
+          shiftMap.set(s.id, s);
+        }
+      }
+    }
+
+    // Merge local shifts: preserve new shifts created on this device that server doesn't have yet
+    let hasLocalShiftsToPush = false;
+    if (localData && Array.isArray(localData.shifts)) {
+      for (const ls of localData.shifts) {
+        if (!ls || !ls.id || delSet.has(ls.id)) continue;
+
+        if (!shiftMap.has(ls.id)) {
+          // New shift created by user! Keep it on screen!
+          shiftMap.set(ls.id, ls);
+          hasLocalShiftsToPush = true;
+        } else {
+          // Exists in both: newer timestamp wins
+          const existing = shiftMap.get(ls.id);
+          const localUpdated = ls.updatedAt || 0;
+          const serverUpdated = existing.updatedAt || 0;
+          if (localUpdated > serverUpdated) {
+            shiftMap.set(ls.id, ls);
+            hasLocalShiftsToPush = true;
+          }
+        }
+      }
+    }
+
+    baseData.shifts = Array.from(shiftMap.values());
+    state.data = baseData;
 
     // Normalize legacy open shifts: ensure employeeId is null and status is standard draft/published
     (state.data.shifts || []).forEach(s => {
@@ -510,6 +571,11 @@
 
     // Save clean state in localStorage
     localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
+
+    // If local storage held new shifts that were missing from server, push them to server now!
+    if (hasLocalShiftsToPush && loadedFromApi) {
+      saveData();
+    }
 
     renderApp();
     startRealtimeSync();
@@ -4862,6 +4928,7 @@
       state.editingShift = null;
       state.selectedScheduleDate = date;
       setCurrentMonday(getMonday(new Date(date)));
+      unDeleteShiftId(shiftPayload.id);
 
       // Direct atomic write to MongoDB
       try {
@@ -4922,12 +4989,17 @@
       deleteShiftBtn.addEventListener("click", async () => {
         if (!confirm("Are you sure you want to delete this shift?")) return;
         const deletedId = state.editingShift.id;
+        
+        // 1. Mark permanently deleted in persistent deleted set
+        addDeletedShiftId(deletedId);
+
+        // 2. Remove from active state
         state.data.shifts = (state.data.shifts || []).filter(s => s.id !== deletedId);
         state.editingShift = null;
         renderApp();
         showToast("Shift deleted.", "error");
 
-        // 1. Direct atomic DELETE from MongoDB backend
+        // 3. Direct atomic DELETE from MongoDB backend
         try {
           await fetch(`/api/shifts/${encodeURIComponent(deletedId)}`, {
             method: "DELETE"
@@ -4943,7 +5015,7 @@
           } catch (e2) {}
         }
 
-        // 2. Also save data state cleanly
+        // 4. Also save data state cleanly
         await saveData();
       });
     }
