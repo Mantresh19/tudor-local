@@ -213,7 +213,26 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
         self.send_response(200)
         self.end_headers()
 
+    def _is_render_disabled(self):
+        if os.environ.get("RENDER") or os.environ.get("RENDER_EXTERNAL_URL") or os.environ.get("RENDER_SERVICE_ID"):
+            self.send_response(410)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.end_headers()
+            html = """<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Server Offline - Localhost Only</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;text-align:center;}
+.card{max-width:440px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:28px;box-shadow:0 10px 25px rgba(0,0,0,0.4);}
+h1{font-size:1.25rem;margin:0 0 10px;color:#f87171;}p{font-size:0.9rem;color:#94a3b8;line-height:1.5;margin:0;}</style></head>
+<body><div class="card"><h1>Live Cloud Server Taken Down</h1>
+<p>Tudor Local Rota has been stopped on the live server and moved exclusively to your <strong>localhost</strong> environment (<code>http://localhost:8080</code>).</p></div></body></html>"""
+            self.wfile.write(html.encode("utf-8"))
+            return True
+        return False
+
     def do_DELETE(self):
+        if self._is_render_disabled():
+            return
         parsed = urlparse(self.path)
         if parsed.path.startswith("/api/shifts/"):
             shift_id = parsed.path.split("/api/shifts/")[1].strip()
@@ -222,19 +241,10 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
                     try:
                         _mongo_db.shifts.delete_one({"_id": shift_id})
                         _mongo_db.shifts.delete_one({"id": shift_id})
-                        _mongo_db.settings.update_one(
-                            {"_id": "deleted_shift_ids"},
-                            {"$addToSet": {"ids": shift_id}},
-                            upsert=True
-                        )
                     except Exception as e:
                         print(f"MongoDB delete error: {e}")
                 db = read_db()
                 db["shifts"] = [s for s in db.get("shifts", []) if s.get("id") != shift_id]
-                db_del = db.get("deletedShiftIds", [])
-                if shift_id not in db_del:
-                    db_del.append(shift_id)
-                db["deletedShiftIds"] = db_del
                 write_db(db)
                 self.send_json(200, {"success": True, "version": _db_version, "id": shift_id, "message": "Shift permanently deleted"})
                 return
@@ -247,6 +257,8 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(json.dumps(payload).encode("utf-8"))
 
     def do_GET(self):
+        if self._is_render_disabled():
+            return
         parsed = urlparse(self.path)
         if parsed.path == "/api/data-version":
             db_data = read_db()
@@ -309,6 +321,8 @@ class RotaHandler(http.server.SimpleHTTPRequestHandler):
         super().do_GET()
 
     def do_POST(self):
+        if self._is_render_disabled():
+            return
         parsed = urlparse(self.path)
         content_length = int(self.headers.get("Content-Length", 0))
         body = self.rfile.read(content_length).decode("utf-8") if content_length > 0 else "{}"

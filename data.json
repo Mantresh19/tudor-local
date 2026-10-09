@@ -1,7 +1,7 @@
 {
   "settings": {
     "businessName": "Tudor Local",
-    "currency": "£",
+    "currency": "\u00a3",
     "targetLaborPercentage": 20,
     "projectedWeeklyRevenue": 0
   },
@@ -150,12 +150,14 @@
       "departmentId": "mgmt",
       "role": "Staff Member",
       "date": "2026-09-30",
-      "startTime": "08:00",
+      "startTime": "09:00",
       "endTime": "22:00",
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1790937977571
     },
     {
       "id": "shift_1790268299312",
@@ -164,12 +166,13 @@
       "role": "Staff Member",
       "date": "2026-10-01",
       "startTime": "08:00",
-      "endTime": "16:00",
+      "endTime": "15:00",
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
       "status": "published",
-      "isPaid": false
+      "isPaid": false,
+      "updatedAt": 1791123459604
     },
     {
       "id": "shift_1790268323046",
@@ -209,7 +212,9 @@
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791123431072
     },
     {
       "id": "shift_1790368044859",
@@ -692,12 +697,14 @@
       "departmentId": "mgmt",
       "role": "Staff Member",
       "date": "2026-09-27",
-      "startTime": "09:00",
+      "startTime": "08:00",
       "endTime": "22:00",
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1790843961501
     },
     {
       "id": "shift_1790369626930",
@@ -731,12 +738,14 @@
       "departmentId": "mgmt",
       "role": "Staff Member",
       "date": "2026-10-11",
-      "startTime": "09:00",
+      "startTime": "08:00",
       "endTime": "22:00",
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
-      "status": "published"
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1790843948912
     },
     {
       "id": "shift_1790626388330",
@@ -744,69 +753,14 @@
       "departmentId": "general",
       "role": "Staff Member",
       "date": "2026-10-01",
-      "startTime": "16:00",
+      "startTime": "15:00",
       "endTime": "22:00",
       "breakMinutes": 0,
       "rate": 10,
       "notes": "",
       "status": "published",
-      "isPaid": false
-    },
-    {
-      "id": "shift_1790626462583",
-      "employeeId": null,
-      "departmentId": "general",
-      "role": "Staff Member",
-      "date": "2026-10-05",
-      "startTime": "08:00",
-      "endTime": "22:00",
-      "breakMinutes": 0,
-      "rate": 10,
-      "notes": "",
-      "status": "published",
-      "isPaid": false
-    },
-    {
-      "id": "shift_1790626476095",
-      "employeeId": null,
-      "departmentId": "general",
-      "role": "Staff Member",
-      "date": "2026-10-07",
-      "startTime": "08:00",
-      "endTime": "22:00",
-      "breakMinutes": 0,
-      "rate": 10,
-      "notes": "",
-      "status": "published",
-      "isPaid": false
-    },
-    {
-      "id": "shift_1790626494246",
-      "employeeId": null,
-      "departmentId": "general",
-      "role": "Staff Member",
-      "date": "2026-10-09",
-      "startTime": "08:00",
-      "endTime": "22:00",
-      "breakMinutes": 0,
-      "rate": 10,
-      "notes": "",
-      "status": "published",
-      "isPaid": false
-    },
-    {
-      "id": "shift_1790626510511",
-      "employeeId": null,
-      "departmentId": "general",
-      "role": "Staff Member",
-      "date": "2026-10-10",
-      "startTime": "08:00",
-      "endTime": "22:00",
-      "breakMinutes": 0,
-      "rate": 10,
-      "notes": "",
-      "status": "published",
-      "isPaid": false
+      "isPaid": false,
+      "updatedAt": 1791123450772
     },
     {
       "id": "shift_1790268149164",
@@ -822,80 +776,275 @@
       "status": "published",
       "isPaid": false,
       "updatedAt": 1790781597504
+    },
+    {
+      "id": "shift_1790782452431",
+      "employeeId": "emp_1790268027518",
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-05",
+      "startTime": "08:00",
+      "endTime": "15:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791123491113
+    },
+    {
+      "id": "shift_1791123513506",
+      "employeeId": "emp_1790267945703",
+      "departmentId": "mgmt",
+      "role": "Staff Member",
+      "date": "2026-10-05",
+      "startTime": "15:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791123513506
+    },
+    {
+      "id": "shift_1791220728872",
+      "employeeId": "emp_1790268011960",
+      "departmentId": "mgmt",
+      "role": "Staff Member",
+      "date": "2026-10-13",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220728872
+    },
+    {
+      "id": "shift_1791220738675",
+      "employeeId": "emp_1790268011960",
+      "departmentId": "mgmt",
+      "role": "Staff Member",
+      "date": "2026-10-15",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220738675
+    },
+    {
+      "id": "shift_1791220753618",
+      "employeeId": "emp_1790268011960",
+      "departmentId": "mgmt",
+      "role": "Staff Member",
+      "date": "2026-10-12",
+      "startTime": "08:00",
+      "endTime": "15:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220775805
+    },
+    {
+      "id": "shift_1791220768166",
+      "employeeId": "emp_1790368388939",
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-12",
+      "startTime": "15:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220768166
+    },
+    {
+      "id": "shift_1791220792616",
+      "employeeId": "emp_1790267945703",
+      "departmentId": "mgmt",
+      "role": "Staff Member",
+      "date": "2026-10-18",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220792616
+    },
+    {
+      "id": "shift_1791220811123",
+      "employeeId": null,
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-14",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220811123
+    },
+    {
+      "id": "shift_1791220819302",
+      "employeeId": null,
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-16",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220819302
+    },
+    {
+      "id": "shift_1791220825049",
+      "employeeId": null,
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-17",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1791220825049
+    },
+    {
+      "id": "shift_1790843904799",
+      "employeeId": "emp_1790267994714",
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-07",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1790843914382
+    },
+    {
+      "id": "shift_1790843936770",
+      "employeeId": "emp_1790267994714",
+      "departmentId": "general",
+      "role": "Staff Member",
+      "date": "2026-10-10",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1790843936770
+    },
+    {
+      "id": "shift_1790844106878",
+      "employeeId": "emp_1790267945703",
+      "departmentId": "mgmt",
+      "role": "Staff Member",
+      "date": "2026-10-09",
+      "startTime": "08:00",
+      "endTime": "22:00",
+      "breakMinutes": 0,
+      "rate": 10,
+      "notes": "",
+      "status": "published",
+      "isPaid": false,
+      "updatedAt": 1790844106878
     }
   ],
   "users": [
     {
       "id": "user_admin",
       "username": "admin",
-      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
       "role": "admin",
       "name": "Manager (Admin)",
       "employeeId": null,
       "hasRotaAccess": true,
       "hasInventoryAccess": true,
       "isActive": true,
-      "mustChangePassword": false
+      "mustChangePassword": false,
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
     },
     {
       "id": "user_mantresh",
       "username": "mantresh",
-      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9",
       "role": "admin",
       "name": "Mantresh",
       "employeeId": "emp_1790267945703",
       "hasRotaAccess": true,
       "hasInventoryAccess": true,
       "isActive": true,
-      "mustChangePassword": false
+      "mustChangePassword": false,
+      "passwordHash": "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9"
     },
     {
       "id": "user_shon",
       "username": "shon",
-      "passwordHash": "cd230bf25bb6b86db045544c251b6d327df1bda8d9a8d762488935337fdfdb7d",
       "role": "staff",
       "name": "Shon",
       "employeeId": "emp_1790267994714",
       "hasRotaAccess": true,
       "hasInventoryAccess": false,
       "isActive": true,
-      "mustChangePassword": false
+      "mustChangePassword": false,
+      "passwordHash": "cd230bf25bb6b86db045544c251b6d327df1bda8d9a8d762488935337fdfdb7d"
     },
     {
       "id": "user_isuru",
       "username": "isuru",
-      "passwordHash": "5a825d4b2274864458470386ace79f630092a8f49b5b633b022a610230ecbe4c",
       "role": "staff",
       "name": "Isuru",
       "employeeId": "emp_1790268011960",
       "hasRotaAccess": true,
       "hasInventoryAccess": true,
       "isActive": true,
-      "mustChangePassword": false
+      "mustChangePassword": false,
+      "passwordHash": "5a825d4b2274864458470386ace79f630092a8f49b5b633b022a610230ecbe4c"
     },
     {
       "id": "user_riya",
       "username": "riya",
-      "passwordHash": "bc97aaa7b5bde4bae9d3b658e6d4bf711b2d8bb5d7a27f17e95815efc6e0618d",
       "role": "staff",
       "name": "Riya",
       "employeeId": "emp_1790268027518",
       "hasRotaAccess": true,
       "hasInventoryAccess": false,
       "isActive": true,
-      "mustChangePassword": false
+      "mustChangePassword": false,
+      "passwordHash": "bc97aaa7b5bde4bae9d3b658e6d4bf711b2d8bb5d7a27f17e95815efc6e0618d"
     },
     {
       "id": "user_swastik",
       "username": "swastik",
-      "passwordHash": "9418da7af89fccd032acba8a75de03278170e65d5302f0c2b7387e2b709dcf76",
       "role": "staff",
       "name": "Swastik",
       "employeeId": "emp_1790368388939",
       "hasRotaAccess": true,
       "hasInventoryAccess": false,
       "isActive": true,
-      "mustChangePassword": false
+      "mustChangePassword": false,
+      "passwordHash": "9418da7af89fccd032acba8a75de03278170e65d5302f0c2b7387e2b709dcf76"
     }
   ],
   "resetRequests": [],
@@ -3043,9 +3192,73 @@
       "updatedAt": "2026-09-26T01:30:00.000Z"
     }
   ],
-  "notifications": [],
-  "deletedShiftIds": [
-    "shift_user_fresh_777"
+  "notifications": [
+    {
+      "id": "notif_1791220792616_8wbn",
+      "recipientEmployeeId": "emp_1790267945703",
+      "forAdmin": false,
+      "title": "\ud83d\udcc5 New Shift Assigned",
+      "message": "Your shift on 2026-10-18 (08:00 \u2013 22:00) has been assigned to you.",
+      "type": "shift",
+      "date": "2026-10-18",
+      "timestamp": 1791220792616,
+      "readBy": []
+    },
+    {
+      "id": "notif_1791220775805_ic9s",
+      "recipientEmployeeId": "emp_1790268011960",
+      "forAdmin": false,
+      "title": "\ud83d\udcc5 Shift Updated",
+      "message": "Your shift on 2026-10-12 (08:00 \u2013 15:00) has been updated.",
+      "type": "shift",
+      "date": "2026-10-12",
+      "timestamp": 1791220775805,
+      "readBy": []
+    },
+    {
+      "id": "notif_1791220768166_sq2i",
+      "recipientEmployeeId": "emp_1790368388939",
+      "forAdmin": false,
+      "title": "\ud83d\udcc5 New Shift Assigned",
+      "message": "Your shift on 2026-10-12 (15:00 \u2013 22:00) has been assigned to you.",
+      "type": "shift",
+      "date": "2026-10-12",
+      "timestamp": 1791220768166,
+      "readBy": []
+    },
+    {
+      "id": "notif_1791220753618_nd97",
+      "recipientEmployeeId": "emp_1790268011960",
+      "forAdmin": false,
+      "title": "\ud83d\udcc5 New Shift Assigned",
+      "message": "Your shift on 2026-10-12 (08:00 \u2013 03:00) has been assigned to you.",
+      "type": "shift",
+      "date": "2026-10-12",
+      "timestamp": 1791220753618,
+      "readBy": []
+    },
+    {
+      "id": "notif_1791220738675_13a6",
+      "recipientEmployeeId": "emp_1790268011960",
+      "forAdmin": false,
+      "title": "\ud83d\udcc5 New Shift Assigned",
+      "message": "Your shift on 2026-10-15 (08:00 \u2013 22:00) has been assigned to you.",
+      "type": "shift",
+      "date": "2026-10-15",
+      "timestamp": 1791220738675,
+      "readBy": []
+    },
+    {
+      "id": "notif_1791220728872_r845",
+      "recipientEmployeeId": "emp_1790268011960",
+      "forAdmin": false,
+      "title": "\ud83d\udcc5 New Shift Assigned",
+      "message": "Your shift on 2026-10-13 (08:00 \u2013 22:00) has been assigned to you.",
+      "type": "shift",
+      "date": "2026-10-13",
+      "timestamp": 1791220728872,
+      "readBy": []
+    }
   ],
-  "_last_updated": 1790781597504
+  "_last_updated": 1791221044109
 }

@@ -8,13 +8,28 @@ const { MongoClient } = require("mongodb");
 const PORT = parseInt(process.env.PORT || "8080", 10);
 const BASE_DIR = __dirname;
 const DATA_FILE = path.join(BASE_DIR, "data.json");
-const MONGO_URI = process.env.MONGODB_URI || "mongodb://localhost:27017";
+const MONGO_URI = process.env.MONGODB_URI || "mongodb://127.0.0.1:27017";
 const MONGO_DB_NAME = process.env.MONGODB_DB || "tudor_rota";
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "20mb" }));
 app.use(express.urlencoded({ extended: true, limit: "20mb" }));
+
+// Block live cloud access on Render — run exclusively on Localhost
+app.use((req, res, next) => {
+  if (process.env.RENDER || process.env.RENDER_EXTERNAL_URL || process.env.RENDER_SERVICE_ID) {
+    return res.status(410).send(`<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Server Offline - Localhost Only</title>
+<style>body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#0f172a;color:#f8fafc;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;padding:20px;box-sizing:border-box;text-align:center;}
+.card{max-width:440px;background:#1e293b;border:1px solid #334155;border-radius:12px;padding:28px;box-shadow:0 10px 25px rgba(0,0,0,0.4);}
+h1{font-size:1.25rem;margin:0 0 10px;color:#f87171;}p{font-size:0.9rem;color:#94a3b8;line-height:1.5;margin:0;}</style></head>
+<body><div class="card"><h1>Live Cloud Server Taken Down</h1>
+<p>Tudor Local Rota has been stopped on the live server and moved exclusively to your <strong>localhost</strong> environment (<code>http://localhost:8080</code>).</p></div></body></html>`);
+  }
+  next();
+});
 
 // Prevent caching on API endpoints
 app.use("/api", (req, res, next) => {

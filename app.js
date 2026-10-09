@@ -316,12 +316,9 @@
     return Number((netMinutes / 60).toFixed(2));
   }
 
-  // Persistence: Save to backend / localStorage
-  // Persistence: Save to backend / localStorage
+  // Persistence: Save directly to local MongoDB backend (Single Source of Truth)
   async function saveData() {
     if (!state.data) state.data = {};
-    state.data.deletedShiftIds = Array.from(getDeletedShiftIds());
-    localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
     renderApp();
     try {
       const res = await fetch("/api/data", {
@@ -334,87 +331,31 @@
         if (json && json.version) {
           lastKnownServerVersion = json.version;
           state.data._last_updated = json.version;
-          localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
         }
       }
     } catch (err) {
-      console.warn("Server sync skipped, cached locally:", err);
+      console.warn("Backend save error:", err);
     }
   }
 
-  // Real-Time Multi-Device Sync Engine
+  // Real-Time Sync Engine (Single Source of Truth = Backend Database)
   let lastKnownServerVersion = 0;
   let isSyncing = false;
   let syncIntervalId = null;
 
-  // Unified Smart Bi-Directional Reconciliation:
-  // 1. Tombstone Enforcement: Deleted shifts NEVER reappear on any device or reload.
-  // 2. Local Shift Preservation: User-created shifts on this device are NEVER wiped by server reboots or older payloads.
-  // 3. Last-Write-Wins: Newer timestamps win on shift edits.
-  // 4. Automatic Upstream Sync: If this device has valid user shifts missing from the server, push them to the server so all devices get them.
-  function reconcileRotaData(incomingData, fallbackData = null) {
-    const base = incomingData && typeof incomingData === "object" ? incomingData : (fallbackData || {});
+  function normalizeServerData(serverData) {
+    const data = serverData && typeof serverData === "object" ? serverData : JSON.parse(JSON.stringify(CLEAN_DATA));
+    if (!Array.isArray(data.employees)) data.employees = [];
+    if (!Array.isArray(data.shifts)) data.shifts = [];
+    if (!Array.isArray(data.departments) || data.departments.length === 0) data.departments = CLEAN_DATA.departments;
+    if (!Array.isArray(data.users) || data.users.length === 0) data.users = JSON.parse(JSON.stringify(CLEAN_DATA.users));
+    if (!data.settings) data.settings = CLEAN_DATA.settings;
+    if (!Array.isArray(data.notifications)) data.notifications = [];
+    if (!Array.isArray(data.inventory)) data.inventory = [];
+    if (!Array.isArray(data.resetRequests)) data.resetRequests = [];
 
-    // 1. Reconcile deleted shift IDs
-    const delSet = getDeletedShiftIds();
-    if (incomingData && Array.isArray(incomingData.deletedShiftIds)) {
-      incomingData.deletedShiftIds.forEach(id => {
-        if (id) delSet.add(id);
-      });
-      localStorage.setItem("tudor_deleted_shift_ids", JSON.stringify([...delSet]));
-    }
-
-    // 2. Build shift map: Never discard user-created shifts, never resurrect deleted shifts
-    const shiftMap = new Map();
-
-    // First: Load incoming shifts that are NOT in delSet
-    if (incomingData && Array.isArray(incomingData.shifts)) {
-      for (const s of incomingData.shifts) {
-        if (s && s.id && !delSet.has(s.id)) {
-          shiftMap.set(s.id, s);
-        }
-      }
-    }
-
-    // Second: Merge local candidates from current in-memory state and localStorage
-    const localCandidates = [];
-    if (state.data && Array.isArray(state.data.shifts)) {
-      localCandidates.push(...state.data.shifts);
-    }
-    try {
-      const localStr = localStorage.getItem("planday_rota_data");
-      if (localStr) {
-        const parsed = JSON.parse(localStr);
-        if (parsed && Array.isArray(parsed.shifts)) {
-          localCandidates.push(...parsed.shifts);
-        }
-      }
-    } catch (e) {}
-
-    let hasLocalShiftsToPush = false;
-    for (const ls of localCandidates) {
-      if (!ls || !ls.id || delSet.has(ls.id)) continue;
-
-      if (!shiftMap.has(ls.id)) {
-        // Shift created on this device that incoming server data is missing!
-        // PRESERVE IT! Never let server wipe it!
-        shiftMap.set(ls.id, ls);
-        hasLocalShiftsToPush = true;
-      } else {
-        // Shift exists in both: compare updatedAt (newer wins)
-        const incomingShift = shiftMap.get(ls.id);
-        const localUpdated = ls.updatedAt || 0;
-        const incomingUpdated = incomingShift.updatedAt || 0;
-        if (localUpdated > incomingUpdated) {
-          shiftMap.set(ls.id, ls);
-          hasLocalShiftsToPush = true;
-        }
-      }
-    }
-
-    const reconciledShifts = Array.from(shiftMap.values());
     // Normalize open shifts
-    reconciledShifts.forEach(s => {
+    data.shifts.forEach(s => {
       if (s.employeeId === "" || s.employeeId === undefined) s.employeeId = null;
       if (s.status === "open") {
         s.status = "published";
@@ -422,43 +363,18 @@
       }
     });
 
-    const result = {
-      ...base,
-      shifts: reconciledShifts,
-      deletedShiftIds: Array.from(delSet),
-      employees: (Array.isArray(base.employees) && base.employees.length > 0)
-        ? base.employees
-        : (state.data && Array.isArray(state.data.employees) && state.data.employees.length > 0 ? state.data.employees : []),
-      departments: (Array.isArray(base.departments) && base.departments.length > 0)
-        ? base.departments
-        : (state.data && Array.isArray(state.data.departments) ? state.data.departments : CLEAN_DATA.departments),
-      users: (Array.isArray(base.users) && base.users.length > 0)
-        ? base.users
-        : (state.data && Array.isArray(state.data.users) && state.data.users.length > 0 ? state.data.users : CLEAN_DATA.users),
-      settings: base.settings || (state.data && state.data.settings ? state.data.settings : CLEAN_DATA.settings),
-      notifications: Array.isArray(base.notifications)
-        ? base.notifications
-        : (state.data && Array.isArray(state.data.notifications) ? state.data.notifications : []),
-      inventory: Array.isArray(base.inventory)
-        ? base.inventory
-        : (state.data && Array.isArray(state.data.inventory) ? state.data.inventory : []),
-      resetRequests: Array.isArray(base.resetRequests)
-        ? base.resetRequests
-        : (state.data && Array.isArray(state.data.resetRequests) ? state.data.resetRequests : [])
-    };
-
     // Ensure core admin users always exist
     for (const refU of CLEAN_DATA.users) {
-      const existing = result.users.find(u =>
+      const existing = data.users.find(u =>
         (refU.id && u.id === refU.id) ||
         (refU.username && u.username && u.username.toLowerCase() === refU.username.toLowerCase())
       );
       if (!existing) {
-        result.users.push(JSON.parse(JSON.stringify(refU)));
+        data.users.push(JSON.parse(JSON.stringify(refU)));
       }
     }
 
-    return { reconciled: result, hasLocalShiftsToPush };
+    return data;
   }
 
   async function checkServerSync() {
@@ -468,7 +384,6 @@
     try {
       isSyncing = true;
 
-      // 1. Fast, ultra-lightweight version check (< 100 bytes)
       const verRes = await fetch(`/api/data-version?_t=${Date.now()}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
@@ -478,12 +393,10 @@
       const verData = await verRes.json();
       const serverVersion = verData.version || 0;
 
-      // If server version matches what we already have, do nothing! (0 CPU, 0 bandwidth, 0 flicker)
       if (lastKnownServerVersion && serverVersion <= lastKnownServerVersion) {
         return;
       }
 
-      // 2. Version changed! Fetch fresh data from server
       const dataRes = await fetch(`/api/data?_t=${Date.now()}`, {
         cache: "no-store",
         headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" }
@@ -493,10 +406,8 @@
       const serverData = await dataRes.json();
       if (!serverData || typeof serverData !== "object") return;
 
-      // Reconcile incoming server data with local state & tombstones
-      const { reconciled, hasLocalShiftsToPush } = reconcileRotaData(serverData);
+      const normalized = normalizeServerData(serverData);
 
-      // Check if user is currently interacting with an open modal or input field
       const isModalOpen = Boolean(
         state.editingShift ||
         state.editingEmployee ||
@@ -516,9 +427,8 @@
         activeEl.isContentEditable
       );
 
-      // Sync user permissions in real-time
-      if (state.currentUser && reconciled.users) {
-        const freshUser = reconciled.users.find(u =>
+      if (state.currentUser && normalized.users) {
+        const freshUser = normalized.users.find(u =>
           u.id === state.currentUser.id ||
           (u.username && state.currentUser.username && u.username.toLowerCase() === state.currentUser.username.toLowerCase())
         );
@@ -531,21 +441,13 @@
         }
       }
 
-      state.data = reconciled;
+      state.data = normalized;
       lastKnownServerVersion = serverVersion;
-      localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
 
-      if (hasLocalShiftsToPush) {
-        // Local device held shifts that server was missing! Push upstream so all devices get them!
-        saveData();
-      }
-
-      // If user is actively typing or editing a form modal, do NOT clobber active DOM
       if (isModalOpen || isTyping) {
         return;
       }
 
-      // Safe to update UI: preserve scroll position
       const scrollY = window.scrollY;
       renderApp();
       if (scrollY > 0) window.scrollTo(0, scrollY);
@@ -559,30 +461,31 @@
 
   function startRealtimeSync() {
     if (syncIntervalId) clearInterval(syncIntervalId);
-    // Poll every 3 seconds for near-instant multi-device sync
-    syncIntervalId = setInterval(checkServerSync, 3000);
+    syncIntervalId = setInterval(checkServerSync, 2500);
 
-    // Instant sync when switching back to tab / unlocking phone
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") {
         checkServerSync();
       }
     });
 
-    // Instant sync when browser window is focused
     window.addEventListener("focus", () => {
       checkServerSync();
     });
 
-    // Instant sync when internet connection is restored
     window.addEventListener("online", () => {
       checkServerSync();
     });
   }
 
-  // Load Data with Smart Bi-directional Sync & Deletion Protection
+  // Load Data Directly from Local MongoDB Server (Single Source of Truth)
   async function loadData() {
-    let loadedFromApi = false;
+    // Purge old cached shift data in localStorage so stale shifts never resurrect or duplicate
+    try {
+      localStorage.removeItem("planday_rota_data");
+      localStorage.removeItem("tudor_deleted_shift_ids");
+    } catch (e) {}
+
     let serverData = null;
     try {
       const res = await fetch(`/api/data?_t=${Date.now()}`, {
@@ -591,31 +494,15 @@
       });
       if (res.ok) {
         serverData = await res.json();
-        loadedFromApi = true;
         if (serverData && serverData._last_updated) {
           lastKnownServerVersion = serverData._last_updated;
         }
       }
     } catch (e) {
-      console.log("Loading from localStorage fallback...");
+      console.error("Failed to load data from local server:", e);
     }
 
-    let localData = null;
-    try {
-      const localStr = localStorage.getItem("planday_rota_data");
-      if (localStr) localData = JSON.parse(localStr);
-    } catch (e) {}
-
-    const incoming = (loadedFromApi && serverData) ? serverData : localData;
-    const { reconciled, hasLocalShiftsToPush } = reconcileRotaData(incoming, localData || CLEAN_DATA);
-
-    state.data = reconciled;
-    localStorage.setItem("planday_rota_data", JSON.stringify(state.data));
-
-    if (hasLocalShiftsToPush && loadedFromApi) {
-      saveData();
-    }
-
+    state.data = normalizeServerData(serverData);
     renderApp();
     startRealtimeSync();
   }
@@ -2825,43 +2712,7 @@
                 </div>
               </div>
 
-              <!-- 4. Database & Data Safety (MongoDB - Management Only) -->
-              <div class="settings-section-card" id="db-safety-section">
-                <div class="settings-section-title" style="display:flex; justify-content:space-between; align-items:center;">
-                  <span>Database & Data Safety</span>
-                  <span class="badge" id="db-status-badge" style="background:#dcfce7;color:#15803d;font-weight:700;font-size:11px;">Active</span>
-                </div>
-                <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-                  Your rota shifts and team data are preserved directly into MongoDB (<code style="font-size:11px;">tudor_rota</code>) with two-way sync.
-                </p>
-                <div id="db-status-details" style="background:var(--bg-main); border:1px solid var(--border-color); border-radius:8px; padding:10px 12px; font-size:12px; line-height:1.6; margin-bottom:0.75rem;">
-                  <div style="display:flex; justify-content:space-between;">
-                    <span style="color:var(--text-muted);">Database:</span>
-                    <span style="font-weight:600;" id="db-database-name">tudor_rota</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between;">
-                    <span style="color:var(--text-muted);">Connected URI:</span>
-                    <span style="font-family:monospace;font-size:11px;" id="db-uri-display">mongodb://localhost:27017</span>
-                  </div>
-                  <div style="display:flex; justify-content:space-between;">
-                    <span style="color:var(--text-muted);">Total Shifts Saved:</span>
-                    <span style="font-weight:700;color:#2563eb;" id="db-shifts-count">${(state.data.shifts || []).length} shifts</span>
-                  </div>
-                  <div style="margin-top:6px;padding-top:6px;border-top:1px dashed var(--border-color);color:#16a34a;font-weight:600;display:flex;align-items:center;gap:6px;" id="db-safety-msg">
-                    <span>✓</span> <span>All shifts safe from server spin-downs & restarts</span>
-                  </div>
-                </div>
-                <div style="display:flex; gap:8px;">
-                  <button type="button" class="btn btn-secondary btn-sm" id="btn-check-db-status" style="flex:1;">
-                    Test DB Connection
-                  </button>
-                  <button type="button" class="btn btn-primary btn-sm" id="btn-force-sync-db" style="flex:1;">
-                    Force Save All to DB
-                  </button>
-                </div>
-              </div>
-
-              <!-- 5. Business Settings (Admin Only) -->
+              <!-- 4. Business Settings (Admin Only) -->
               <div class="settings-section-card">
                 <div class="settings-section-title">Business & Currency</div>
                 <div class="form-row">
@@ -4593,61 +4444,6 @@
       });
     }
 
-    // Settings Modal: Database & Data Safety Actions
-    const btnCheckDb = document.getElementById("btn-check-db-status");
-    if (btnCheckDb) {
-      btnCheckDb.addEventListener("click", async () => {
-        btnCheckDb.textContent = "Checking...";
-        btnCheckDb.disabled = true;
-        try {
-          const res = await fetch("/api/db-status");
-          const d = await res.json();
-          const badge = document.getElementById("db-status-badge");
-          const dbName = document.getElementById("db-database-name");
-          const dbUri = document.getElementById("db-uri-display");
-          const dbCount = document.getElementById("db-shifts-count");
-          const dbMsg = document.getElementById("db-safety-msg");
-
-          if (d.connected) {
-            if (badge) { badge.textContent = "MongoDB Connected"; badge.style.background = "#dcfce7"; badge.style.color = "#15803d"; }
-            if (dbName) dbName.textContent = d.database || "tudor_rota";
-            if (dbUri) dbUri.textContent = d.uri || "mongodb://localhost:27017";
-            if (dbCount) dbCount.textContent = `${(d.counts && d.counts.shifts !== undefined) ? d.counts.shifts : (state.data.shifts || []).length} shifts`;
-            if (dbMsg) dbMsg.innerHTML = `<span>✓</span> <span>Connected to MongoDB (${d.database}). All shifts securely preserved!</span>`;
-            showToast("MongoDB is active and all shift data is safe!", "success");
-          } else {
-            if (badge) { badge.textContent = "Storage Active"; badge.style.background = "#fef3c7"; badge.style.color = "#b45309"; }
-            if (dbMsg) dbMsg.innerHTML = `<span>✓</span> <span>Local & cloud two-way shift preservation active.</span>`;
-            showToast("Data storage verified: " + d.message, "info");
-          }
-        } catch (err) {
-          showToast("Shift preservation active locally and in browser cache.", "info");
-        } finally {
-          btnCheckDb.textContent = "Test DB Connection";
-          btnCheckDb.disabled = false;
-        }
-      });
-    }
-
-    const btnForceSyncDb = document.getElementById("btn-force-sync-db");
-    if (btnForceSyncDb) {
-      btnForceSyncDb.addEventListener("click", async () => {
-        btnForceSyncDb.textContent = "Saving...";
-        btnForceSyncDb.disabled = true;
-        try {
-          await saveData();
-          const dbCount = document.getElementById("db-shifts-count");
-          if (dbCount) dbCount.textContent = `${(state.data.shifts || []).length} shifts`;
-          showToast(`Saved ${(state.data.shifts || []).length} shifts to MongoDB and local backup!`, "success");
-        } catch (e) {
-          showToast("Saved locally.", "info");
-        } finally {
-          btnForceSyncDb.textContent = "Force Save All to DB";
-          btnForceSyncDb.disabled = false;
-        }
-      });
-    }
-
     // Settings Modal: Close & Done
     const closeSettingsBtn = document.getElementById("btn-close-settings");
     const doneSettingsBtn = document.getElementById("btn-done-settings");
@@ -4659,10 +4455,6 @@
     if (clearShiftsBtn) {
       clearShiftsBtn.addEventListener("click", async () => {
         if (!confirm("Are you sure you want to remove all shifts? Staff and logins will be kept.")) return;
-        const currentShiftIds = (state.data.shifts || []).map(s => s.id);
-        currentShiftIds.forEach(id => {
-          if (id) addDeletedShiftId(id);
-        });
         state.data.shifts = [];
         state.showSettingsModal = false;
         await saveData();
@@ -4937,15 +4729,23 @@
         updatedAt: Date.now()
       };
 
-      // Un-tombstone if previously deleted
-      if (state.data.deletedShiftIds) {
-        state.data.deletedShiftIds = state.data.deletedShiftIds.filter(id => id !== shiftPayload.id);
-      }
-
       const isEdit = !state.editingShift.isNew;
+      if (!state.data.shifts) state.data.shifts = [];
+
       if (state.editingShift.isNew) {
-        if (!state.data.shifts) state.data.shifts = [];
-        state.data.shifts.push(shiftPayload);
+        // Prevent accidental duplicate shift on same day/time/employee
+        const dupIdx = state.data.shifts.findIndex(
+          s => s.employeeId === shiftPayload.employeeId &&
+               s.date === shiftPayload.date &&
+               s.startTime === shiftPayload.startTime &&
+               s.endTime === shiftPayload.endTime
+        );
+        if (dupIdx !== -1) {
+          shiftPayload.id = state.data.shifts[dupIdx].id;
+          state.data.shifts[dupIdx] = shiftPayload;
+        } else {
+          state.data.shifts.push(shiftPayload);
+        }
       } else {
         const index = state.data.shifts.findIndex(s => s.id === state.editingShift.id);
         if (index !== -1) {
@@ -4958,29 +4758,42 @@
       // Targeted Notification for this employee ONLY
       if (empId) {
         const isOvertimeShift = isShiftOvertime(shiftPayload);
-        addNotification({
+        if (!state.data.notifications) state.data.notifications = [];
+        state.data.notifications.unshift({
+          id: "notif_" + Date.now() + "_" + Math.random().toString(36).substr(2, 4),
           recipientEmployeeId: empId,
           forAdmin: false,
           title: isOvertimeShift ? "⚡ Overtime Shift Assigned" : (isEdit ? "📅 Shift Updated" : "📅 New Shift Assigned"),
           message: `Your shift on ${date} (${formatShiftRange(startTime, endTime)}) has been ${isEdit ? "updated" : "assigned to you"}.${isPaid ? " Marked as Paid." : ""}`,
           type: isOvertimeShift ? "overtime" : "shift",
-          date
+          date,
+          timestamp: Date.now(),
+          readBy: []
         });
       }
 
       state.editingShift = null;
       state.selectedScheduleDate = date;
       setCurrentMonday(getMonday(new Date(date)));
-      unDeleteShiftId(shiftPayload.id);
+      renderApp();
 
-      // Direct atomic write to MongoDB
+      // Atomic CRUD write to local MongoDB backend
       try {
-        fetch("/api/shifts", {
+        const res = await fetch("/api/shifts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(shiftPayload)
         });
-      } catch (e) {}
+        if (res.ok) {
+          const json = await res.json();
+          if (json && json.version) {
+            lastKnownServerVersion = json.version;
+            state.data._last_updated = json.version;
+          }
+        }
+      } catch (e) {
+        console.error("Failed to save shift to backend:", e);
+      }
 
       await saveData();
       if (finalStatus === "published") {
@@ -5032,33 +4845,27 @@
       deleteShiftBtn.addEventListener("click", async () => {
         if (!confirm("Are you sure you want to delete this shift?")) return;
         const deletedId = state.editingShift.id;
-        
-        // 1. Mark permanently deleted in persistent deleted set
-        addDeletedShiftId(deletedId);
 
-        // 2. Remove from active state
         state.data.shifts = (state.data.shifts || []).filter(s => s.id !== deletedId);
         state.editingShift = null;
         renderApp();
         showToast("Shift deleted.", "error");
 
-        // 3. Direct atomic DELETE from MongoDB backend
         try {
-          await fetch(`/api/shifts/${encodeURIComponent(deletedId)}`, {
+          const res = await fetch(`/api/shifts/${encodeURIComponent(deletedId)}`, {
             method: "DELETE"
           });
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.version) {
+              lastKnownServerVersion = json.version;
+              state.data._last_updated = json.version;
+            }
+          }
         } catch (err) {
           console.warn("DELETE /api/shifts failed:", err);
-          try {
-            await fetch("/api/shifts/delete", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ id: deletedId })
-            });
-          } catch (e2) {}
         }
 
-        // 4. Also save data state cleanly
         await saveData();
       });
     }
